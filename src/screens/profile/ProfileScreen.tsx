@@ -1,12 +1,20 @@
 import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../../store/authStore';
 import { signOut } from '../../lib/google';
+import { useBehavioralStore, MODES } from '../../store/behavioralStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
 import { TopBar } from '../../components/atoms/TopBar';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 export function ProfileScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const user = useAuthStore(s => s.user);
+  const enabled = useBehavioralStore(s => s.enabled);
+  const mode    = useBehavioralStore(s => s.mode);
+  const modeMeta = enabled ? MODES[mode] : MODES.default;
 
   async function handleSignOut() {
     Alert.alert('Sign out', 'You\'ll need to sign in again next time.', [
@@ -40,9 +48,13 @@ export function ProfileScreen() {
           <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: C.ink3 }}>{user?.email ?? ''}</Text>
         </View>
 
-        <SettingsRow label="Notifications" hint="Coming soon" disabled />
-        <SettingsRow label="Connected Google account" hint="Calendar / Gmail sync coming in v1.1" disabled />
-        <SettingsRow label="Theme" hint="Light only for now" disabled />
+        <SettingsRow
+          label="Behavioral OS"
+          hint={enabled ? `${modeMeta.emoji}  ${modeMeta.name} mode` : 'Off · default theme'}
+          onPress={() => navigation.navigate('BehavioralMode')}
+        />
+        <SettingsRow label="Notifications" hint="Push alerts coming in v1.2" disabled />
+        <SettingsRow label="Connected Google account" hint="Calendar / Gmail sync coming soon" disabled />
 
         <Pressable onPress={handleSignOut}>
           <View style={{
@@ -58,19 +70,25 @@ export function ProfileScreen() {
   );
 }
 
-function SettingsRow({ label, hint, disabled }: { label: string; hint?: string; disabled?: boolean }) {
-  return (
+function SettingsRow({
+  label, hint, onPress, disabled,
+}: {
+  label: string; hint?: string; onPress?: () => void; disabled?: boolean;
+}) {
+  const inner = (
     <View style={{
       backgroundColor: C.card, borderRadius: Radii.md, padding: 14,
       borderWidth: 1, borderColor: C.hairline,
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       opacity: disabled ? 0.6 : 1,
     }}>
-      <View>
+      <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>{label}</Text>
         {hint ? <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink3, marginTop: 2 }}>{hint}</Text> : null}
       </View>
       <Text style={{ color: C.ink3, fontSize: 18 }}>›</Text>
     </View>
   );
+  if (disabled || !onPress) return inner;
+  return <Pressable onPress={onPress}>{inner}</Pressable>;
 }

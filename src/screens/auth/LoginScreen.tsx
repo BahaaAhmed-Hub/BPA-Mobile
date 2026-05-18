@@ -7,12 +7,16 @@ import { signInWithGoogle } from '../../lib/google';
 import { supabase } from '../../lib/supabase';
 import { C, Radii } from '../../theme/tokens';
 import { Logo } from '../../components/atoms/Logo';
+import { MODES, useBehavioralStore } from '../../store/behavioralStore';
 
 export function LoginScreen() {
   const [signing, setSigning] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const enabled = useBehavioralStore(s => s.enabled);
+  const mode    = useBehavioralStore(s => s.mode);
+  const T = enabled ? MODES[mode] : MODES.default;
 
   async function handleGoogle() {
     setSigning(true);
@@ -30,14 +34,14 @@ export function LoginScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0D0F1A' }}>
-      {/* Indigo + samurai red atmospheric glows */}
+    <View style={{ flex: 1, backgroundColor: T.bg }}>
+      {/* Mode-aware atmospheric glows */}
       <LinearGradient
-        colors={['rgba(30,64,175,0.18)', 'transparent']}
+        colors={[T.glow, 'transparent']}
         style={{ position: 'absolute', top: -120, left: -100, width: 420, height: 420, borderRadius: 210 }}
       />
       <LinearGradient
-        colors={['rgba(178,58,54,0.12)', 'transparent']}
+        colors={[T.glow, 'transparent']}
         style={{ position: 'absolute', bottom: -100, right: -80, width: 360, height: 360, borderRadius: 180 }}
       />
 
@@ -50,31 +54,31 @@ export function LoginScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Logo size={44} />
             <View>
-              <Text style={{ color: '#E8EAF6', fontFamily: 'Inter_800ExtraBold', fontSize: 20, letterSpacing: -0.3 }}>
+              <Text style={{ color: T.text, fontFamily: 'Inter_800ExtraBold', fontSize: 20, letterSpacing: -0.3 }}>
                 The Professor
               </Text>
-              <Text style={{ color: 'rgba(232,234,246,0.55)', fontFamily: 'Inter_500Medium', fontSize: 11, marginTop: 2, letterSpacing: 1.4 }}>
-                BPA · DAILY DISCIPLINE
-              </Text>
+              {T.badge ? (
+                <Text style={{ color: T.accentBright, fontFamily: 'Inter_700Bold', fontSize: 10, marginTop: 3, letterSpacing: 2 }}>
+                  {T.badge}
+                </Text>
+              ) : (
+                <Text style={{ color: T.textDim, fontFamily: 'Inter_500Medium', fontSize: 11, marginTop: 2, letterSpacing: 1.4 }}>
+                  BPA · DAILY DISCIPLINE
+                </Text>
+              )}
             </View>
           </View>
 
           {/* Hero copy */}
           <View>
-            <Text style={{ color: '#E8EAF6', fontFamily: 'Inter_800ExtraBold', fontSize: 40, letterSpacing: -1.5, lineHeight: 44 }}>
-              Your AI Executive
+            <Text style={{ color: T.text, fontFamily: 'Inter_800ExtraBold', fontSize: 40, letterSpacing: -1.5, lineHeight: 44 }}>
+              {T.id === 'samurai' ? 'Discipline.' : T.id === 'pharaoh' ? 'Build Your' : T.id === 'astral' ? 'Think in' : 'Your AI Executive'}
             </Text>
-            <LinearGradient
-              colors={['#60A5FA', '#93C5FD', '#60A5FA']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={{ marginTop: 4 }}
-            >
-              <Text style={{ color: 'transparent', fontFamily: 'Inter_800ExtraBold', fontSize: 40, letterSpacing: -1.5, lineHeight: 44 }}>
-                Operating System
-              </Text>
-            </LinearGradient>
-            <Text style={{ color: 'rgba(232,234,246,0.7)', fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 22, marginTop: 18, maxWidth: 320 }}>
-              Triage emails, prep for meetings, manage tasks, and track habits — all powered by AI.
+            <Text style={{ color: T.accentBright, fontFamily: 'Inter_800ExtraBold', fontSize: 40, letterSpacing: -1.5, lineHeight: 44, marginTop: 4 }}>
+              {T.id === 'samurai' ? 'Precision. Mastery.' : T.id === 'pharaoh' ? 'Legacy.' : T.id === 'astral' ? 'Horizons.' : 'Operating System'}
+            </Text>
+            <Text style={{ color: T.textDim, fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 22, marginTop: 18, maxWidth: 320 }}>
+              {T.tagline}
             </Text>
           </View>
 
@@ -84,26 +88,26 @@ export function LoginScreen() {
               <View style={{ gap: 10, marginBottom: 6 }}>
                 <TextInput
                   placeholder="Email"
-                  placeholderTextColor="rgba(232,234,246,0.4)"
+                  placeholderTextColor={`${T.text}60`}
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
                   keyboardType="email-address"
-                  style={inputStyle}
+                  style={{ ...inputStyle, color: T.text }}
                 />
                 <TextInput
                   placeholder="Password"
-                  placeholderTextColor="rgba(232,234,246,0.4)"
+                  placeholderTextColor={`${T.text}60`}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
-                  style={inputStyle}
+                  style={{ ...inputStyle, color: T.text }}
                 />
                 <Pressable
                   onPress={handleEmail}
                   disabled={signing}
                   style={({ pressed }) => ({
-                    backgroundColor: pressed ? '#1d3290' : '#2A3FD9',
+                    backgroundColor: pressed ? T.accent : T.accentBright,
                     paddingVertical: 14,
                     borderRadius: Radii.sm,
                     alignItems: 'center',
@@ -112,7 +116,7 @@ export function LoginScreen() {
                 >
                   {signing
                     ? <ActivityIndicator color="#fff" />
-                    : <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 15 }}>Sign in with email</Text>}
+                    : <Text style={{ color: T.bg, fontFamily: 'Inter_700Bold', fontSize: 15 }}>Sign in with email</Text>}
                 </Pressable>
               </View>
             )}
@@ -128,25 +132,25 @@ export function LoginScreen() {
                 paddingVertical: 15,
                 paddingHorizontal: 24,
                 borderRadius: Radii.sm,
-                backgroundColor: pressed ? 'rgba(30,64,175,0.22)' : 'rgba(30,64,175,0.12)',
+                backgroundColor: pressed ? `${T.accent}40` : `${T.accent}22`,
                 borderWidth: 1.5,
-                borderColor: 'rgba(96,165,250,0.45)',
+                borderColor: `${T.accentBright}80`,
                 opacity: signing ? 0.7 : 1,
               })}
             >
               <GoogleG />
-              <Text style={{ color: '#E8EAF6', fontFamily: 'Inter_700Bold', fontSize: 15 }}>
+              <Text style={{ color: T.text, fontFamily: 'Inter_700Bold', fontSize: 15 }}>
                 {signing ? 'Redirecting…' : 'Continue with Google'}
               </Text>
             </Pressable>
 
             <Pressable onPress={() => setShowEmail(s => !s)}>
-              <Text style={{ color: 'rgba(232,234,246,0.6)', fontFamily: 'Inter_500Medium', fontSize: 13, textAlign: 'center' }}>
+              <Text style={{ color: T.textDim, fontFamily: 'Inter_500Medium', fontSize: 13, textAlign: 'center' }}>
                 {showEmail ? 'Hide email sign-in' : 'Use email and password instead'}
               </Text>
             </Pressable>
 
-            <Text style={{ color: 'rgba(232,234,246,0.4)', fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', marginTop: 4 }}>
+            <Text style={{ color: T.textDim, opacity: 0.6, fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', marginTop: 4 }}>
               Your data is isolated and encrypted. Only you can access it.
             </Text>
           </View>

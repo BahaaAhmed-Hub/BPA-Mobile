@@ -12,12 +12,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TaskDetailScreen } from '../screens/tasks/TaskDetailScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 import { SetupWizard, WIZARD_DONE_KEY } from '../screens/wizard/SetupWizard';
+import { BehavioralModeScreen } from '../screens/behavioral/BehavioralModeScreen';
 
 export type RootStackParamList = {
   App: undefined;
   Login: undefined;
   TaskDetail: { taskId: string };
   Notifications: undefined;
+  BehavioralMode: undefined;
 };
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
@@ -87,6 +89,11 @@ export function RootNavigator() {
             <Stack.Screen
               name="Notifications"
               component={NotificationsScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="BehavioralMode"
+              component={BehavioralModeScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
           </>
