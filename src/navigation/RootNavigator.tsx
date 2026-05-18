@@ -1,6 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as Linking from 'expo-linking';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
@@ -8,8 +8,10 @@ import { handleAuthCallback } from '../lib/google';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { TabNavigator } from './TabNavigator';
 import { LoadingScreen } from '../screens/LoadingScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TaskDetailScreen } from '../screens/tasks/TaskDetailScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
+import { SetupWizard, WIZARD_DONE_KEY } from '../screens/wizard/SetupWizard';
 
 export type RootStackParamList = {
   App: undefined;
@@ -56,7 +58,20 @@ export function RootNavigator() {
     };
   }, [setUser, setLoading, clearTasks, clearHabits]);
 
+  const [wizardChecked, setWizardChecked] = useState(false);
+  const [showWizard, setShowWizard]       = useState(false);
+
+  useEffect(() => {
+    if (!user) { setWizardChecked(false); setShowWizard(false); return; }
+    void AsyncStorage.getItem(WIZARD_DONE_KEY).then(v => {
+      setShowWizard(v !== '1');
+      setWizardChecked(true);
+    });
+  }, [user]);
+
   if (loading) return <LoadingScreen />;
+  if (user && !wizardChecked) return <LoadingScreen />;
+  if (user && showWizard) return <SetupWizard onDone={() => setShowWizard(false)} />;
 
   return (
     <NavigationContainer>
