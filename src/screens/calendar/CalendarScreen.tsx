@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCalendarStore } from '../../store/calendarStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
@@ -37,14 +37,22 @@ function durMin(start: string, end: string): number {
 
 export function CalendarScreen() {
   const [selected, setSelected] = useState<Date>(() => { const d = new Date(); d.setHours(0,0,0,0); return d; });
-  const events  = useCalendarStore(s => s.events);
-  const load    = useCalendarStore(s => s.loadRange);
-  const loading = useCalendarStore(s => s.loading);
+  const events         = useCalendarStore(s => s.events);
+  const sync           = useCalendarStore(s => s.syncFromGoogle);
+  const load           = useCalendarStore(s => s.loadRange);
+  const loading        = useCalendarStore(s => s.loading);
+  const syncing        = useCalendarStore(s => s.syncing);
+  const lastSyncedAt   = useCalendarStore(s => s.lastSyncedAt);
+  const needsReconnect = useCalendarStore(s => s.needsReconnect);
 
   const weekStart = useMemo(() => startOfWeek(selected), [selected]);
   const weekEnd   = useMemo(() => addDays(weekStart, 6), [weekStart]);
 
-  useEffect(() => { void load(isoDate(weekStart), isoDate(weekEnd)); }, [load, weekStart, weekEnd]);
+  useEffect(() => {
+    // Try Google sync first — falls back to Supabase rows on error/no token.
+    void sync(isoDate(weekStart), isoDate(weekEnd))
+      .catch(() => void load(isoDate(weekStart), isoDate(weekEnd)));
+  }, [sync, load, weekStart, weekEnd]);
 
   const dayEvents = useMemo(
     () => events.filter(e => isSameDay(new Date(e.start_time), selected)),
@@ -58,7 +66,48 @@ export function CalendarScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>
-      <TopBar title="Calendar Intel" subtitle={subtitle} />
+      <TopBar
+        title="Calendar Intel"
+        subtitle={subtitle}
+        right={
+          <Pressable
+            onPress={() => void sync(isoDate(weekStart), isoDate(weekEnd))}
+            disabled={syncing}
+            hitSlop={8}
+            style={{
+              width: 36, height: 36, borderRadius: 18,
+              backgroundColor: C.card, borderWidth: 1, borderColor: C.hairline,
+              alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            {syncing
+              ? <ActivityIndicator size="small" color={C.indigo} />
+              : <Text style={{ color: C.indigo, fontFamily: 'Inter_700Bold', fontSize: 14 }}>⟳</Text>}
+          </Pressable>
+        }
+      />
+
+      {needsReconnect.length > 0 ? (
+        <View style={{
+          marginHorizontal: 20, marginBottom: 10,
+          backgroundColor: 'rgba(178,58,54,0.08)', borderRadius: Radii.sm,
+          padding: 10, borderWidth: 1, borderColor: 'rgba(178,58,54,0.2)',
+        }}>
+          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: C.red }}>
+            Reconnect required: {needsReconnect.join(', ')}
+          </Text>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: C.ink2, marginTop: 2 }}>
+            Sign out and back in with Google to grant a fresh token.
+          </Text>
+        </View>
+      ) : null}
+
+      {lastSyncedAt ? (
+        <Text style={{ paddingHorizontal: 20, marginBottom: 6, fontFamily: 'Inter_500Medium', fontSize: 11, color: C.ink3 }}>
+          Synced {new Date(lastSyncedAt).toLocaleTimeString()}
+        </Text>
+      ) : null}
+
 
       {/* Week strip */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 12, flexDirection: 'row', gap: 4 }}>
@@ -101,7 +150,7 @@ export function CalendarScreen() {
       {/* Timeline */}
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load(isoDate(weekStart), isoDate(weekEnd))} tintColor={C.indigo} />}
+        refreshControl={<RefreshControl refreshing={loading || syncing} onRefresh={() => void sync(isoDate(weekStart), isoDate(weekEnd))} tintColor={C.indigo} />}
       >
         <Text style={{
           fontFamily: 'Inter_700Bold', fontSize: 11, color: C.ink,
@@ -119,7 +168,9 @@ export function CalendarScreen() {
           }}>
             <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: C.ink }}>Open day</Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: C.ink2, marginTop: 4 }}>
-              No events scheduled. Once Google Calendar sync is wired (next slice), your meetings will appear here automatically.
+              {lastSyncedAt
+                ? 'Nothing on the calendar.'
+                : 'Tap ⟳ to pull events from Google Calendar.'}
             </Text>
           </View>
         ) : (

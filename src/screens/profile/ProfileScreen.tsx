@@ -59,7 +59,11 @@ export function ProfileScreen() {
           onPress={() => navigation.navigate('BehavioralMode')}
         />
         <SettingsRow label="Notifications" hint="Push alerts coming in v1.2" disabled />
-        <SettingsRow label="Connected Google account" hint="Calendar / Gmail sync coming soon" disabled />
+        <SettingsRow
+          label="Connected Google account"
+          hint={user?.email ? `Calendar sync active · ${user.email}` : 'Sign in with Google to sync'}
+          disabled
+        />
 
         <Pressable onPress={handleSignOut}>
           <View style={{
