@@ -1,12 +1,15 @@
 import { useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTaskStore } from '../../store/taskStore';
 import { useHabitStore } from '../../store/habitStore';
 import { C, Quadrants, Radii, Shadows } from '../../theme/tokens';
 import { Card } from '../../components/atoms/Card';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -18,6 +21,7 @@ function greeting(): string {
 }
 
 export function TodayScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const tasks       = useTaskStore(s => s.tasks);
   const loadTasks   = useTaskStore(s => s.loadFromDB);
   const setStatus   = useTaskStore(s => s.setStatus);
@@ -77,26 +81,29 @@ export function TodayScreen() {
           topTasks.map(t => {
             const q = Quadrants[t.quadrant ?? 'neither'];
             return (
-              <Card key={t.id}>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                  <Pressable
-                    onPress={() => void setStatus(t.id, 'done')}
-                    hitSlop={8}
-                    style={{
-                      width: 22, height: 22, borderRadius: 11,
-                      borderWidth: 2, borderColor: q.color, marginTop: 1,
-                    }}
-                  />
-                  <View style={{ flex: 1, gap: 6 }}>
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>{t.title}</Text>
-                    <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-                      <Pill label={q.label} color={q.color} soft={q.soft} small />
-                      {t.effort_minutes ? <Pill label={`${t.effort_minutes}m`} color={C.ink2} soft="#EEF1F6" small /> : null}
-                      {t.due_date ? <Pill label={t.due_date} color={C.ink2} soft="#EEF1F6" small /> : null}
+              <Pressable key={t.id} onPress={() => navigation.navigate('TaskDetail', { taskId: t.id })}>
+                <Card>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+                    <Pressable
+                      onPress={() => void setStatus(t.id, 'done')}
+                      hitSlop={8}
+                      style={{
+                        width: 22, height: 22, borderRadius: 11,
+                        borderWidth: 2, borderColor: q.color, marginTop: 1,
+                      }}
+                    />
+                    <View style={{ flex: 1, gap: 6 }}>
+                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>{t.title}</Text>
+                      <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                        <Pill label={q.label} color={q.color} soft={q.soft} small />
+                        {t.effort_minutes ? <Pill label={`${t.effort_minutes}m`} color={C.ink2} soft="#EEF1F6" small /> : null}
+                        {t.due_date ? <Pill label={t.due_date} color={C.ink2} soft="#EEF1F6" small /> : null}
+                      </View>
                     </View>
+                    <Text style={{ color: C.ink3, fontSize: 22, lineHeight: 22 }}>›</Text>
                   </View>
-                </View>
-              </Card>
+                </Card>
+              </Pressable>
             );
           })
         )}

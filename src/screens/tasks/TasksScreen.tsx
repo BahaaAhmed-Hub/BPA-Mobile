@@ -1,21 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTaskStore } from '../../store/taskStore';
 import { C, Quadrants, QuadrantId, Radii, Shadows } from '../../theme/tokens';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
 import type { DbTask } from '../../types/database';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const QUADRANT_ORDER: QuadrantId[] = ['urgent_important', 'important_not_urgent', 'urgent_not_important', 'neither'];
 
 export function TasksScreen() {
-  const tasks   = useTaskStore(s => s.tasks);
-  const load    = useTaskStore(s => s.loadFromDB);
-  const loading = useTaskStore(s => s.loading);
-  const move    = useTaskStore(s => s.moveToQuadrant);
-  const remove  = useTaskStore(s => s.removeTask);
-  const setStatus = useTaskStore(s => s.setStatus);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const tasks      = useTaskStore(s => s.tasks);
+  const load       = useTaskStore(s => s.loadFromDB);
+  const loading    = useTaskStore(s => s.loading);
+  const setStatus  = useTaskStore(s => s.setStatus);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -37,7 +39,6 @@ export function TasksScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>
       <TopBar title="Task Command" subtitle="Eisenhower matrix" />
 
-      {/* Quadrant selector chips */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -49,14 +50,12 @@ export function TasksScreen() {
           const count = byQuadrant[q].length;
           return (
             <Pressable key={q} onPress={() => setActiveQuadrant(q)}>
-              <View
-                style={{
-                  paddingHorizontal: 14, paddingVertical: 8,
-                  borderRadius: Radii.pill,
-                  backgroundColor: active ? meta.color : meta.soft,
-                  flexDirection: 'row', gap: 6, alignItems: 'center',
-                }}
-              >
+              <View style={{
+                paddingHorizontal: 14, paddingVertical: 8,
+                borderRadius: Radii.pill,
+                backgroundColor: active ? meta.color : meta.soft,
+                flexDirection: 'row', gap: 6, alignItems: 'center',
+              }}>
                 <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: active ? '#fff' : meta.color }}>
                   {meta.label}
                 </Text>
@@ -75,7 +74,6 @@ export function TasksScreen() {
         })}
       </ScrollView>
 
-      {/* Active quadrant body */}
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 10 }}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={C.indigo} />}
@@ -90,14 +88,8 @@ export function TasksScreen() {
             <TaskRow
               key={t.id}
               task={t}
+              onOpen={() => navigation.navigate('TaskDetail', { taskId: t.id })}
               onComplete={() => void setStatus(t.id, 'done')}
-              onMove={(q) => void move(t.id, q)}
-              onDelete={() => {
-                Alert.alert('Delete task', t.title, [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Delete', style: 'destructive', onPress: () => void remove(t.id) },
-                ]);
-              }}
             />
           ))
         )}
@@ -126,81 +118,33 @@ function QuadrantHeader({ id, count }: { id: QuadrantId; count: number }) {
   );
 }
 
-function TaskRow({
-  task,
-  onComplete,
-  onMove,
-  onDelete,
-}: {
-  task: DbTask;
-  onComplete: () => void;
-  onMove: (q: QuadrantId) => void;
-  onDelete: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
+function TaskRow({ task, onOpen, onComplete }: { task: DbTask; onOpen: () => void; onComplete: () => void }) {
   const q = Quadrants[(task.quadrant ?? 'neither') as QuadrantId];
-
   return (
-    <Pressable onPress={() => setExpanded(e => !e)}>
-      <View
-        style={{
-          backgroundColor: C.card,
-          borderRadius: Radii.md,
-          borderWidth: 1, borderColor: C.hairline,
-          padding: 14, gap: 10,
-          ...Shadows.card,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-          <Pressable onPress={onComplete} hitSlop={8}>
-            <View style={{
-              width: 22, height: 22, borderRadius: 11,
-              borderWidth: 2, borderColor: q.color,
-            }} />
-          </Pressable>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>{task.title}</Text>
-            {task.description ? (
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: C.ink2, marginTop: 4 }} numberOfLines={expanded ? undefined : 2}>
-                {task.description}
-              </Text>
-            ) : null}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-              {task.effort_minutes ? <Pill label={`${task.effort_minutes}m`} color={C.ink2} soft="#EEF1F6" small /> : null}
-              {task.due_date ? <Pill label={task.due_date} color={C.ink2} soft="#EEF1F6" small /> : null}
-              {task.delegated_to ? <Pill label={`→ ${task.delegated_to}`} color={C.green} soft={C.greenSoft} small /> : null}
-            </View>
+    <Pressable onPress={onOpen}>
+      <View style={{
+        backgroundColor: C.card, borderRadius: Radii.md,
+        borderWidth: 1, borderColor: C.hairline, padding: 14,
+        flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+        ...Shadows.card,
+      }}>
+        <Pressable onPress={onComplete} hitSlop={8}>
+          <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: q.color }} />
+        </Pressable>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }} numberOfLines={2}>{task.title}</Text>
+          {task.description ? (
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: C.ink2, marginTop: 4 }} numberOfLines={2}>
+              {task.description}
+            </Text>
+          ) : null}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            {task.effort_minutes ? <Pill label={`${task.effort_minutes}m`} color={C.ink2} soft="#EEF1F6" small /> : null}
+            {task.due_date ? <Pill label={task.due_date} color={C.ink2} soft="#EEF1F6" small /> : null}
+            {task.delegated_to ? <Pill label={`→ ${task.delegated_to}`} color={C.green} soft={C.greenSoft} small /> : null}
           </View>
         </View>
-
-        {expanded && (
-          <View style={{ gap: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.hairline }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>MOVE TO</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {QUADRANT_ORDER.filter(id => id !== task.quadrant).map(id => {
-                const m = Quadrants[id];
-                return (
-                  <Pressable key={id} onPress={() => onMove(id)}>
-                    <View style={{
-                      paddingHorizontal: 12, paddingVertical: 7, borderRadius: Radii.pill,
-                      backgroundColor: m.soft,
-                    }}>
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: m.color }}>{m.label}</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-              <Pressable onPress={onDelete}>
-                <View style={{
-                  paddingHorizontal: 12, paddingVertical: 7, borderRadius: Radii.pill,
-                  backgroundColor: 'rgba(178,58,54,0.08)',
-                }}>
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: C.red }}>Delete</Text>
-                </View>
-              </Pressable>
-            </View>
-          </View>
-        )}
+        <Text style={{ color: C.ink3, fontSize: 22, lineHeight: 22 }}>›</Text>
       </View>
     </Pressable>
   );

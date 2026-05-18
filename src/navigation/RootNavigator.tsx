@@ -8,10 +8,17 @@ import { handleAuthCallback } from '../lib/google';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { TabNavigator } from './TabNavigator';
 import { LoadingScreen } from '../screens/LoadingScreen';
+import { TaskDetailScreen } from '../screens/tasks/TaskDetailScreen';
+
+export type RootStackParamList = {
+  App: undefined;
+  Login: undefined;
+  TaskDetail: { taskId: string };
+};
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const user      = useAuthStore(s => s.user);
@@ -52,9 +59,18 @@ export function RootNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user
-          ? <Stack.Screen name="App" component={TabNavigator} />
-          : <Stack.Screen name="Login" component={LoginScreen} />}
+        {user ? (
+          <>
+            <Stack.Screen name="App" component={TabNavigator} />
+            <Stack.Screen
+              name="TaskDetail"
+              component={TaskDetailScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+          </>
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
