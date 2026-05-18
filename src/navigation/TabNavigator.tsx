@@ -6,22 +6,12 @@ import { TodayScreen } from '../screens/today/TodayScreen';
 import { TasksScreen } from '../screens/tasks/TasksScreen';
 import { HabitsScreen } from '../screens/habits/HabitsScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { CalendarScreen } from '../screens/calendar/CalendarScreen';
 import { AddTaskSheet } from '../components/atoms/AddTaskSheet';
 import { C, Shadows } from '../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const Tab = createBottomTabNavigator();
-
-function CalendarPlaceholder() {
-  return (
-    <View style={{ flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: C.ink, marginBottom: 8 }}>Calendar Intel</Text>
-      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: C.ink3, textAlign: 'center' }}>
-        Google Calendar sync ships in v1.1 once we port the Edge Function flow to mobile OAuth.
-      </Text>
-    </View>
-  );
-}
 
 export function TabNavigator() {
   const [addTaskOpen, setAddTaskOpen] = useState(false);
@@ -47,7 +37,7 @@ export function TabNavigator() {
           options={{ tabBarIcon: ({ color, size }) => <Home color={color} size={size - 2} /> }} />
         <Tab.Screen name="Tasks" component={TasksScreen}
           options={{ tabBarIcon: ({ color, size }) => <CheckSquare color={color} size={size - 2} /> }} />
-        <Tab.Screen name="Calendar" component={CalendarPlaceholder}
+        <Tab.Screen name="Calendar" component={CalendarScreen}
           options={{ tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size - 2} /> }} />
         <Tab.Screen name="Habits" component={HabitsScreen}
           options={{ tabBarIcon: ({ color, size }) => <Flame color={color} size={size - 2} /> }} />
