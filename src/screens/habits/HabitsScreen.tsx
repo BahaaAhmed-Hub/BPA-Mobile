@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHabitStore } from '../../store/habitStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
 import { TopBar } from '../../components/atoms/TopBar';
+import { SwipeRow } from '../../components/atoms/SwipeRow';
 import type { DbHabitFrequency } from '../../types/database';
 
 export function HabitsScreen() {
@@ -65,44 +66,54 @@ export function HabitsScreen() {
           habits.map(h => {
             const done = isCompletedToday(h.id);
             return (
-              <Pressable
+              <SwipeRow
                 key={h.id}
-                onPress={() => void toggleToday(h.id)}
-                onLongPress={() => {
-                  Alert.alert('Archive habit', h.name, [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Archive', style: 'destructive', onPress: () => void removeHabit(h.id) },
-                  ]);
+                leftAction={{
+                  label: done ? 'UNDO' : 'DONE',
+                  color: done ? C.slate : C.green,
+                  onAction: () => void toggleToday(h.id),
+                }}
+                rightAction={{
+                  label: 'ARCHIVE',
+                  color: C.red,
+                  onAction: () => {
+                    Alert.alert('Archive habit', h.name, [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Archive', style: 'destructive', onPress: () => void removeHabit(h.id) },
+                    ]);
+                  },
                 }}
               >
-                <View style={{
-                  flexDirection: 'row', alignItems: 'center', gap: 12,
-                  backgroundColor: C.card,
-                  borderRadius: Radii.md,
-                  borderWidth: 1, borderColor: C.hairline,
-                  padding: 14,
-                  ...Shadows.card,
-                }}>
+                <Pressable onPress={() => void toggleToday(h.id)}>
                   <View style={{
-                    width: 28, height: 28, borderRadius: 8,
-                    borderWidth: 2, borderColor: done ? C.green : C.hairline,
-                    backgroundColor: done ? C.green : 'transparent',
-                    alignItems: 'center', justifyContent: 'center',
+                    flexDirection: 'row', alignItems: 'center', gap: 12,
+                    backgroundColor: C.card,
+                    borderRadius: Radii.md,
+                    borderWidth: 1, borderColor: C.hairline,
+                    padding: 14,
+                    ...Shadows.card,
                   }}>
-                    {done ? <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 16, lineHeight: 16 }}>✓</Text> : null}
+                    <View style={{
+                      width: 28, height: 28, borderRadius: 8,
+                      borderWidth: 2, borderColor: done ? C.green : C.hairline,
+                      backgroundColor: done ? C.green : 'transparent',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {done ? <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 16, lineHeight: 16 }}>✓</Text> : null}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>{h.name}</Text>
+                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: C.ink3, marginTop: 2 }}>
+                        {h.frequency}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 16, color: C.red }}>{h.current_streak}</Text>
+                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: C.ink3, letterSpacing: 0.5 }}>STREAK</Text>
+                    </View>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>{h.name}</Text>
-                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: C.ink3, marginTop: 2 }}>
-                      {h.frequency}
-                    </Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 16, color: C.red }}>{h.current_streak}</Text>
-                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: C.ink3, letterSpacing: 0.5 }}>STREAK</Text>
-                  </View>
-                </View>
-              </Pressable>
+                </Pressable>
+              </SwipeRow>
             );
           })
         )}

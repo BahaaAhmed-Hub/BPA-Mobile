@@ -7,6 +7,7 @@ import { useTaskStore } from '../../store/taskStore';
 import { C, Quadrants, QuadrantId, Radii, Shadows } from '../../theme/tokens';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
+import { SwipeRow } from '../../components/atoms/SwipeRow';
 import type { DbTask } from '../../types/database';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -18,6 +19,7 @@ export function TasksScreen() {
   const load       = useTaskStore(s => s.loadFromDB);
   const loading    = useTaskStore(s => s.loading);
   const setStatus  = useTaskStore(s => s.setStatus);
+  const moveTo     = useTaskStore(s => s.moveToQuadrant);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -85,12 +87,29 @@ export function TasksScreen() {
           </View>
         ) : (
           byQuadrant[activeQuadrant].map(t => (
-            <TaskRow
+            <SwipeRow
               key={t.id}
-              task={t}
-              onOpen={() => navigation.navigate('TaskDetail', { taskId: t.id })}
-              onComplete={() => void setStatus(t.id, 'done')}
-            />
+              leftAction={{
+                label: 'DONE',
+                color: C.green,
+                onAction: () => void setStatus(t.id, 'done'),
+              }}
+              rightAction={t.quadrant !== 'neither' ? {
+                label: 'ELIMINATE',
+                color: C.slate,
+                onAction: () => void moveTo(t.id, 'neither'),
+              } : {
+                label: 'DELETE',
+                color: C.red,
+                onAction: () => void useTaskStore.getState().removeTask(t.id),
+              }}
+            >
+              <TaskRow
+                task={t}
+                onOpen={() => navigation.navigate('TaskDetail', { taskId: t.id })}
+                onComplete={() => void setStatus(t.id, 'done')}
+              />
+            </SwipeRow>
           ))
         )}
       </ScrollView>

@@ -109,7 +109,7 @@ export function TodayScreen() {
         )}
 
         {/* Habits quick row */}
-        <SectionHeader title="Habits" hint="Swipe-right gesture coming in v1.1 — tap to mark for now" />
+        <SectionHeader title="Habits" hint="Swipe right to mark complete · Swipe left to archive" />
         {habits.length === 0 ? (
           <Card><Text style={{ color: C.ink2, fontFamily: 'Inter_500Medium', fontSize: 14 }}>No habits yet. Create one from the Habits tab.</Text></Card>
         ) : (
