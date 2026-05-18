@@ -10,27 +10,44 @@ import { CalendarScreen } from '../screens/calendar/CalendarScreen';
 import { AddTaskSheet } from '../components/atoms/AddTaskSheet';
 import { C, Shadows } from '../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useIsTablet } from '../lib/layout';
 
 const Tab = createBottomTabNavigator();
 
 export function TabNavigator() {
   const [addTaskOpen, setAddTaskOpen] = useState(false);
+  const tablet = useIsTablet();
 
   return (
     <View style={{ flex: 1 }}>
       <Tab.Navigator
+        // @ts-expect-error tabBarPosition: 'left' is supported in v7 but not yet typed
+        tabBarPosition={tablet ? 'left' : 'bottom'}
         screenOptions={{
           headerShown: false,
           tabBarShowLabel: true,
           tabBarActiveTintColor: C.indigo,
           tabBarInactiveTintColor: C.ink3,
-          tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 11 },
-          tabBarStyle: {
-            backgroundColor: C.card,
-            borderTopColor: C.hairline,
-            paddingTop: 6,
-            height: 84,
-          },
+          tabBarLabelStyle: tablet
+            ? { fontFamily: 'Inter_600SemiBold', fontSize: 13, marginLeft: 4 }
+            : { fontFamily: 'Inter_500Medium', fontSize: 11 },
+          tabBarStyle: tablet
+            ? {
+                backgroundColor: C.card,
+                borderRightWidth: 1,
+                borderRightColor: C.hairline,
+                width: 220,
+                paddingTop: 16,
+              }
+            : {
+                backgroundColor: C.card,
+                borderTopColor: C.hairline,
+                paddingTop: 6,
+                height: 84,
+              },
+          tabBarItemStyle: tablet
+            ? { paddingVertical: 4, marginHorizontal: 8, borderRadius: 12 }
+            : undefined,
         }}
       >
         <Tab.Screen name="Today" component={TodayScreen}
@@ -45,8 +62,14 @@ export function TabNavigator() {
           options={{ tabBarIcon: ({ color, size }) => <User color={color} size={size - 2} /> }} />
       </Tab.Navigator>
 
-      {/* Center FAB — signature gradient (indigo → red) */}
-      <View pointerEvents="box-none" style={{ position: 'absolute', bottom: 38, left: 0, right: 0, alignItems: 'center' }}>
+      {/* Center FAB — bottom on phone, bottom-right above sidebar on tablet */}
+      <View
+        pointerEvents="box-none"
+        style={tablet
+          ? { position: 'absolute', bottom: 32, right: 32 }
+          : { position: 'absolute', bottom: 38, left: 0, right: 0, alignItems: 'center' }
+        }
+      >
         <Pressable onPress={() => setAddTaskOpen(true)} hitSlop={8}>
           <LinearGradient
             colors={['#2A3FD9', '#B23A36']}

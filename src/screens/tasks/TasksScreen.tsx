@@ -8,6 +8,7 @@ import { C, Quadrants, QuadrantId, Radii, Shadows } from '../../theme/tokens';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
+import { useIsTablet } from '../../lib/layout';
 import type { DbTask } from '../../types/database';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -36,6 +37,58 @@ export function TasksScreen() {
   }, [tasks]);
 
   const [activeQuadrant, setActiveQuadrant] = useState<QuadrantId>('urgent_important');
+  const tablet = useIsTablet();
+
+  // On iPad, render the full 2×2 matrix instead of a single quadrant at a time.
+  if (tablet) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>
+        <TopBar title="Task Command" subtitle="Eisenhower matrix" />
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 20, paddingBottom: 120,
+            maxWidth: 1300, alignSelf: 'center', width: '100%',
+          }}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={C.indigo} />}
+        >
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+            {QUADRANT_ORDER.map(q => (
+              <View key={q} style={{ width: '48.5%', minHeight: 360 }}>
+                <QuadrantHeader id={q} count={byQuadrant[q].length} />
+                <View style={{ gap: 10, marginTop: 8 }}>
+                  {byQuadrant[q].length === 0 ? (
+                    <View style={{
+                      padding: 24, alignItems: 'center',
+                      backgroundColor: C.card, borderRadius: Radii.md,
+                      borderWidth: 1, borderColor: C.hairline, borderStyle: 'dashed',
+                    }}>
+                      <Text style={{ color: C.ink3, fontFamily: 'Inter_500Medium', fontSize: 13 }}>Nothing here.</Text>
+                    </View>
+                  ) : (
+                    byQuadrant[q].map(t => (
+                      <SwipeRow
+                        key={t.id}
+                        leftAction={{ label: 'DONE', color: C.green, onAction: () => void setStatus(t.id, 'done') }}
+                        rightAction={t.quadrant !== 'neither'
+                          ? { label: 'ELIMINATE', color: C.slate, onAction: () => void moveTo(t.id, 'neither') }
+                          : { label: 'DELETE',    color: C.red,   onAction: () => void useTaskStore.getState().removeTask(t.id) }}
+                      >
+                        <TaskRow
+                          task={t}
+                          onOpen={() => navigation.navigate('TaskDetail', { taskId: t.id })}
+                          onComplete={() => void setStatus(t.id, 'done')}
+                        />
+                      </SwipeRow>
+                    ))
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>
