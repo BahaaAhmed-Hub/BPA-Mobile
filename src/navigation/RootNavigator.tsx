@@ -9,11 +9,13 @@ import { LoginScreen } from '../screens/auth/LoginScreen';
 import { TabNavigator } from './TabNavigator';
 import { LoadingScreen } from '../screens/LoadingScreen';
 import { TaskDetailScreen } from '../screens/tasks/TaskDetailScreen';
+import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 
 export type RootStackParamList = {
   App: undefined;
   Login: undefined;
   TaskDetail: { taskId: string };
+  Notifications: undefined;
 };
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
@@ -65,6 +67,11 @@ export function RootNavigator() {
             <Stack.Screen
               name="TaskDetail"
               component={TaskDetailScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
           </>
