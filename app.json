@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "The Professor",
+    "slug": "bpa-mobile",
+    "scheme": "bpa",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F4F5F8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bahaaahmed.bpa"
+    },
+    "android": {
+      "package": "com.bahaaahmed.bpa",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F4F5F8"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-font"
+    ]
+  }
+}
