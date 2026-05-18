@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTaskStore } from '../../store/taskStore';
 import { useHabitStore } from '../../store/habitStore';
+import { useEmailActionsStore } from '../../store/emailActionsStore';
 import { C, Quadrants, Radii, Shadows } from '../../theme/tokens';
 import { Card } from '../../components/atoms/Card';
 import { TopBar } from '../../components/atoms/TopBar';
@@ -32,7 +33,15 @@ export function TodayScreen() {
   const toggleHabit   = useHabitStore(s => s.toggleToday);
   const isCompletedToday = useHabitStore(s => s.isCompletedToday);
 
-  useEffect(() => { void loadTasks(); void loadHabits(); }, [loadTasks, loadHabits]);
+  const emailActions  = useEmailActionsStore(s => s.actions);
+  const loadEmails    = useEmailActionsStore(s => s.loadFromDB);
+
+  useEffect(() => { void loadTasks(); void loadHabits(); void loadEmails(); }, [loadTasks, loadHabits, loadEmails]);
+
+  const pendingEmails = useMemo(
+    () => emailActions.filter(a => a.status !== 'handled').length,
+    [emailActions],
+  );
 
   const { topTasks, doneToday, totalOpen } = useMemo(() => {
     const open = tasks.filter(t => t.status !== 'done');
@@ -72,6 +81,28 @@ export function TodayScreen() {
           <StatCard label="Done today"  value={doneToday}  accent={C.green}  />
           <StatCard label="Habits"      value={`${habitsDone}/${habits.length || 0}`} accent={C.red} />
         </View>
+
+        {/* Inbox callout */}
+        {pendingEmails > 0 ? (
+          <Pressable onPress={() => navigation.navigate('Inbox')}>
+            <View style={{
+              backgroundColor: C.indigoSoft, borderRadius: Radii.md,
+              borderWidth: 1, borderColor: 'rgba(42,63,217,0.18)',
+              padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12,
+            }}>
+              <Text style={{ fontSize: 22 }}>📬</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: C.indigo }}>
+                  {pendingEmails} item{pendingEmails === 1 ? '' : 's'} in inbox
+                </Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink2, marginTop: 2 }}>
+                  Triaged emails waiting for review.
+                </Text>
+              </View>
+              <Text style={{ color: C.indigo, fontSize: 22, lineHeight: 22 }}>›</Text>
+            </View>
+          </Pressable>
+        ) : null}
 
         {/* Top tasks */}
         <SectionHeader title="The three" hint="Highest leverage right now" />

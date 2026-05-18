@@ -49,6 +49,11 @@ export function ProfileScreen() {
         </View>
 
         <SettingsRow
+          label="Inbox"
+          hint="Triaged email actions from Supabase"
+          onPress={() => navigation.navigate('Inbox')}
+        />
+        <SettingsRow
           label="Behavioral OS"
           hint={enabled ? `${modeMeta.emoji}  ${modeMeta.name} mode` : 'Off · default theme'}
           onPress={() => navigation.navigate('BehavioralMode')}
