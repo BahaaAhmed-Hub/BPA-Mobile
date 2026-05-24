@@ -13,6 +13,7 @@ interface CalendarState {
 
   loadRange:    (fromIsoDate: string, toIsoDate: string) => Promise<void>;
   syncFromGoogle: (fromIsoDate: string, toIsoDate: string) => Promise<void>;
+  updateEvent:  (id: string, patch: Partial<DbCalendarEvent>) => Promise<{ ok: boolean; reason?: 'google-readonly' }>;
   clearAll:     () => void;
 }
 
@@ -34,7 +35,7 @@ function toDbEvent(g: import('../lib/googleCalendar').GoogleSyncEvent): DbCalend
   };
 }
 
-export const useCalendarStore = create<CalendarState>(set => ({
+export const useCalendarStore = create<CalendarState>((set, get) => ({
   events: [],
   loading: false,
   syncing: false,
@@ -80,6 +81,23 @@ export const useCalendarStore = create<CalendarState>(set => ({
       needsReconnect: result.needsReconnect,
       lastSyncedAt: new Date().toISOString(),
     });
+  },
+
+  async updateEvent(id, patch) {
+    const isGoogleSourced = id.startsWith('google:');
+    // Optimistic UI update either way
+    set({ events: get().events.map(e => e.id === id ? { ...e, ...patch } : e) });
+    if (isGoogleSourced) {
+      // Google write-back via google-calendar-write Edge Function isn't wired
+      // yet. Surface this to the caller so the UI can show a notice.
+      return { ok: false, reason: 'google-readonly' };
+    }
+    const { error } = await supabase.from('calendar_events').update(patch).eq('id', id);
+    if (error) {
+      console.warn('[calendarStore] updateEvent:', error.message);
+      return { ok: false };
+    }
+    return { ok: true };
   },
 
   clearAll() { set({ events: [], error: null, lastSyncedAt: null, needsReconnect: [] }); },

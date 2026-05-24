@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCalendarStore } from '../../store/calendarStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { DbCalendarEvent } from '../../types/database';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -36,6 +39,7 @@ function durMin(start: string, end: string): number {
 }
 
 export function CalendarScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selected, setSelected] = useState<Date>(() => { const d = new Date(); d.setHours(0,0,0,0); return d; });
   const events         = useCalendarStore(s => s.events);
   const sync           = useCalendarStore(s => s.syncFromGoogle);
@@ -185,7 +189,9 @@ export function CalendarScreen() {
             return (
               <View key={e.id}>
                 {showNowAfter ? <NowDivider /> : null}
-                <EventCard event={e} highlighted={isLive} dimmed={isPast && !isLive} />
+                <Pressable onPress={() => navigation.navigate('EventDetail', { eventId: e.id })}>
+                  <EventCard event={e} highlighted={isLive} dimmed={isPast && !isLive} />
+                </Pressable>
                 {showNowBetween ? <NowDivider /> : null}
               </View>
             );

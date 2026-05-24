@@ -14,6 +14,7 @@ import { NotificationsScreen } from '../screens/notifications/NotificationsScree
 import { SetupWizard, WIZARD_DONE_KEY } from '../screens/wizard/SetupWizard';
 import { BehavioralModeScreen } from '../screens/behavioral/BehavioralModeScreen';
 import { InboxScreen } from '../screens/inbox/InboxScreen';
+import { EventDetailScreen } from '../screens/calendar/EventDetailScreen';
 
 export type RootStackParamList = {
   App: undefined;
@@ -22,6 +23,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   BehavioralMode: undefined;
   Inbox: undefined;
+  EventDetail: { eventId: string };
 };
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
@@ -101,6 +103,11 @@ export function RootNavigator() {
             <Stack.Screen
               name="Inbox"
               component={InboxScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="EventDetail"
+              component={EventDetailScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
           </>
