@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../../lib/supabase';
 import { Logo } from '../../components/atoms/Logo';
 import { C, Radii } from '../../theme/tokens';
 
@@ -55,6 +56,11 @@ export function SetupWizard({ onDone }: { onDone: () => void }) {
       [WIZARD_DONE_KEY, '1'],
       [WIZARD_PREFS_KEY, JSON.stringify(prefs)],
     ]);
+    // Persist schedule preferences to Supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('users').update({ schedule_rules: prefs as unknown as Record<string, unknown> }).eq('id', user.id);
+    }
     onDone();
   }
 

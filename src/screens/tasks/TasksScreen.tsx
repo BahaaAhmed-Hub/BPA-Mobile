@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTaskStore } from '../../store/taskStore';
+import { useCompanyStore } from '../../store/companyStore';
 import { C, Quadrants, QuadrantId, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
@@ -25,7 +26,12 @@ export function TasksScreen() {
   const setStatus  = useTaskStore(s => s.setStatus);
   const moveTo     = useTaskStore(s => s.moveToQuadrant);
 
-  useEffect(() => { void load(); }, [load]);
+  const companies     = useCompanyStore(s => s.companies);
+  const loadCompanies = useCompanyStore(s => s.loadFromDB);
+
+  useEffect(() => { void load(); void loadCompanies(); }, [load, loadCompanies]);
+
+  const [companyFilter, setCompanyFilter] = useState<string | null>(null);
 
   const byQuadrant = useMemo(() => {
     const groups: Record<QuadrantId, DbTask[]> = {
@@ -33,11 +39,12 @@ export function TasksScreen() {
     };
     for (const t of tasks) {
       if (t.status === 'done' || t.status === 'deferred') continue;
+      if (companyFilter && t.company_id !== companyFilter) continue;
       const q = (t.quadrant ?? 'neither') as QuadrantId;
       groups[q].push(t);
     }
     return groups;
-  }, [tasks]);
+  }, [tasks, companyFilter]);
 
   const [activeQuadrant, setActiveQuadrant] = useState<QuadrantId>('urgent_important');
   const tablet = useIsTablet();
@@ -46,6 +53,12 @@ export function TasksScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
         <TopBar title="Task Command" subtitle="Eisenhower matrix" />
+        <CompanyFilterRow
+          companies={companies}
+          companyFilter={companyFilter}
+          setCompanyFilter={setCompanyFilter}
+          P={P}
+        />
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20, paddingBottom: 120,
@@ -95,6 +108,12 @@ export function TasksScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
       <TopBar title="Task Command" subtitle="Eisenhower matrix" />
+      <CompanyFilterRow
+        companies={companies}
+        companyFilter={companyFilter}
+        setCompanyFilter={setCompanyFilter}
+        P={P}
+      />
 
       <ScrollView
         horizontal
@@ -169,6 +188,61 @@ export function TasksScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+type ScreenPalette = ReturnType<typeof useScreenPalette>;
+
+function CompanyFilterRow({
+  companies, companyFilter, setCompanyFilter, P,
+}: {
+  companies: import('../../types/database').DbCompany[];
+  companyFilter: string | null;
+  setCompanyFilter: (id: string | null) => void;
+  P: ScreenPalette;
+}) {
+  if (companies.length === 0) return null;
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, gap: 8 }}
+    >
+      {/* All pill */}
+      <Pressable onPress={() => setCompanyFilter(null)}>
+        <View style={{
+          paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radii.pill, borderWidth: 1,
+          backgroundColor: companyFilter === null ? P.ink : 'transparent',
+          borderColor: companyFilter === null ? P.ink : P.hairline,
+        }}>
+          <Text style={{
+            fontFamily: 'Inter_500Medium', fontSize: 13,
+            color: companyFilter === null ? P.bg : P.ink2,
+          }}>All</Text>
+        </View>
+      </Pressable>
+      {companies.map(company => {
+        const active = companyFilter === company.id;
+        const activeColor = company.color_tag ?? P.accent;
+        return (
+          <Pressable
+            key={company.id}
+            onPress={() => setCompanyFilter(active ? null : company.id)}
+          >
+            <View style={{
+              paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radii.pill, borderWidth: 1,
+              backgroundColor: active ? activeColor : 'transparent',
+              borderColor: active ? activeColor : P.hairline,
+            }}>
+              <Text style={{
+                fontFamily: 'Inter_500Medium', fontSize: 13,
+                color: active ? '#fff' : P.ink2,
+              }}>{company.name}</Text>
+            </View>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
   );
 }
 

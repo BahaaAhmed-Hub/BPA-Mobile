@@ -27,6 +27,7 @@ export type RootStackParamList = {
 };
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
+import { useCompanyStore } from '../store/companyStore';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -51,7 +52,7 @@ export function RootNavigator() {
       const u = session?.user;
       setUser(u ? { id: u.id, email: u.email ?? '', name: u.user_metadata?.full_name as string | undefined, avatarUrl: u.user_metadata?.avatar_url as string | undefined } : null);
       setLoading(false);
-      if (!session) { clearTasks(); clearHabits(); }
+      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); }
     });
 
     // Deep-link OAuth callback (when the in-app browser hands the URL back)
