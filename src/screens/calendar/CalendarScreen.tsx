@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator } from 'react-native';
+import {
+  View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator,
+  Modal, TextInput, Switch, KeyboardAvoidingView, Platform, Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCalendarStore } from '../../store/calendarStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette, ScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { DbCalendarEvent } from '../../types/database';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
+import { supabase } from '../../lib/supabase';
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -53,6 +58,7 @@ export function CalendarScreen() {
 
   const weekStart = useMemo(() => startOfWeek(selected), [selected]);
   const weekEnd   = useMemo(() => addDays(weekStart, 6), [weekStart]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     void sync(isoDate(weekStart), isoDate(weekEnd))
@@ -75,20 +81,33 @@ export function CalendarScreen() {
         subtitle={subtitle}
         dark={P.isDark}
         right={
-          <Pressable
-            onPress={() => void sync(isoDate(weekStart), isoDate(weekEnd))}
-            disabled={syncing}
-            hitSlop={8}
-            style={{
-              width: 36, height: 36, borderRadius: 18,
-              backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
-              alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            {syncing
-              ? <ActivityIndicator size="small" color={P.accent} />
-              : <Text style={{ color: P.accent, fontFamily: 'Inter_700Bold', fontSize: 14 }}>⟳</Text>}
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable
+              onPress={() => void sync(isoDate(weekStart), isoDate(weekEnd))}
+              disabled={syncing}
+              hitSlop={8}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {syncing
+                ? <ActivityIndicator size="small" color={P.accent} />
+                : <Text style={{ color: P.accent, fontFamily: 'Inter_700Bold', fontSize: 14 }}>⟳</Text>}
+            </Pressable>
+            <Pressable
+              onPress={() => setShowCreateModal(true)}
+              hitSlop={8}
+              style={{
+                width: 36, height: 36, borderRadius: 18,
+                backgroundColor: P.accent, borderWidth: 0,
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 20, lineHeight: 22 }}>+</Text>
+            </Pressable>
+          </View>
         }
       />
 
@@ -195,9 +214,230 @@ export function CalendarScreen() {
           })
         )}
       </ScrollView>
+
+      <CreateEventModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSaved={() => {
+          setShowCreateModal(false);
+          void load(isoDate(weekStart), isoDate(weekEnd));
+        }}
+      />
     </SafeAreaView>
   );
 }
+
+// ─── Create Event Modal ──────────────────────────────────────────────────────
+
+function CreateEventModal({
+  visible, onClose, onSaved,
+}: { visible: boolean; onClose: () => void; onSaved: () => void }) {
+  const P = useScreenPalette();
+
+  const [title, setTitle] = useState('');
+  const [location, setLocation] = useState('');
+  const [allDay, setAllDay] = useState(false);
+  const [date, setDate] = useState<Date>(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
+  const [startTime, setStartTime] = useState<Date>(() => {
+    const d = new Date(); d.setMinutes(0, 0, 0); return d;
+  });
+  const [endTime, setEndTime] = useState<Date>(() => {
+    const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0); return d;
+  });
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  function buildIso(d: Date, t: Date): string {
+    const out = new Date(d);
+    out.setHours(t.getHours(), t.getMinutes(), 0, 0);
+    return out.toISOString();
+  }
+
+  function fmtTimePicker(d: Date): string {
+    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function handleSave() {
+    if (!title.trim()) { Alert.alert('Title required'); return; }
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { Alert.alert('Not signed in'); return; }
+
+      const startIso = allDay
+        ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0).toISOString()
+        : buildIso(date, startTime);
+      const endIso = allDay
+        ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 0).toISOString()
+        : buildIso(date, endTime);
+
+      const { error } = await supabase.from('calendar_events').insert({
+        user_id: user.id,
+        title: title.trim(),
+        location: location.trim() || null,
+        start_time: startIso,
+        end_time: endIso,
+        is_synced: false,
+        google_event_id: null,
+        company_id: null,
+        meeting_type: null,
+        prep_notes: null,
+      });
+
+      if (error) throw error;
+      onSaved();
+      // Reset form
+      setTitle(''); setLocation(''); setAllDay(false);
+    } catch (e: unknown) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputStyle = {
+    backgroundColor: P.bg, borderWidth: 1, borderColor: P.hairline,
+    borderRadius: Radii.sm, paddingHorizontal: 14, paddingVertical: 12,
+    fontFamily: 'Inter_400Regular' as const, fontSize: 15, color: P.ink,
+  };
+
+  const rowStyle = {
+    flexDirection: 'row' as const, alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    backgroundColor: P.surface, borderRadius: Radii.sm,
+    paddingHorizontal: 14, paddingVertical: 12,
+    borderWidth: 1, borderColor: P.hairline,
+  };
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top', 'bottom']}>
+        {/* Modal header */}
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+          paddingHorizontal: 20, paddingVertical: 14,
+          borderBottomWidth: 1, borderBottomColor: P.hairline,
+        }}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 17, color: P.ink }}>New Event</Text>
+          <Pressable onPress={onClose} hitSlop={10}>
+            <Text style={{ fontSize: 22, color: P.ink2, fontFamily: 'Inter_500Medium' }}>×</Text>
+          </Pressable>
+        </View>
+
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
+
+            {/* Title */}
+            <TextInput
+              style={[inputStyle, { fontFamily: 'Inter_700Bold', fontSize: 18 }]}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Event title"
+              placeholderTextColor={P.ink3}
+            />
+
+            {/* Location */}
+            <TextInput
+              style={inputStyle}
+              value={location}
+              onChangeText={setLocation}
+              placeholder="Location (optional)"
+              placeholderTextColor={P.ink3}
+            />
+
+            {/* Date */}
+            <Pressable onPress={() => setShowDatePicker(v => !v)}>
+              <View style={rowStyle}>
+                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink }}>Date</Text>
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.accent }}>
+                  {date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                </Text>
+              </View>
+            </Pressable>
+            {showDatePicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(_, d) => { if (d) setDate(d); }}
+              />
+            )}
+
+            {/* All-day toggle */}
+            <View style={rowStyle}>
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink }}>All day</Text>
+              <Switch
+                value={allDay}
+                onValueChange={setAllDay}
+                trackColor={{ false: P.hairline, true: P.accent }}
+                thumbColor="#fff"
+              />
+            </View>
+
+            {!allDay && (
+              <>
+                {/* Start time */}
+                <Pressable onPress={() => { setShowStartPicker(v => !v); setShowEndPicker(false); }}>
+                  <View style={rowStyle}>
+                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink }}>Start time</Text>
+                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.accent }}>
+                      {fmtTimePicker(startTime)}
+                    </Text>
+                  </View>
+                </Pressable>
+                {showStartPicker && (
+                  <DateTimePicker
+                    value={startTime}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(_, t) => { if (t) setStartTime(t); }}
+                  />
+                )}
+
+                {/* End time */}
+                <Pressable onPress={() => { setShowEndPicker(v => !v); setShowStartPicker(false); }}>
+                  <View style={rowStyle}>
+                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink }}>End time</Text>
+                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.accent }}>
+                      {fmtTimePicker(endTime)}
+                    </Text>
+                  </View>
+                </Pressable>
+                {showEndPicker && (
+                  <DateTimePicker
+                    value={endTime}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(_, t) => { if (t) setEndTime(t); }}
+                  />
+                )}
+              </>
+            )}
+
+            {/* Save */}
+            <Pressable onPress={() => { void handleSave(); }} disabled={saving} style={{ marginTop: 8 }}>
+              <View style={{
+                backgroundColor: P.accent, borderRadius: Radii.sm,
+                paddingVertical: 14, alignItems: 'center',
+                opacity: saving ? 0.7 : 1,
+              }}>
+                {saving
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff' }}>Save Event</Text>}
+              </View>
+            </Pressable>
+
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+// ─── Now Divider ─────────────────────────────────────────────────────────────
 
 function NowDivider({ P }: { P: ScreenPalette }) {
   const now = new Date();
