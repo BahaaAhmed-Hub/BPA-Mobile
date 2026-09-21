@@ -93,6 +93,41 @@ export function TodayScreen() {
           <StatCard label="Habits"      value={`${habitsDone}/${habits.length || 0}`} accent={C.red} />
         </View>
 
+        {/* Morning Brief */}
+        {!tasksLoading && (
+          <View style={{
+            backgroundColor: P.isDark ? 'rgba(255,255,255,0.06)' : '#1A1F3A',
+            borderRadius: Radii.md,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: P.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)',
+            marginBottom: 16,
+            gap: 10,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: P.accent, letterSpacing: 1.6, textTransform: 'uppercase' }}>
+                ✦ Morning Brief
+              </Text>
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+                {new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </View>
+            <View style={{ gap: 4 }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 20 }}>
+                {'· ' + `${topTasks.length} priorities queued — top: ${topTasks[0]?.title ?? 'clear day'}`}
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 20 }}>
+                {'· ' + `${habitsDone}/${habits.length} habits checked in`}
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 20 }}>
+                {'· ' + (doneToday > 0
+                  ? `${doneToday} task${doneToday > 1 ? 's' : ''} shipped today`
+                  : `${totalOpen} open tasks across all quadrants`)}
+              </Text>
+            </View>
+          </View>
+        )}
+
         <View style={{ flexDirection: tablet ? 'row' : 'column', gap: tablet ? 24 : 0 }}>
           {/* LEFT (tablet) / TOP (phone) — The three */}
           <View style={{ flex: tablet ? 1 : undefined, gap: 16 }}>
@@ -187,6 +222,37 @@ export function TodayScreen() {
               </View>
             )}
           </View>
+        </View>
+
+        {/* AI Planning Assistant banner */}
+        <View style={{ marginTop: 16 }}>
+          <Pressable onPress={() => navigation.navigate('PlanningAssistant')}>
+            <View style={{
+              backgroundColor: '#0A0E1F',
+              borderRadius: Radii.md,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: 'rgba(42,63,217,0.3)',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+            }}>
+              <View style={{
+                width: 40, height: 40, borderRadius: 20,
+                backgroundColor: 'rgba(42,63,217,0.2)',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Text style={{ fontSize: 18 }}>✦</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: '#fff' }}>Ask The Professor</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
+                  AI executive coach · planning, focus, strategy
+                </Text>
+              </View>
+              <Text style={{ color: C.indigo, fontSize: 20 }}>›</Text>
+            </View>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>

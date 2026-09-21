@@ -28,8 +28,8 @@ const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'
 const DAY_LETTERS = ['S','M','T','W','T','F','S'];
 
 // ─── Sub-tab type ─────────────────────────────────────────────────────────────
-type SubTab = 'Balance' | 'Today' | 'Financials' | 'Budget' | 'Goals';
-const SUB_TABS: SubTab[] = ['Balance', 'Today', 'Financials', 'Budget', 'Goals'];
+type SubTab = 'Balance' | 'Today' | 'Financials' | 'Budget' | 'Goals' | 'Reports';
+const SUB_TABS: SubTab[] = ['Balance', 'Today', 'Financials', 'Budget', 'Goals', 'Reports'];
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export function FinanceScreen() {
@@ -89,6 +89,7 @@ export function FinanceScreen() {
       {activeTab === 'Financials' && <FinancialsTab loading={loading} onRefresh={loadAll} />}
       {activeTab === 'Budget'     && <BudgetTab     loading={loading} onRefresh={loadAll} />}
       {activeTab === 'Goals'      && <GoalsTab      loading={loading} onRefresh={loadAll} />}
+      {activeTab === 'Reports'    && <ReportsTab    loading={loading} onRefresh={loadAll} />}
 
       <AddTransactionModal visible={addOpen} onClose={() => setAddOpen(false)} />
     </SafeAreaView>
@@ -941,6 +942,184 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
           {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
         </View>
       ))}
+    </ScrollView>
+  );
+}
+
+// ─── REPORTS TAB ─────────────────────────────────────────────────────────────
+
+function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => Promise<void> }) {
+  const P = useScreenPalette();
+  const transactions = useFinanceStore(s => s.transactions);
+  const categories   = useFinanceStore(s => s.categories);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function handleRefresh() { setRefreshing(true); await onRefresh(); setRefreshing(false); }
+
+  const now = new Date();
+  const thisMonth = isoYYYYMM(now);
+
+  // Build last 6 months array (oldest first, current last)
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    return { label: MONTH_NAMES[d.getMonth()], iso: isoYYYYMM(d), isCurrent: i === 5 };
+  });
+
+  // Section 1: monthly expense totals
+  const monthlyExpenses = useMemo(() => last6Months.map(m => ({
+    ...m,
+    total: transactions
+      .filter(tx => tx.tx_type === 'expense' && tx.date.slice(0, 7) === m.iso)
+      .reduce((s, tx) => s + tx.amount, 0),
+  })), [transactions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const maxExpense = Math.max(...monthlyExpenses.map(m => m.total), 1);
+
+  // Section 2: top 5 categories this month
+  const { topCategories, totalExpensesThisMonth } = useMemo(() => {
+    const monthTxs = transactions.filter(
+      tx => tx.tx_type === 'expense' && tx.date.slice(0, 7) === thisMonth,
+    );
+    const byCategory: Record<string, { cat: DbFinanceCategory | null; total: number }> = {};
+    for (const tx of monthTxs) {
+      const cat = categories.find(c => c.id === tx.category_id) ?? null;
+      const key = tx.category_id ?? 'uncat';
+      if (!byCategory[key]) byCategory[key] = { cat, total: 0 };
+      byCategory[key].total += tx.amount;
+    }
+    const sorted = Object.values(byCategory).sort((a, b) => b.total - a.total).slice(0, 5);
+    const total = monthTxs.reduce((s, tx) => s + tx.amount, 0);
+    return { topCategories: sorted, totalExpensesThisMonth: total };
+  }, [transactions, categories, thisMonth]);
+
+  // Section 3: income vs expenses this month
+  const { incomeThisMonth, expensesThisMonth } = useMemo(() => {
+    const monthTxs = transactions.filter(tx => tx.date.slice(0, 7) === thisMonth);
+    return {
+      incomeThisMonth:   monthTxs.filter(tx => tx.tx_type === 'income').reduce((s, tx) => s + tx.amount, 0),
+      expensesThisMonth: monthTxs.filter(tx => tx.tx_type === 'expense').reduce((s, tx) => s + tx.amount, 0),
+    };
+  }, [transactions, thisMonth]);
+
+  return (
+    <ScrollView
+      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 20 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={P.accent} />}
+    >
+      {/* ── Section 1: Spending bar chart ── */}
+      <View>
+        <SectionLabel title="SPENDING · LAST 6 MONTHS" P={P} />
+        <View style={{
+          backgroundColor: P.surface, borderRadius: Radii.md, padding: 16, marginTop: 8,
+          borderWidth: 1, borderColor: P.hairline,
+          ...Shadows.card,
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, paddingHorizontal: 4 }}>
+            {monthlyExpenses.map(m => {
+              const barH = Math.max(4, (m.total / maxExpense) * 140);
+              return (
+                <View key={m.iso} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+                  <View style={{
+                    width: '100%', height: barH,
+                    backgroundColor: m.isCurrent ? P.accent : C.indigo,
+                    borderTopLeftRadius: 4, borderTopRightRadius: 4,
+                  }} />
+                  <Text style={{
+                    fontFamily: m.isCurrent ? 'Inter_700Bold' : 'Inter_400Regular',
+                    fontSize: 10,
+                    color: m.isCurrent ? P.ink : P.ink3,
+                  }}>
+                    {m.label}
+                  </Text>
+                  <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, color: P.ink3 }}>
+                    {fmtCompact(m.total)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+
+      {/* ── Section 2: Top categories ── */}
+      <View>
+        <SectionLabel title={`TOP CATEGORIES · ${MONTH_NAMES[now.getMonth()].toUpperCase()}`} P={P} />
+        <View style={{ gap: 8, marginTop: 8 }}>
+          {topCategories.length === 0 ? (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink3 }}>No expense data this month</Text>
+            </View>
+          ) : (
+            topCategories.map(({ cat, total }) => {
+              const pct = totalExpensesThisMonth > 0 ? total / totalExpensesThisMonth : 0;
+              return (
+                <View key={cat?.id ?? 'uncat'} style={{
+                  backgroundColor: P.surface, borderRadius: Radii.md, padding: 14,
+                  borderWidth: 1, borderColor: P.hairline,
+                  ...Shadows.card,
+                }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={{
+                      width: 36, height: 36, borderRadius: 10,
+                      backgroundColor: cat ? `${cat.color}20` : P.hairline,
+                      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <Text style={{ fontSize: 16 }}>{cat?.icon ?? '📁'}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>
+                          {cat?.name ?? 'Uncategorized'}
+                        </Text>
+                        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: C.red }}>
+                          {total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        </Text>
+                      </View>
+                      <View style={{ height: 4, backgroundColor: P.hairline, borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
+                        <View style={{
+                          position: 'absolute', left: 0, top: 0, bottom: 0,
+                          width: `${pct * 100}%`,
+                          backgroundColor: cat?.color ?? C.red, borderRadius: 2,
+                        }} />
+                      </View>
+                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, marginTop: 3 }}>
+                        {Math.round(pct * 100)}% of total expenses
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </View>
+      </View>
+
+      {/* ── Section 3: Income vs Expenses summary ── */}
+      <View>
+        <SectionLabel title={`INCOME VS EXPENSES · ${MONTH_NAMES[now.getMonth()].toUpperCase()}`} P={P} />
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+          <View style={{
+            flex: 1, backgroundColor: P.surface, borderRadius: Radii.md, padding: 16,
+            borderWidth: 1, borderColor: P.hairline,
+            ...Shadows.card,
+          }}>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, letterSpacing: 1 }}>INCOME</Text>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 17, color: C.green, marginTop: 4 }}>
+              {fmt(incomeThisMonth, 'EGP')}
+            </Text>
+          </View>
+          <View style={{
+            flex: 1, backgroundColor: P.surface, borderRadius: Radii.md, padding: 16,
+            borderWidth: 1, borderColor: P.hairline,
+            ...Shadows.card,
+          }}>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, letterSpacing: 1 }}>EXPENSES</Text>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 17, color: C.red, marginTop: 4 }}>
+              {fmt(expensesThisMonth, 'EGP')}
+            </Text>
+          </View>
+        </View>
+      </View>
     </ScrollView>
   );
 }
