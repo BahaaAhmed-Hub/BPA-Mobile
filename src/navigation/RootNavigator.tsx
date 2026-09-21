@@ -17,6 +17,7 @@ import { InboxScreen } from '../screens/inbox/InboxScreen';
 import { EventDetailScreen } from '../screens/calendar/EventDetailScreen';
 import { WeeklyReviewScreen } from '../screens/review/WeeklyReviewScreen';
 import { EnergyLogScreen } from '../screens/energy/EnergyLogScreen';
+import { PlanningAssistantScreen } from '../screens/assistant/PlanningAssistantScreen';
 
 export type RootStackParamList = {
   App: undefined;
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   EventDetail: { eventId: string };
   WeeklyReview: undefined;
   EnergyLog: undefined;
+  PlanningAssistant: undefined;
 };
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
@@ -56,6 +58,9 @@ export function RootNavigator() {
       const u = session?.user;
       setUser(u ? { id: u.id, email: u.email ?? '', name: u.user_metadata?.full_name as string | undefined, avatarUrl: u.user_metadata?.avatar_url as string | undefined } : null);
       setLoading(false);
+      if (session) {
+        void import('../lib/pushNotifications').then(m => m.registerForPushNotifications());
+      }
       if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); }
     });
 
@@ -124,6 +129,11 @@ export function RootNavigator() {
               name="EnergyLog"
               component={EnergyLogScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="PlanningAssistant"
+              component={PlanningAssistantScreen}
+              options={{ presentation: 'card', animation: 'slide_from_bottom' }}
             />
           </>
         ) : (

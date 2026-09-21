@@ -61,7 +61,11 @@ export function ProfileScreen() {
           hint={enabled ? `${modeMeta.emoji}  ${modeMeta.name} mode` : 'Off · default theme'}
           onPress={() => navigation.navigate('BehavioralMode')}
         />
-        <SettingsRow label="Notifications" hint="Push alerts coming in v1.2" disabled />
+        <SettingsRow
+          label="Notifications"
+          hint="Tap to enable push alerts"
+          onPress={() => void import('../../lib/pushNotifications').then(m => m.registerForPushNotifications())}
+        />
         <SettingsRow
           label="Connected Google account"
           hint={user?.email ? `Calendar sync active · ${user.email}` : 'Sign in with Google to sync'}
