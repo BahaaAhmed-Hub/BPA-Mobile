@@ -67,6 +67,16 @@ export function ProfileScreen() {
           hint={user?.email ? `Calendar sync active · ${user.email}` : 'Sign in with Google to sync'}
           disabled
         />
+        <SettingsRow
+          label="📋  Weekly Review"
+          hint="Log shipped, slipped, focus & meeting hours"
+          onPress={() => navigation.navigate('WeeklyReview')}
+        />
+        <SettingsRow
+          label="⚡  Energy Log"
+          hint="Track your daily morning & afternoon energy"
+          onPress={() => navigation.navigate('EnergyLog')}
+        />
 
         <Pressable onPress={handleSignOut}>
           <View style={{
