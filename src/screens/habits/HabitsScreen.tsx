@@ -3,11 +3,14 @@ import { View, Text, ScrollView, Pressable, RefreshControl, Modal, TextInput, Al
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHabitStore } from '../../store/habitStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
+import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
 import type { DbHabitFrequency } from '../../types/database';
 
 export function HabitsScreen() {
+  const P = useScreenPalette();
+
   const habits          = useHabitStore(s => s.habits);
   const load            = useHabitStore(s => s.loadFromDB);
   const loading         = useHabitStore(s => s.loading);
@@ -34,7 +37,7 @@ export function HabitsScreen() {
   const doneCount = habits.filter(h => isCompletedToday(h.id)).length;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
       <TopBar
         title="Habits"
         subtitle={`${doneCount} / ${habits.length || 0} today`}
@@ -44,7 +47,7 @@ export function HabitsScreen() {
             hitSlop={8}
             style={{
               width: 36, height: 36, borderRadius: 18,
-              backgroundColor: C.indigo, alignItems: 'center', justifyContent: 'center',
+              backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center',
             }}
           >
             <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 18, lineHeight: 18 }}>＋</Text>
@@ -53,12 +56,12 @@ export function HabitsScreen() {
       />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 10 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={C.indigo} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={P.accent} />}
       >
         {habits.length === 0 && !loading ? (
           <View style={{ padding: 32, alignItems: 'center', gap: 8 }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: C.ink2 }}>No habits yet</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: C.ink3, textAlign: 'center' }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: P.ink2 }}>No habits yet</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink3, textAlign: 'center' }}>
               Tap ＋ to add one. Daily, weekdays, or weekly.
             </Text>
           </View>
@@ -87,29 +90,29 @@ export function HabitsScreen() {
                 <Pressable onPress={() => void toggleToday(h.id)}>
                   <View style={{
                     flexDirection: 'row', alignItems: 'center', gap: 12,
-                    backgroundColor: C.card,
+                    backgroundColor: P.surface,
                     borderRadius: Radii.md,
-                    borderWidth: 1, borderColor: C.hairline,
+                    borderWidth: 1, borderColor: P.hairline,
                     padding: 14,
                     ...Shadows.card,
                   }}>
                     <View style={{
                       width: 28, height: 28, borderRadius: 8,
-                      borderWidth: 2, borderColor: done ? C.green : C.hairline,
+                      borderWidth: 2, borderColor: done ? C.green : P.hairline,
                       backgroundColor: done ? C.green : 'transparent',
                       alignItems: 'center', justifyContent: 'center',
                     }}>
                       {done ? <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 16, lineHeight: 16 }}>✓</Text> : null}
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>{h.name}</Text>
-                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: C.ink3, marginTop: 2 }}>
+                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: P.ink }}>{h.name}</Text>
+                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: P.ink3, marginTop: 2 }}>
                         {h.frequency}
                       </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 16, color: C.red }}>{h.current_streak}</Text>
-                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: C.ink3, letterSpacing: 0.5 }}>STREAK</Text>
+                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: P.ink3, letterSpacing: 0.5 }}>STREAK</Text>
                     </View>
                   </View>
                 </Pressable>
@@ -122,19 +125,19 @@ export function HabitsScreen() {
       {/* Add habit modal */}
       <Modal visible={adding} animationType="slide" transparent onRequestClose={() => setAdding(false)}>
         <Pressable onPress={() => setAdding(false)} style={{ flex: 1, backgroundColor: 'rgba(11,18,32,0.5)', justifyContent: 'flex-end' }}>
-          <Pressable onPress={() => {}} style={{ backgroundColor: C.card, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 14 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: C.ink }}>New habit</Text>
+          <Pressable onPress={() => {}} style={{ backgroundColor: P.surface, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 14 }}>
+            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: P.ink }}>New habit</Text>
             <TextInput
               placeholder="Habit name (e.g. Morning run)"
-              placeholderTextColor={C.ink3}
+              placeholderTextColor={P.ink3}
               value={name}
               onChangeText={setName}
               autoFocus
               style={{
-                borderWidth: 1, borderColor: C.hairline,
+                borderWidth: 1, borderColor: P.hairline,
                 borderRadius: Radii.sm,
                 paddingHorizontal: 14, paddingVertical: 12,
-                fontFamily: 'Inter_500Medium', fontSize: 15, color: C.ink,
+                fontFamily: 'Inter_500Medium', fontSize: 15, color: P.ink,
               }}
             />
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -146,11 +149,11 @@ export function HabitsScreen() {
                       paddingVertical: 10,
                       borderRadius: Radii.sm,
                       borderWidth: 1,
-                      borderColor: active ? C.indigo : C.hairline,
-                      backgroundColor: active ? C.indigoSoft : C.card,
+                      borderColor: active ? P.accent : P.hairline,
+                      backgroundColor: active ? `${P.accent}20` : P.surface,
                       alignItems: 'center',
                     }}>
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: active ? C.indigo : C.ink2, textTransform: 'capitalize' }}>{f}</Text>
+                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: active ? P.accent : P.ink2, textTransform: 'capitalize' }}>{f}</Text>
                     </View>
                   </Pressable>
                 );
@@ -160,7 +163,7 @@ export function HabitsScreen() {
               onPress={save}
               disabled={!name.trim()}
               style={{
-                backgroundColor: name.trim() ? C.indigo : C.hairline,
+                backgroundColor: name.trim() ? P.accent : P.hairline,
                 paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center', marginTop: 4,
               }}
             >

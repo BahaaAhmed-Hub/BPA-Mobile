@@ -7,6 +7,7 @@ import { useTaskStore } from '../../store/taskStore';
 import { useHabitStore } from '../../store/habitStore';
 import { useCalendarStore } from '../../store/calendarStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
+import { useScreenPalette, type ScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { DbTask, DbHabit, DbCalendarEvent } from '../../types/database';
@@ -51,6 +52,8 @@ function greeting(): string {
 
 export function NotificationsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const P = useScreenPalette();
+
   const tasks    = useTaskStore(s => s.tasks);
   const loadTasks= useTaskStore(s => s.loadFromDB);
 
@@ -84,7 +87,6 @@ export function NotificationsScreen() {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
 
-    // Day greeting / summary
     const openCount = tasks.filter(t => t.status !== 'done' && t.status !== 'deferred').length;
     const doneToday = tasks.filter(t => t.completed_at && new Date(t.completed_at).toDateString() === new Date().toDateString()).length;
     const habitsDone = habits.filter(h => isCompletedToday(h.id)).length;
@@ -95,7 +97,6 @@ export function NotificationsScreen() {
       accent: C.indigo, icon: '✦', sortAt: todayMs + 6 * 3600_000,
     });
 
-    // Overdue tasks
     for (const t of tasks) {
       if (isOverdue(t)) {
         list.push({
@@ -106,7 +107,6 @@ export function NotificationsScreen() {
       }
     }
 
-    // Streak milestones
     for (const h of habits) {
       if (streakMilestone(h.current_streak)) {
         list.push({
@@ -117,7 +117,6 @@ export function NotificationsScreen() {
       }
     }
 
-    // Upcoming meetings (next 3 today)
     const upcoming = events
       .filter(e => new Date(e.start_time).getTime() >= now)
       .slice(0, 3);
@@ -129,7 +128,6 @@ export function NotificationsScreen() {
       });
     }
 
-    // Most recent first
     return list.sort((a, b) => b.sortAt - a.sortAt);
   }, [tasks, habits, events, isCompletedToday]);
 
@@ -142,7 +140,7 @@ export function NotificationsScreen() {
   }, [signals, filter]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
       <TopBar
         title="Notifications"
         subtitle={signals.length === 0 ? 'All caught up' : `${signals.length} signal${signals.length === 1 ? '' : 's'}`}
@@ -159,10 +157,10 @@ export function NotificationsScreen() {
             <Pressable key={f} onPress={() => setFilter(f)}>
               <View style={{
                 paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radii.sm,
-                backgroundColor: active ? C.ink : C.card,
-                borderWidth: active ? 0 : 1, borderColor: C.hairline,
+                backgroundColor: active ? P.ink : P.surface,
+                borderWidth: active ? 0 : 1, borderColor: P.hairline,
               }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: active ? '#fff' : C.ink }}>{f}</Text>
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: active ? P.bg : P.ink }}>{f}</Text>
               </View>
             </Pressable>
           );
@@ -171,12 +169,12 @@ export function NotificationsScreen() {
 
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 8 }}
-        refreshControl={<RefreshControl refreshing={reading} onRefresh={refresh} tintColor={C.indigo} />}
+        refreshControl={<RefreshControl refreshing={reading} onRefresh={refresh} tintColor={P.accent} />}
       >
         {filtered.length === 0 ? (
           <View style={{ padding: 32, alignItems: 'center' }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: C.ink2 }}>You're caught up</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: C.ink3, marginTop: 6, textAlign: 'center' }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: P.ink2 }}>You're caught up</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink3, marginTop: 6, textAlign: 'center' }}>
               No active signals match this filter.
             </Text>
           </View>
@@ -193,14 +191,15 @@ export function NotificationsScreen() {
 }
 
 function SignalCard({ signal, onOpen }: { signal: Signal; onOpen: (s: Signal) => void }) {
-  const title = useTitle(signal);
-  const body  = useBody(signal);
+  const P = useScreenPalette();
+  const title = getTitle(signal);
+  const body  = getBody(signal);
 
   return (
     <Pressable onPress={() => onOpen(signal)}>
       <View style={{
-        backgroundColor: C.card, borderRadius: Radii.md, padding: 14,
-        borderWidth: 1, borderColor: C.hairline,
+        backgroundColor: P.surface, borderRadius: Radii.md, padding: 14,
+        borderWidth: 1, borderColor: P.hairline,
         position: 'relative', overflow: 'hidden',
         ...Shadows.card,
       }}>
@@ -214,9 +213,9 @@ function SignalCard({ signal, onOpen }: { signal: Signal; onOpen: (s: Signal) =>
             <Text style={{ fontSize: 14, color: signal.accent }}>{signal.icon}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: C.ink, letterSpacing: -0.2 }} numberOfLines={1}>{title}</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: C.ink2, marginTop: 3, lineHeight: 18 }}>{body}</Text>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: C.ink3, marginTop: 6 }}>
+            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: P.ink, letterSpacing: -0.2 }} numberOfLines={1}>{title}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink2, marginTop: 3, lineHeight: 18 }}>{body}</Text>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, marginTop: 6 }}>
               {fmtRelative(new Date(signal.sortAt))}
             </Text>
           </View>
@@ -226,16 +225,16 @@ function SignalCard({ signal, onOpen }: { signal: Signal; onOpen: (s: Signal) =>
   );
 }
 
-function useTitle(s: Signal): string {
+function getTitle(s: Signal): string {
   switch (s.kind) {
-    case 'greeting': return `${greeting()}`;
+    case 'greeting': return greeting();
     case 'overdue':  return 'Task overdue';
     case 'streak':   return `${s.habit.current_streak}-day streak`;
     case 'meeting':  return s.event.title;
   }
 }
 
-function useBody(s: Signal): string {
+function getBody(s: Signal): string {
   switch (s.kind) {
     case 'greeting':
       return `${s.openCount} open task${s.openCount === 1 ? '' : 's'} · ${s.doneCount} shipped today · ${s.habitsDone}/${s.habitsTotal || 0} habits done.`;
