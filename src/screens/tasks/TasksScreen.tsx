@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -11,10 +11,233 @@ import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
 import { useIsTablet } from '../../lib/layout';
-import type { DbTask } from '../../types/database';
+import type { DbTask, DbTaskStatus } from '../../types/database';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const QUADRANT_ORDER: QuadrantId[] = ['urgent_important', 'important_not_urgent', 'urgent_not_important', 'neither'];
+
+// ─── DraggableTaskList ───────────────────────────────────────────────────────
+
+interface DraggableTaskListProps {
+  tasks: DbTask[];
+  onReorder: (newIds: string[]) => void;
+  onPress: (taskId: string) => void;
+  onSwipeLeft: (taskId: string) => void;
+  setStatus: (id: string, s: DbTaskStatus) => void;
+}
+
+function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }: DraggableTaskListProps) {
+  const P = useScreenPalette();
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const cancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function enterDrag(id: string) {
+    setDraggingId(id);
+    // Auto-cancel after 5 seconds
+    if (cancelTimerRef.current) clearTimeout(cancelTimerRef.current);
+    cancelTimerRef.current = setTimeout(() => {
+      setDraggingId(null);
+    }, 5000);
+  }
+
+  function cancelDrag() {
+    setDraggingId(null);
+    if (cancelTimerRef.current) clearTimeout(cancelTimerRef.current);
+  }
+
+  function moveToPosition(targetId: string) {
+    if (!draggingId || draggingId === targetId) { cancelDrag(); return; }
+    const ids = tasks.map(t => t.id);
+    const fromIdx = ids.indexOf(draggingId);
+    const toIdx   = ids.indexOf(targetId);
+    if (fromIdx === -1 || toIdx === -1) { cancelDrag(); return; }
+    const next = [...ids];
+    next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, draggingId);
+    onReorder(next);
+    cancelDrag();
+  }
+
+  // Cleanup timer on unmount
+  useEffect(() => () => {
+    if (cancelTimerRef.current) clearTimeout(cancelTimerRef.current);
+  }, []);
+
+  if (tasks.length === 0) {
+    return (
+      <View style={{ padding: 32, alignItems: 'center' }}>
+        <Text style={{ color: P.ink3, fontFamily: 'Inter_500Medium', fontSize: 14 }}>Nothing here.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ gap: 10 }}>
+      {/* Drag mode banner */}
+      {draggingId !== null && (
+        <View style={{
+          backgroundColor: C.indigo,
+          borderRadius: Radii.md,
+          paddingHorizontal: 14,
+          paddingVertical: 10,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: '#fff', flex: 1 }}>
+            Tap a row to move here
+          </Text>
+          <Pressable onPress={cancelDrag} hitSlop={10}>
+            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff' }}>✕</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {tasks.map(t => {
+        const isDragging  = draggingId === t.id;
+        const inDragMode  = draggingId !== null;
+
+        const rowBorderColor  = isDragging ? C.indigo : P.hairline;
+        const rowBorderWidth  = isDragging ? 2 : 1;
+        const rowBorderStyle  = isDragging ? 'dashed' : 'solid';
+
+        if (inDragMode && !isDragging) {
+          // In drag mode: tap this row to move the dragged task here
+          return (
+            <Pressable key={t.id} onPress={() => moveToPosition(t.id)}>
+              <View style={{
+                backgroundColor: P.surface,
+                borderRadius: Radii.md,
+                borderWidth: 2,
+                borderColor: 'transparent',
+                padding: 14,
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 12,
+                ...Shadows.card,
+                opacity: 0.7,
+              }}>
+                {/* Drag handle (inactive) */}
+                <View style={{
+                  width: 28,
+                  height: 44,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Text style={{ color: P.ink3, fontFamily: 'Inter_700Bold', fontSize: 16 }}>⠿</Text>
+                </View>
+                <TaskRowContent task={t} />
+              </View>
+            </Pressable>
+          );
+        }
+
+        if (inDragMode && isDragging) {
+          // The dragged row — highlighted, not tappable
+          return (
+            <View key={t.id} style={{
+              backgroundColor: P.surface,
+              borderRadius: Radii.md,
+              borderWidth: rowBorderWidth,
+              borderColor: rowBorderColor,
+              borderStyle: rowBorderStyle,
+              padding: 14,
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 12,
+              ...Shadows.card,
+            }}>
+              {/* Drag handle (active) */}
+              <View style={{
+                width: 28,
+                height: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Text style={{ color: C.indigo, fontFamily: 'Inter_700Bold', fontSize: 16 }}>⠿</Text>
+              </View>
+              <TaskRowContent task={t} />
+            </View>
+          );
+        }
+
+        // Normal (no drag active): swipe + tap to open, long-press handle to drag
+        return (
+          <SwipeRow
+            key={t.id}
+            leftAction={{
+              label: 'DONE',
+              color: C.green,
+              onAction: () => setStatus(t.id, 'done'),
+            }}
+            rightAction={t.quadrant !== 'neither' ? {
+              label: 'ELIMINATE',
+              color: C.slate,
+              onAction: () => onSwipeLeft(t.id),
+            } : {
+              label: 'DELETE',
+              color: C.red,
+              onAction: () => void useTaskStore.getState().removeTask(t.id),
+            }}
+          >
+            <Pressable onPress={() => onPress(t.id)}>
+              <View style={{
+                backgroundColor: P.surface,
+                borderRadius: Radii.md,
+                borderWidth: rowBorderWidth,
+                borderColor: rowBorderColor,
+                borderStyle: rowBorderStyle,
+                padding: 14,
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: 12,
+                ...Shadows.card,
+              }}>
+                {/* Drag handle — long-press to enter drag mode */}
+                <Pressable
+                  onLongPress={() => enterDrag(t.id)}
+                  delayLongPress={300}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                  style={{ width: 28, height: 44, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Text style={{ color: C.slate, fontFamily: 'Inter_700Bold', fontSize: 16 }}>⠿</Text>
+                </Pressable>
+                <TaskRowContent task={t} />
+              </View>
+            </Pressable>
+          </SwipeRow>
+        );
+      })}
+    </View>
+  );
+}
+
+// Shared inner content of a task row (no interaction — parent handles that)
+function TaskRowContent({ task }: { task: DbTask }) {
+  const P = useScreenPalette();
+  const q = Quadrants[(task.quadrant ?? 'neither') as QuadrantId];
+  return (
+    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+      <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: q.color, marginTop: 1 }} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: P.ink }} numberOfLines={2}>{task.title}</Text>
+        {task.description ? (
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink2, marginTop: 4 }} numberOfLines={2}>
+            {task.description}
+          </Text>
+        ) : null}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          {task.effort_minutes ? <Pill label={`${task.effort_minutes}m`} color={P.ink2} soft={P.isDark ? `${P.ink}15` : '#EEF1F6'} small /> : null}
+          {task.due_date ? <Pill label={task.due_date} color={P.ink2} soft={P.isDark ? `${P.ink}15` : '#EEF1F6'} small /> : null}
+          {task.delegated_to ? <Pill label={`→ ${task.delegated_to}`} color={C.green} soft={C.greenSoft} small /> : null}
+        </View>
+      </View>
+      <Text style={{ color: P.ink3, fontSize: 22, lineHeight: 22 }}>›</Text>
+    </View>
+  );
+}
+
+// ─── TasksScreen ─────────────────────────────────────────────────────────────
 
 export function TasksScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -45,6 +268,37 @@ export function TasksScreen() {
     }
     return groups;
   }, [tasks, companyFilter]);
+
+  // ── Local ordering state (mobile drag-and-drop) ──────────────────────────
+  const [localOrders, setLocalOrders] = useState<Record<string, string[]>>({});
+
+  // Initialize any quadrant that doesn't have a local order yet
+  useEffect(() => {
+    setLocalOrders(prev => {
+      const next = { ...prev };
+      let changed = false;
+      for (const q of QUADRANT_ORDER) {
+        if (!next[q]) {
+          next[q] = byQuadrant[q].map(t => t.id);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [byQuadrant]);
+
+  function getOrderedTasks(quadrant: QuadrantId): DbTask[] {
+    const qTasks = byQuadrant[quadrant];
+    const order  = localOrders[quadrant];
+    if (!order) return qTasks;
+    const map = Object.fromEntries(qTasks.map(t => [t.id, t]));
+    return order.map(id => map[id]).filter(Boolean) as DbTask[];
+  }
+
+  function setQuadrantOrder(quadrant: QuadrantId, ids: string[]) {
+    setLocalOrders(prev => ({ ...prev, [quadrant]: ids }));
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   const [activeQuadrant, setActiveQuadrant] = useState<QuadrantId>('urgent_important');
   const tablet = useIsTablet();
@@ -155,37 +409,13 @@ export function TasksScreen() {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={P.accent} />}
       >
         <QuadrantHeader id={activeQuadrant} count={byQuadrant[activeQuadrant].length} />
-        {byQuadrant[activeQuadrant].length === 0 ? (
-          <View style={{ padding: 32, alignItems: 'center' }}>
-            <Text style={{ color: P.ink3, fontFamily: 'Inter_500Medium', fontSize: 14 }}>Nothing here.</Text>
-          </View>
-        ) : (
-          byQuadrant[activeQuadrant].map(t => (
-            <SwipeRow
-              key={t.id}
-              leftAction={{
-                label: 'DONE',
-                color: C.green,
-                onAction: () => void setStatus(t.id, 'done'),
-              }}
-              rightAction={t.quadrant !== 'neither' ? {
-                label: 'ELIMINATE',
-                color: C.slate,
-                onAction: () => void moveTo(t.id, 'neither'),
-              } : {
-                label: 'DELETE',
-                color: C.red,
-                onAction: () => void useTaskStore.getState().removeTask(t.id),
-              }}
-            >
-              <TaskRow
-                task={t}
-                onOpen={() => navigation.navigate('TaskDetail', { taskId: t.id })}
-                onComplete={() => void setStatus(t.id, 'done')}
-              />
-            </SwipeRow>
-          ))
-        )}
+        <DraggableTaskList
+          tasks={getOrderedTasks(activeQuadrant)}
+          onReorder={(ids) => setQuadrantOrder(activeQuadrant, ids)}
+          onPress={(id) => navigation.navigate('TaskDetail', { taskId: id })}
+          onSwipeLeft={(id) => void moveTo(id, 'neither')}
+          setStatus={setStatus}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -267,6 +497,7 @@ function QuadrantHeader({ id, count }: { id: QuadrantId; count: number }) {
   );
 }
 
+// Used only in the tablet layout — unchanged
 function TaskRow({ task, onOpen, onComplete }: { task: DbTask; onOpen: () => void; onComplete: () => void }) {
   const P = useScreenPalette();
   const q = Quadrants[(task.quadrant ?? 'neither') as QuadrantId];
