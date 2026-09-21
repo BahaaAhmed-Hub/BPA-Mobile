@@ -249,9 +249,9 @@ export function EventDetailScreen() {
           </ListSection>
 
           {isGoogleSourced ? (
-            <View style={{ padding: 12, backgroundColor: '#F7F8FB', borderRadius: Radii.sm }}>
+            <View style={{ padding: 12, backgroundColor: 'rgba(47,110,214,0.07)', borderRadius: Radii.sm }}>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink2, lineHeight: 18 }}>
-                ✦ Editing a Google Calendar event. Changes are kept locally for this session — writing back to Google ships when the google-calendar-write Edge Function is wired into mobile.
+                ✦ Changes to this Google Calendar event are written back to Google automatically.
               </Text>
             </View>
           ) : null}

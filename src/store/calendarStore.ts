@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { listGoogleEvents } from '../lib/googleCalendar';
+import { listGoogleEvents, writeGoogleEvent } from '../lib/googleCalendar';
 import type { DbCalendarEvent } from '../types/database';
 
 interface CalendarState {
@@ -13,7 +13,7 @@ interface CalendarState {
 
   loadRange:    (fromIsoDate: string, toIsoDate: string) => Promise<void>;
   syncFromGoogle: (fromIsoDate: string, toIsoDate: string) => Promise<void>;
-  updateEvent:  (id: string, patch: Partial<DbCalendarEvent>) => Promise<{ ok: boolean; reason?: 'google-readonly' }>;
+  updateEvent:  (id: string, patch: Partial<DbCalendarEvent>) => Promise<{ ok: boolean; error?: string }>;
   clearAll:     () => void;
 }
 
@@ -24,6 +24,8 @@ function toDbEvent(g: import('../lib/googleCalendar').GoogleSyncEvent): DbCalend
     id: `google:${g.id}`,
     user_id: '',
     company_id: null,
+    // Store the Google calendarId so write-back can reference it later.
+    calendar_id: g.calendarId,
     google_event_id: g.id,
     title: g.summary ?? '(no title)',
     start_time: start,
@@ -85,17 +87,29 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
 
   async updateEvent(id, patch) {
     const isGoogleSourced = id.startsWith('google:');
-    // Optimistic UI update either way
+    // Optimistic UI update first.
     set({ events: get().events.map(e => e.id === id ? { ...e, ...patch } : e) });
+
     if (isGoogleSourced) {
-      // Google write-back via google-calendar-write Edge Function isn't wired
-      // yet. Surface this to the caller so the UI can show a notice.
-      return { ok: false, reason: 'google-readonly' };
+      const event = get().events.find(e => e.id === id);
+      if (!event?.google_event_id) return { ok: false, error: 'missing google event id' };
+      const calendarId = event.calendar_id ?? 'primary';
+
+      // Map our DB fields to Google Calendar API fields.
+      const googlePatch: Record<string, unknown> = {};
+      if (patch.title      !== undefined) googlePatch.summary     = patch.title;
+      if (patch.prep_notes !== undefined) googlePatch.description = patch.prep_notes;
+      if (patch.location   !== undefined) googlePatch.location    = patch.location;
+      if (patch.start_time !== undefined) googlePatch.start       = { dateTime: patch.start_time };
+      if (patch.end_time   !== undefined) googlePatch.end         = { dateTime: patch.end_time };
+
+      return writeGoogleEvent(event.google_event_id, calendarId, googlePatch);
     }
+
     const { error } = await supabase.from('calendar_events').update(patch).eq('id', id);
     if (error) {
       console.warn('[calendarStore] updateEvent:', error.message);
-      return { ok: false };
+      return { ok: false, error: error.message };
     }
     return { ok: true };
   },

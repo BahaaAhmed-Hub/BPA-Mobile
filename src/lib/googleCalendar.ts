@@ -63,3 +63,32 @@ export async function listGoogleCalendars(): Promise<GoogleSyncCalendar[]> {
   }
   return (data?.calendars as GoogleSyncCalendar[]) ?? [];
 }
+
+interface GoogleEventPatch {
+  summary?: string;
+  description?: string | null;
+  location?: string | null;
+  start?: { dateTime: string } | { date: string };
+  end?: { dateTime: string } | { date: string };
+}
+
+/** Write a partial update to a Google Calendar event via the existing Edge Function. */
+export async function writeGoogleEvent(
+  googleEventId: string,
+  calendarId: string,
+  patch: GoogleEventPatch,
+): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase.functions.invoke('google-calendar-write', {
+    body: {
+      action:     'update_event',
+      event_id:   googleEventId,
+      calendar_id: calendarId,
+      patch,
+    },
+  });
+  if (error) {
+    console.warn('[googleCalendar] write_event:', error.message);
+    return { ok: false, error: error.message };
+  }
+  return { ok: data?.ok !== false };
+}
