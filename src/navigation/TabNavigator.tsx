@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { CalendarDays, CheckSquare, Flame, Home, User } from 'lucide-react-native';
+import { CalendarDays, CheckSquare, Flame, Home, User, Wallet } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, View, Text } from 'react-native';
 import { TodayScreen } from '../screens/today/TodayScreen';
@@ -7,6 +7,7 @@ import { TasksScreen } from '../screens/tasks/TasksScreen';
 import { HabitsScreen } from '../screens/habits/HabitsScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { CalendarScreen } from '../screens/calendar/CalendarScreen';
+import { FinanceScreen } from '../screens/finance/FinanceScreen';
 import { AddTaskSheet } from '../components/atoms/AddTaskSheet';
 import { C, Shadows } from '../theme/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -58,6 +59,8 @@ export function TabNavigator() {
           options={{ tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size - 2} /> }} />
         <Tab.Screen name="Habits" component={HabitsScreen}
           options={{ tabBarIcon: ({ color, size }) => <Flame color={color} size={size - 2} /> }} />
+        <Tab.Screen name="Finance" component={FinanceScreen}
+          options={{ tabBarIcon: ({ color, size }) => <Wallet color={color} size={size - 2} /> }} />
         <Tab.Screen name="Profile" component={ProfileScreen}
           options={{ tabBarIcon: ({ color, size }) => <User color={color} size={size - 2} /> }} />
       </Tab.Navigator>
