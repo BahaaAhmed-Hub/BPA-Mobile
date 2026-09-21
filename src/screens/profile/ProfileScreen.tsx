@@ -81,6 +81,11 @@ export function ProfileScreen() {
           hint="Track your daily morning & afternoon energy"
           onPress={() => navigation.navigate('EnergyLog')}
         />
+        <SettingsRow
+          label="✦  Planning Assistant"
+          hint="AI executive coaching · ask anything"
+          onPress={() => navigation.navigate('PlanningAssistant')}
+        />
 
         <Pressable onPress={handleSignOut}>
           <View style={{
