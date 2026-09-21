@@ -5,7 +5,7 @@ import { useFinanceStore } from '../../store/financeStore';
 import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
-import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, TxType } from '../../types/financeTypes';
+import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceBudget, DbFinanceBill, DbFinanceGoal, TxType } from '../../types/financeTypes';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -28,8 +28,8 @@ const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'
 const DAY_LETTERS = ['S','M','T','W','T','F','S'];
 
 // ─── Sub-tab type ─────────────────────────────────────────────────────────────
-type SubTab = 'Balance' | 'Today' | 'Financials';
-const SUB_TABS: SubTab[] = ['Balance', 'Today', 'Financials'];
+type SubTab = 'Balance' | 'Today' | 'Financials' | 'Budget' | 'Goals';
+const SUB_TABS: SubTab[] = ['Balance', 'Today', 'Financials', 'Budget', 'Goals'];
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export function FinanceScreen() {
@@ -87,6 +87,8 @@ export function FinanceScreen() {
       {activeTab === 'Balance'    && <BalanceTab    loading={loading} onRefresh={loadAll} />}
       {activeTab === 'Today'      && <TodayTab      loading={loading} onRefresh={loadAll} />}
       {activeTab === 'Financials' && <FinancialsTab loading={loading} onRefresh={loadAll} />}
+      {activeTab === 'Budget'     && <BudgetTab     loading={loading} onRefresh={loadAll} />}
+      {activeTab === 'Goals'      && <GoalsTab      loading={loading} onRefresh={loadAll} />}
 
       <AddTransactionModal visible={addOpen} onClose={() => setAddOpen(false)} />
     </SafeAreaView>
@@ -657,6 +659,288 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
           </View>
         </View>
       )}
+    </ScrollView>
+  );
+}
+
+// ─── BUDGET TAB ───────────────────────────────────────────────────────────────
+
+function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => Promise<void> }) {
+  const P = useScreenPalette();
+  const budgets      = useFinanceStore(s => s.budgets);
+  const bills        = useFinanceStore(s => s.bills);
+  const transactions = useFinanceStore(s => s.transactions);
+  const categories   = useFinanceStore(s => s.categories);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const now = new Date();
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+  const [viewYear,  setViewYear]  = useState(now.getFullYear());
+
+  async function handleRefresh() { setRefreshing(true); await onRefresh(); setRefreshing(false); }
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  }
+
+  const monthKey = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
+
+  const monthBudgets = useMemo(
+    () => budgets.filter(b => b.month === monthKey),
+    [budgets, monthKey],
+  );
+
+  // Actual spending per category for the viewed month
+  const spentByCategory = useMemo(() => {
+    const monthTxs = transactions.filter(
+      t => t.date.startsWith(monthKey) && t.tx_type === 'expense' && t.currency === 'EGP',
+    );
+    const acc: Record<string, number> = {};
+    for (const t of monthTxs) {
+      const key = t.category_id ?? 'uncategorized';
+      acc[key] = (acc[key] ?? 0) + t.amount;
+    }
+    return acc;
+  }, [transactions, monthKey]);
+
+  // Today's day number for bills due-soon check
+  const todayDay = now.getDate();
+  const isCurrentMonth = viewMonth === now.getMonth() && viewYear === now.getFullYear();
+
+  return (
+    <ScrollView
+      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 16 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={P.accent} />}
+    >
+      {/* Month navigator */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Pressable onPress={prevMonth} hitSlop={12}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink3 }}>‹</Text>
+        </Pressable>
+        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
+          {MONTH_NAMES[viewMonth]} {viewYear}
+        </Text>
+        <Pressable onPress={nextMonth} hitSlop={12}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink3 }}>›</Text>
+        </Pressable>
+      </View>
+
+      {/* Budget rows */}
+      {monthBudgets.length === 0 ? (
+        <View style={{ padding: 40, alignItems: 'center' }}>
+          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink3 }}>
+            No budgets set for this month
+          </Text>
+        </View>
+      ) : (
+        <View style={{ gap: 10 }}>
+          <SectionLabel title="BUDGETS" P={P} />
+          {monthBudgets.map(budget => {
+            const cat = categories.find(c => c.id === budget.category_id) ?? null;
+            const spent = spentByCategory[budget.category_id ?? 'uncategorized'] ?? 0;
+            const pct = budget.planned_amount > 0 ? Math.min(1, spent / budget.planned_amount) : 0;
+            const over = spent > budget.planned_amount;
+            const barColor = over ? C.red : C.green;
+            return (
+              <View key={budget.id} style={{
+                backgroundColor: P.surface, borderRadius: Radii.md, padding: 14,
+                borderWidth: 1, borderColor: P.hairline,
+                gap: 8,
+                ...Shadows.card,
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    backgroundColor: cat ? `${cat.color}20` : P.hairline,
+                    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <Text style={{ fontSize: 16 }}>{cat?.icon ?? '📁'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>
+                      {cat?.name ?? 'Uncategorized'}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, color: P.ink3 }}>
+                      planned {budget.currency} {budget.planned_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </Text>
+                    <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 13, color: over ? C.red : P.ink2, marginTop: 1 }}>
+                      spent {spent.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </Text>
+                  </View>
+                </View>
+                <View style={{ gap: 4 }}>
+                  <View style={{ height: 5, backgroundColor: P.hairline, borderRadius: 3, overflow: 'hidden' }}>
+                    <View style={{
+                      position: 'absolute', left: 0, top: 0, bottom: 0,
+                      width: `${pct * 100}%`,
+                      backgroundColor: barColor, borderRadius: 3,
+                    }} />
+                  </View>
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: over ? C.red : P.ink3 }}>
+                    {Math.round(pct * 100)}% used{over ? ' — OVER BUDGET' : ''}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {/* Bills section */}
+      {bills.length > 0 ? (
+        <View style={{ gap: 10 }}>
+          <SectionLabel title="UPCOMING BILLS" P={P} />
+          {bills.map(bill => {
+            const cat = categories.find(c => c.id === bill.category_id) ?? null;
+            const dueSoon = isCurrentMonth && bill.due_day >= todayDay;
+            return (
+              <View key={bill.id} style={{
+                backgroundColor: P.surface, borderRadius: Radii.md, padding: 14,
+                borderWidth: 1, borderColor: P.hairline,
+                flexDirection: 'row', alignItems: 'center', gap: 10,
+                ...Shadows.card,
+              }}>
+                <View style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  backgroundColor: cat ? `${cat.color}20` : P.hairline,
+                  alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <Text style={{ fontSize: 16 }}>{cat?.icon ?? '🧾'}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>{bill.name}</Text>
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: P.ink3, marginTop: 1 }}>
+                    Due day {bill.due_day}
+                  </Text>
+                </View>
+                {dueSoon ? (
+                  <View style={{
+                    backgroundColor: `${C.orange}20`, borderRadius: Radii.pill,
+                    paddingHorizontal: 8, paddingVertical: 3, marginRight: 6,
+                  }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: C.orange, letterSpacing: 0.6 }}>
+                      DUE SOON
+                    </Text>
+                  </View>
+                ) : null}
+                <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: P.ink }}>
+                  {bill.currency} {bill.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
+    </ScrollView>
+  );
+}
+
+// ─── GOALS TAB ────────────────────────────────────────────────────────────────
+
+function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => Promise<void> }) {
+  const P = useScreenPalette();
+  const goals = useFinanceStore(s => s.goals);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function handleRefresh() { setRefreshing(true); await onRefresh(); setRefreshing(false); }
+
+  if (goals.length === 0) {
+    return (
+      <ScrollView
+        contentContainerStyle={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 120 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={P.accent} />}
+      >
+        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink3 }}>No goals yet</Text>
+      </ScrollView>
+    );
+  }
+
+  // 2-column grid
+  const rows: DbFinanceGoal[][] = [];
+  for (let i = 0; i < goals.length; i += 2) {
+    rows.push(goals.slice(i, i + 2));
+  }
+
+  return (
+    <ScrollView
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, gap: 12, paddingTop: 4 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={P.accent} />}
+    >
+      {rows.map((row, ri) => (
+        <View key={ri} style={{ flexDirection: 'row', gap: 12 }}>
+          {row.map(goal => {
+            const pct = goal.target_amount > 0
+              ? Math.min(1, goal.current_amount / goal.target_amount)
+              : 0;
+            return (
+              <View key={goal.id} style={{
+                flex: 1,
+                backgroundColor: `${goal.color}18`,
+                borderRadius: Radii.md,
+                borderLeftWidth: 3, borderLeftColor: goal.color,
+                borderTopWidth: 1, borderTopColor: `${goal.color}30`,
+                borderRightWidth: 1, borderRightColor: `${goal.color}30`,
+                borderBottomWidth: 1, borderBottomColor: `${goal.color}30`,
+                padding: 14,
+                gap: 8,
+              }}>
+                {/* % complete badge top-right */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Text style={{ fontSize: 28 }}>{goal.icon}</Text>
+                  <View style={{
+                    backgroundColor: `${goal.color}30`, borderRadius: Radii.pill,
+                    paddingHorizontal: 7, paddingVertical: 2,
+                  }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: goal.color }}>
+                      {Math.round(pct * 100)}%
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Name + sub_label */}
+                <View>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: P.ink }} numberOfLines={1}>
+                    {goal.name}
+                  </Text>
+                  {goal.sub_label ? (
+                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, marginTop: 1 }} numberOfLines={1}>
+                      {goal.sub_label}
+                    </Text>
+                  ) : null}
+                </View>
+
+                {/* Progress bar */}
+                <View style={{ height: 5, backgroundColor: `${goal.color}30`, borderRadius: 3, overflow: 'hidden' }}>
+                  <View style={{
+                    position: 'absolute', left: 0, top: 0, bottom: 0,
+                    width: `${pct * 100}%`,
+                    backgroundColor: goal.color, borderRadius: 3,
+                  }} />
+                </View>
+
+                {/* Amounts */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 13, color: goal.color }}>
+                    {goal.current_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </Text>
+                  <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, color: P.ink3 }}>
+                    / {goal.target_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+          {/* If odd number, fill the second slot */}
+          {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
+        </View>
+      ))}
     </ScrollView>
   );
 }

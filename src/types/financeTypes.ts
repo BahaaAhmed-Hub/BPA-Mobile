@@ -64,3 +64,26 @@ export interface DbFinanceGoal {
   is_active: boolean;
   created_at: string;
 }
+
+export interface DbFinanceBudget {
+  id: string;
+  user_id: string;
+  category_id: string | null;
+  month: string; // YYYY-MM
+  planned_amount: number;
+  currency: Currency;
+  created_at: string;
+}
+
+export interface DbFinanceBill {
+  id: string;
+  user_id: string;
+  name: string;
+  amount: number;
+  currency: Currency;
+  due_day: number;
+  category_id: string | null;
+  is_active: boolean;
+  last_paid_date: string | null;
+  created_at: string;
+}
