@@ -6,6 +6,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTaskStore } from '../../store/taskStore';
 import { C, Quadrants, QuadrantId, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
+import { UIFont, NumFont } from '../../theme/typography';
 import type { DbTask, DbTaskStatus } from '../../types/database';
 
 const QUADRANT_ORDER: QuadrantId[] = ['urgent_important', 'important_not_urgent', 'urgent_not_important', 'neither'];
@@ -41,7 +42,7 @@ export function TaskDetailScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }}>
         <Header onBack={() => navigation.goBack()} title="Not found" P={P} />
         <View style={{ padding: 24, alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_500Medium', color: P.ink2 }}>This task has been deleted.</Text>
+          <Text style={{ fontFamily: UIFont.medium, color: P.ink2 }}>This task has been deleted.</Text>
         </View>
       </SafeAreaView>
     );
@@ -80,7 +81,7 @@ export function TaskDetailScreen() {
             placeholderTextColor={P.ink3}
             multiline
             style={{
-              fontFamily: 'Inter_700Bold', fontSize: 26, color: P.ink, letterSpacing: -0.6, lineHeight: 32,
+              fontFamily: UIFont.bold, fontSize: 26, color: P.ink, letterSpacing: -0.6, lineHeight: 32,
               paddingVertical: 4,
             }}
           />
@@ -98,7 +99,7 @@ export function TaskDetailScreen() {
                     borderWidth: 1, borderColor: active ? accent : P.hairline,
                   }}>
                     <Text style={{
-                      fontFamily: 'Inter_600SemiBold', fontSize: 12,
+                      fontFamily: UIFont.semiBold, fontSize: 12,
                       color: active ? '#fff' : accent,
                     }}>{STATUS_LABELS[s]}</Text>
                   </View>
@@ -132,7 +133,7 @@ export function TaskDetailScreen() {
                       paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radii.pill,
                       backgroundColor: active ? m.color : m.soft,
                     }}>
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: active ? '#fff' : m.color }}>
+                      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? '#fff' : m.color }}>
                         {m.label}
                       </Text>
                     </View>
@@ -169,7 +170,7 @@ export function TaskDetailScreen() {
                   placeholder="—"
                   placeholderTextColor={P.ink3}
                   keyboardType="number-pad"
-                  style={{ ...fieldStyle(P), fontFamily: 'JetBrainsMono_500Medium' }}
+                  style={{ ...fieldStyle(P), fontFamily: NumFont.medium }}
                 />
               </Section>
             </View>
@@ -183,7 +184,7 @@ export function TaskDetailScreen() {
                     borderColor: showDatePicker ? P.accent : P.hairline,
                   }}>
                     <Text style={{
-                      fontFamily: 'JetBrainsMono_500Medium', fontSize: 14,
+                      fontFamily: NumFont.medium, fontSize: 14,
                       color: task.due_date ? P.ink : P.ink3,
                     }}>
                       {task.due_date ? dateFmt.format(dueDateObj) : '— not set'}
@@ -226,11 +227,11 @@ export function TaskDetailScreen() {
 
           {/* Footer meta */}
           <View style={{ paddingVertical: 12, gap: 4 }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, letterSpacing: 0.5 }}>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 0.5 }}>
               CREATED {new Date(task.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
             </Text>
             {task.completed_at ? (
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: C.green, letterSpacing: 0.5 }}>
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: C.green, letterSpacing: 0.5 }}>
                 COMPLETED {new Date(task.completed_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
               </Text>
             ) : null}
@@ -250,15 +251,15 @@ function Header({ onBack, title, accent, onDelete, P }: { onBack: () => void; ti
       flexDirection: 'row', alignItems: 'center', gap: 10,
     }}>
       <Pressable onPress={onBack} hitSlop={8} style={iconBtn(P)}>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
       </Pressable>
       <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
         {accent ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: accent }} /> : null}
-        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink2 }}>{title}</Text>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink2 }}>{title}</Text>
       </View>
       {onDelete ? (
         <Pressable onPress={onDelete} hitSlop={8} style={iconBtn(P)}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 16, color: C.red, lineHeight: 16 }}>⌫</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 16, color: C.red, lineHeight: 16 }}>⌫</Text>
         </Pressable>
       ) : <View style={{ width: 36 }} />}
     </View>
@@ -268,7 +269,7 @@ function Header({ onBack, title, accent, onDelete, P }: { onBack: () => void; ti
 function Section({ title, tight, children, P }: { title: string; tight?: boolean; children: React.ReactNode; P: P }) {
   return (
     <View style={{ gap: 6 }}>
-      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: P.ink3, letterSpacing: 1.2 }}>
+      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink3, letterSpacing: 1.2 }}>
         {title.toUpperCase()}
       </Text>
       <View style={{ marginTop: tight ? 0 : 2 }}>{children}</View>
@@ -292,7 +293,7 @@ function fieldStyle(P: P) {
     borderRadius: Radii.sm,
     borderWidth: 1, borderColor: P.hairline,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontFamily: 'Inter_400Regular', fontSize: 15, color: P.ink,
+    fontFamily: UIFont.regular, fontSize: 15, color: P.ink,
     minHeight: 44,
   };
 }

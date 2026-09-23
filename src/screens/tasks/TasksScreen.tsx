@@ -7,6 +7,7 @@ import { useTaskStore } from '../../store/taskStore';
 import { useCompanyStore } from '../../store/companyStore';
 import { C, Quadrants, QuadrantId, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
+import { UIFont, NumFont } from '../../theme/typography';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
@@ -66,7 +67,7 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
   if (tasks.length === 0) {
     return (
       <View style={{ padding: 32, alignItems: 'center' }}>
-        <Text style={{ color: P.ink3, fontFamily: 'Inter_500Medium', fontSize: 14 }}>Nothing here.</Text>
+        <Text style={{ color: P.ink3, fontFamily: UIFont.medium, fontSize: 14 }}>Nothing here.</Text>
       </View>
     );
   }
@@ -84,11 +85,11 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: '#fff', flex: 1 }}>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: '#fff', flex: 1 }}>
             Tap a row to move here
           </Text>
           <Pressable onPress={cancelDrag} hitSlop={10}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff' }}>✕</Text>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: '#fff' }}>✕</Text>
           </Pressable>
         </View>
       )}
@@ -124,7 +125,7 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <Text style={{ color: P.ink3, fontFamily: 'Inter_700Bold', fontSize: 16 }}>⠿</Text>
+                  <Text style={{ color: P.ink3, fontFamily: UIFont.bold, fontSize: 16 }}>⠿</Text>
                 </View>
                 <TaskRowContent task={t} />
               </View>
@@ -154,7 +155,7 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <Text style={{ color: C.indigo, fontFamily: 'Inter_700Bold', fontSize: 16 }}>⠿</Text>
+                <Text style={{ color: C.indigo, fontFamily: UIFont.bold, fontSize: 16 }}>⠿</Text>
               </View>
               <TaskRowContent task={t} />
             </View>
@@ -200,7 +201,7 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
                   hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                   style={{ width: 28, height: 44, alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <Text style={{ color: C.slate, fontFamily: 'Inter_700Bold', fontSize: 16 }}>⠿</Text>
+                  <Text style={{ color: C.slate, fontFamily: UIFont.bold, fontSize: 16 }}>⠿</Text>
                 </Pressable>
                 <TaskRowContent task={t} />
               </View>
@@ -220,9 +221,9 @@ function TaskRowContent({ task }: { task: DbTask }) {
     <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
       <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: q.color, marginTop: 1 }} />
       <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: P.ink }} numberOfLines={2}>{task.title}</Text>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }} numberOfLines={2}>{task.title}</Text>
         {task.description ? (
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink2, marginTop: 4 }} numberOfLines={2}>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink2, marginTop: 4 }} numberOfLines={2}>
             {task.description}
           </Text>
         ) : null}
@@ -331,7 +332,7 @@ export function TasksScreen() {
                       backgroundColor: P.surface, borderRadius: Radii.md,
                       borderWidth: 1, borderColor: P.hairline, borderStyle: 'dashed',
                     }}>
-                      <Text style={{ color: P.ink3, fontFamily: 'Inter_500Medium', fontSize: 13 }}>Nothing here.</Text>
+                      <Text style={{ color: P.ink3, fontFamily: UIFont.medium, fontSize: 13 }}>Nothing here.</Text>
                     </View>
                   ) : (
                     byQuadrant[q].map(t => (
@@ -386,7 +387,7 @@ export function TasksScreen() {
                 backgroundColor: active ? meta.color : meta.soft,
                 flexDirection: 'row', gap: 6, alignItems: 'center',
               }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: active ? '#fff' : meta.color }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: active ? '#fff' : meta.color }}>
                   {meta.label}
                 </Text>
                 <View style={{
@@ -394,7 +395,7 @@ export function TasksScreen() {
                   borderRadius: Radii.pill,
                   backgroundColor: active ? 'rgba(255,255,255,0.25)' : '#fff',
                 }}>
-                  <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, color: active ? '#fff' : meta.color }}>
+                  <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: active ? '#fff' : meta.color }}>
                     {count}
                   </Text>
                 </View>
@@ -446,7 +447,7 @@ function CompanyFilterRow({
           borderColor: companyFilter === null ? P.ink : P.hairline,
         }}>
           <Text style={{
-            fontFamily: 'Inter_500Medium', fontSize: 13,
+            fontFamily: UIFont.medium, fontSize: 13,
             color: companyFilter === null ? P.bg : P.ink2,
           }}>All</Text>
         </View>
@@ -465,7 +466,7 @@ function CompanyFilterRow({
               borderColor: active ? activeColor : P.hairline,
             }}>
               <Text style={{
-                fontFamily: 'Inter_500Medium', fontSize: 13,
+                fontFamily: UIFont.medium, fontSize: 13,
                 color: active ? '#fff' : P.ink2,
               }}>{company.name}</Text>
             </View>
@@ -489,10 +490,10 @@ function QuadrantHeader({ id, count }: { id: QuadrantId; count: number }) {
     <View style={{ paddingVertical: 8, gap: 4 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink, letterSpacing: -0.3 }}>{meta.label}</Text>
-        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 13, color: P.ink3 }}>· {count}</Text>
+        <Text style={{ fontFamily: NumFont.bold, fontSize: 22, color: P.ink, letterSpacing: -0.3 }}>{meta.label}</Text>
+        <Text style={{ fontFamily: NumFont.medium, fontSize: 13, color: P.ink3 }}>· {count}</Text>
       </View>
-      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink2 }}>{tagline[id]}</Text>
+      <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink2 }}>{tagline[id]}</Text>
     </View>
   );
 }
@@ -513,9 +514,9 @@ function TaskRow({ task, onOpen, onComplete }: { task: DbTask; onOpen: () => voi
           <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: q.color }} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: P.ink }} numberOfLines={2}>{task.title}</Text>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }} numberOfLines={2}>{task.title}</Text>
           {task.description ? (
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink2, marginTop: 4 }} numberOfLines={2}>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink2, marginTop: 4 }} numberOfLines={2}>
               {task.description}
             </Text>
           ) : null}
