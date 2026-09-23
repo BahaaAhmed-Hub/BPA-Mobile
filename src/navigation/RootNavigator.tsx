@@ -18,6 +18,10 @@ import { EventDetailScreen } from '../screens/calendar/EventDetailScreen';
 import { WeeklyReviewScreen } from '../screens/review/WeeklyReviewScreen';
 import { EnergyLogScreen } from '../screens/energy/EnergyLogScreen';
 import { PlanningAssistantScreen } from '../screens/assistant/PlanningAssistantScreen';
+import { HabitDetailScreen } from '../screens/habits/HabitDetailScreen';
+import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
+import { AISettingsScreen } from '../screens/settings/AISettingsScreen';
+import { SettingsPlaceholderScreen } from '../screens/settings/SettingsPlaceholderScreen';
 
 export type RootStackParamList = {
   App: undefined;
@@ -30,6 +34,10 @@ export type RootStackParamList = {
   WeeklyReview: undefined;
   EnergyLog: undefined;
   PlanningAssistant: undefined;
+  HabitDetail: { habitId: string };
+  SettingsAppearance: undefined;
+  SettingsAI: undefined;
+  SettingsDetail: { title: string };
 };
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
@@ -134,6 +142,26 @@ export function RootNavigator() {
               name="PlanningAssistant"
               component={PlanningAssistantScreen}
               options={{ presentation: 'card', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="HabitDetail"
+              component={HabitDetailScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="SettingsAppearance"
+              component={AppearanceScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="SettingsAI"
+              component={AISettingsScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="SettingsDetail"
+              component={SettingsPlaceholderScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
           </>
         ) : (
