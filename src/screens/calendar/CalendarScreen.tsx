@@ -10,6 +10,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCalendarStore } from '../../store/calendarStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette, ScreenPalette } from '../../theme/palette';
+import { UIFont, NumFont } from '../../theme/typography';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { DbCalendarEvent } from '../../types/database';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
@@ -94,7 +95,7 @@ export function CalendarScreen() {
             >
               {syncing
                 ? <ActivityIndicator size="small" color={P.accent} />
-                : <Text style={{ color: P.accent, fontFamily: 'Inter_700Bold', fontSize: 14 }}>⟳</Text>}
+                : <Text style={{ color: P.accent, fontFamily: UIFont.bold, fontSize: 14 }}>⟳</Text>}
             </Pressable>
             <Pressable
               onPress={() => setShowCreateModal(true)}
@@ -105,7 +106,7 @@ export function CalendarScreen() {
                 alignItems: 'center', justifyContent: 'center',
               }}
             >
-              <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 20, lineHeight: 22 }}>+</Text>
+              <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 20, lineHeight: 22 }}>+</Text>
             </Pressable>
           </View>
         }
@@ -117,17 +118,17 @@ export function CalendarScreen() {
           backgroundColor: 'rgba(178,58,54,0.10)', borderRadius: Radii.sm,
           padding: 10, borderWidth: 1, borderColor: 'rgba(178,58,54,0.3)',
         }}>
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: C.red }}>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: C.red }}>
             Reconnect required: {needsReconnect.join(', ')}
           </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: P.ink2, marginTop: 2 }}>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 11, color: P.ink2, marginTop: 2 }}>
             Sign out and back in with Google to grant a fresh token.
           </Text>
         </View>
       ) : null}
 
       {lastSyncedAt ? (
-        <Text style={{ paddingHorizontal: 20, marginBottom: 6, fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3 }}>
+        <Text style={{ paddingHorizontal: 20, marginBottom: 6, fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
           Synced {new Date(lastSyncedAt).toLocaleTimeString()}
         </Text>
       ) : null}
@@ -149,12 +150,12 @@ export function CalendarScreen() {
                 alignItems: 'center',
               }}>
                 <Text style={{
-                  fontFamily: 'Inter_600SemiBold', fontSize: 10,
+                  fontFamily: UIFont.semiBold, fontSize: 10,
                   color: active ? (P.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)') : P.ink2,
                   letterSpacing: 0.5,
                 }}>{DAY_LABELS[i]}</Text>
                 <Text style={{
-                  fontFamily: 'Inter_700Bold', fontSize: 18, marginTop: 2,
+                  fontFamily: UIFont.bold, fontSize: 18, marginTop: 2,
                   color: active ? (P.isDark ? P.bg : '#fff') : today ? P.accent : P.ink,
                 }}>{d.getDate()}</Text>
                 {dayHasEvents ? (
@@ -175,7 +176,7 @@ export function CalendarScreen() {
         refreshControl={<RefreshControl refreshing={loading || syncing} onRefresh={() => void sync(isoDate(weekStart), isoDate(weekEnd))} tintColor={P.accent} />}
       >
         <Text style={{
-          fontFamily: 'Inter_700Bold', fontSize: 11, color: P.ink,
+          fontFamily: UIFont.bold, fontSize: 11, color: P.ink,
           letterSpacing: 0.5, textTransform: 'uppercase',
           marginHorizontal: 4, marginBottom: 10, marginTop: 4,
         }}>
@@ -188,8 +189,8 @@ export function CalendarScreen() {
             padding: 18, borderWidth: 1, borderColor: P.hairline,
             ...Shadows.card,
           }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>Open day</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink2, marginTop: 4 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>Open day</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink2, marginTop: 4 }}>
               {lastSyncedAt ? 'Nothing on the calendar.' : 'Tap ⟳ to pull events from Google Calendar.'}
             </Text>
           </View>
@@ -301,7 +302,7 @@ function CreateEventModal({
   const inputStyle = {
     backgroundColor: P.bg, borderWidth: 1, borderColor: P.hairline,
     borderRadius: Radii.sm, paddingHorizontal: 14, paddingVertical: 12,
-    fontFamily: 'Inter_400Regular' as const, fontSize: 15, color: P.ink,
+    fontFamily: UIFont.regular, fontSize: 15, color: P.ink,
   };
 
   const rowStyle = {
@@ -321,9 +322,9 @@ function CreateEventModal({
           paddingHorizontal: 20, paddingVertical: 14,
           borderBottomWidth: 1, borderBottomColor: P.hairline,
         }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 17, color: P.ink }}>New Event</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 17, color: P.ink }}>New Event</Text>
           <Pressable onPress={onClose} hitSlop={10}>
-            <Text style={{ fontSize: 22, color: P.ink2, fontFamily: 'Inter_500Medium' }}>×</Text>
+            <Text style={{ fontSize: 22, color: P.ink2, fontFamily: UIFont.medium }}>×</Text>
           </Pressable>
         </View>
 
@@ -332,7 +333,7 @@ function CreateEventModal({
 
             {/* Title */}
             <TextInput
-              style={[inputStyle, { fontFamily: 'Inter_700Bold', fontSize: 18 }]}
+              style={[inputStyle, { fontFamily: UIFont.bold, fontSize: 18 }]}
               value={title}
               onChangeText={setTitle}
               placeholder="Event title"
@@ -351,8 +352,8 @@ function CreateEventModal({
             {/* Date */}
             <Pressable onPress={() => setShowDatePicker(v => !v)}>
               <View style={rowStyle}>
-                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink }}>Date</Text>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.accent }}>
+                <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink }}>Date</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.accent }}>
                   {date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                 </Text>
               </View>
@@ -368,7 +369,7 @@ function CreateEventModal({
 
             {/* All-day toggle */}
             <View style={rowStyle}>
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink }}>All day</Text>
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink }}>All day</Text>
               <Switch
                 value={allDay}
                 onValueChange={setAllDay}
@@ -382,8 +383,8 @@ function CreateEventModal({
                 {/* Start time */}
                 <Pressable onPress={() => { setShowStartPicker(v => !v); setShowEndPicker(false); }}>
                   <View style={rowStyle}>
-                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink }}>Start time</Text>
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.accent }}>
+                    <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink }}>Start time</Text>
+                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.accent }}>
                       {fmtTimePicker(startTime)}
                     </Text>
                   </View>
@@ -400,8 +401,8 @@ function CreateEventModal({
                 {/* End time */}
                 <Pressable onPress={() => { setShowEndPicker(v => !v); setShowStartPicker(false); }}>
                   <View style={rowStyle}>
-                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink }}>End time</Text>
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.accent }}>
+                    <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink }}>End time</Text>
+                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.accent }}>
                       {fmtTimePicker(endTime)}
                     </Text>
                   </View>
@@ -426,7 +427,7 @@ function CreateEventModal({
               }}>
                 {saving
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff' }}>Save Event</Text>}
+                  : <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: '#fff' }}>Save Event</Text>}
               </View>
             </Pressable>
 
@@ -444,7 +445,7 @@ function NowDivider({ P }: { P: ScreenPalette }) {
   return (
     <View style={{ marginVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ backgroundColor: C.red, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 }}>
-        <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 10, letterSpacing: 0.4 }}>
+        <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 10, letterSpacing: 0.4 }}>
           NOW · {fmtTime(now.toISOString())}
         </Text>
       </View>
@@ -464,7 +465,7 @@ function EventCard({ event, highlighted, dimmed, P }: { event: DbCalendarEvent; 
       {/* Time gutter — high-contrast, never dimmed, theme-aware */}
       <View style={{ width: 52, paddingTop: 8, alignItems: 'flex-start' }}>
         <Text style={{
-          fontFamily: 'JetBrainsMono_500Medium',
+          fontFamily: NumFont.medium,
           fontSize: 14,
           color: P.ink,
           letterSpacing: -0.2,
@@ -472,7 +473,7 @@ function EventCard({ event, highlighted, dimmed, P }: { event: DbCalendarEvent; 
           {fmtTime(event.start_time)}
         </Text>
         <Text style={{
-          fontFamily: 'Inter_600SemiBold',
+          fontFamily: UIFont.semiBold,
           fontSize: 11,
           color: P.ink2,
           marginTop: 2,
@@ -491,19 +492,19 @@ function EventCard({ event, highlighted, dimmed, P }: { event: DbCalendarEvent; 
         opacity: dimmed ? 0.55 : 1,
       }}>
         <Text style={{
-          fontFamily: 'Inter_700Bold', fontSize: 13,
+          fontFamily: UIFont.bold, fontSize: 13,
           color: highlighted ? '#fff' : C.ink,
           letterSpacing: -0.2,
         }} numberOfLines={2}>{event.title}</Text>
         {event.location ? (
           <Text style={{
-            fontFamily: 'Inter_500Medium', fontSize: 11, marginTop: 3,
+            fontFamily: UIFont.medium, fontSize: 11, marginTop: 3,
             color: highlighted ? 'rgba(255,255,255,0.85)' : C.ink2,
           }} numberOfLines={1}>📍 {event.location}</Text>
         ) : null}
         {event.meeting_type ? (
           <Text style={{
-            fontFamily: 'Inter_600SemiBold', fontSize: 11, marginTop: 3,
+            fontFamily: UIFont.semiBold, fontSize: 11, marginTop: 3,
             color: highlighted ? 'rgba(255,255,255,0.85)' : accent,
           }}>{event.meeting_type}</Text>
         ) : null}

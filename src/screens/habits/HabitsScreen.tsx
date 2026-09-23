@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHabitStore } from '../../store/habitStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
+import { UIFont, NumFont } from '../../theme/typography';
 import { TopBar } from '../../components/atoms/TopBar';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
 import type { DbHabitFrequency } from '../../types/database';
@@ -50,7 +51,7 @@ export function HabitsScreen() {
               backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center',
             }}
           >
-            <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 18, lineHeight: 18 }}>＋</Text>
+            <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 18, lineHeight: 18 }}>＋</Text>
           </Pressable>
         }
       />
@@ -60,8 +61,8 @@ export function HabitsScreen() {
       >
         {habits.length === 0 && !loading ? (
           <View style={{ padding: 32, alignItems: 'center', gap: 8 }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: P.ink2 }}>No habits yet</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink3, textAlign: 'center' }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 16, color: P.ink2 }}>No habits yet</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink3, textAlign: 'center' }}>
               Tap ＋ to add one. Daily, weekdays, or weekly.
             </Text>
           </View>
@@ -102,17 +103,17 @@ export function HabitsScreen() {
                       backgroundColor: done ? C.green : 'transparent',
                       alignItems: 'center', justifyContent: 'center',
                     }}>
-                      {done ? <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 16, lineHeight: 16 }}>✓</Text> : null}
+                      {done ? <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 16, lineHeight: 16 }}>✓</Text> : null}
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: P.ink }}>{h.name}</Text>
-                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: P.ink3, marginTop: 2 }}>
+                      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }}>{h.name}</Text>
+                      <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 2 }}>
                         {h.frequency}
                       </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 16, color: C.red }}>{h.current_streak}</Text>
-                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: P.ink3, letterSpacing: 0.5 }}>STREAK</Text>
+                      <Text style={{ fontFamily: NumFont.medium, fontSize: 16, color: C.red }}>{h.current_streak}</Text>
+                      <Text style={{ fontFamily: UIFont.medium, fontSize: 10, color: P.ink3, letterSpacing: 0.5 }}>STREAK</Text>
                     </View>
                   </View>
                 </Pressable>
@@ -126,7 +127,7 @@ export function HabitsScreen() {
       <Modal visible={adding} animationType="slide" transparent onRequestClose={() => setAdding(false)}>
         <Pressable onPress={() => setAdding(false)} style={{ flex: 1, backgroundColor: 'rgba(11,18,32,0.5)', justifyContent: 'flex-end' }}>
           <Pressable onPress={() => {}} style={{ backgroundColor: P.surface, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 14 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: P.ink }}>New habit</Text>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: P.ink }}>New habit</Text>
             <TextInput
               placeholder="Habit name (e.g. Morning run)"
               placeholderTextColor={P.ink3}
@@ -137,7 +138,7 @@ export function HabitsScreen() {
                 borderWidth: 1, borderColor: P.hairline,
                 borderRadius: Radii.sm,
                 paddingHorizontal: 14, paddingVertical: 12,
-                fontFamily: 'Inter_500Medium', fontSize: 15, color: P.ink,
+                fontFamily: UIFont.medium, fontSize: 15, color: P.ink,
               }}
             />
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -153,7 +154,7 @@ export function HabitsScreen() {
                       backgroundColor: active ? `${P.accent}20` : P.surface,
                       alignItems: 'center',
                     }}>
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: active ? P.accent : P.ink2, textTransform: 'capitalize' }}>{f}</Text>
+                      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: active ? P.accent : P.ink2, textTransform: 'capitalize' }}>{f}</Text>
                     </View>
                   </Pressable>
                 );
@@ -167,7 +168,7 @@ export function HabitsScreen() {
                 paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center', marginTop: 4,
               }}
             >
-              <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 15 }}>Save habit</Text>
+              <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>Save habit</Text>
             </Pressable>
           </Pressable>
         </Pressable>
