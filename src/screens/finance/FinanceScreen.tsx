@@ -73,10 +73,11 @@ export function FinanceScreen() {
             <Pressable key={t} onPress={() => setActiveTab(t)}>
               <View style={{
                 paddingHorizontal: 16, paddingVertical: 8, borderRadius: Radii.pill,
-                backgroundColor: active ? P.ink : P.surface,
-                borderWidth: active ? 0 : 1, borderColor: P.hairline,
+                backgroundColor: active ? P.accent : P.surface,
+                borderWidth: 1,
+                borderColor: active ? P.accentBorder : P.hairline,
               }}>
-                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: active ? P.bg : P.ink }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: active ? P.accentInk : P.ink2 }}>
                   {t}
                 </Text>
               </View>
@@ -132,15 +133,15 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
     >
       {/* Net Position hero card */}
       <View style={{
-        backgroundColor: C.bgDark, borderRadius: Radii.lg,
+        backgroundColor: '#1F1A14', borderRadius: Radii.lg,
         padding: 20, gap: 12,
         ...Shadows.pop,
       }}>
-        <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.4 }}>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.6 }}>
           NET POSITION
         </Text>
         <Text style={{
-          fontFamily: UIFont.bold, fontSize: 32, letterSpacing: -0.8,
+          fontFamily: NumFont.bold, fontSize: 32, letterSpacing: -0.8,
           color: netEGP >= 0 ? '#4ADE80' : '#F87171',
         }}>
           {netEGP < 0 ? `(EGP ${Math.abs(netEGP).toLocaleString('en-US', { maximumFractionDigits: 0 })})` : `EGP ${netEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
@@ -149,8 +150,8 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         {/* Held / Owed bar */}
         <View style={{ gap: 6 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>HELD</Text>
-            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>OWED</Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.2 }}>HELD</Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.2 }}>OWED</Text>
           </View>
           <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 3, overflow: 'hidden' }}>
             {owedEGP + heldEGP > 0 ? (
@@ -174,8 +175,8 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View>
-            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1 }}>SAFE TO SPEND</Text>
-            <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: '#fff', marginTop: 2 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.4 }}>SAFE TO SPEND</Text>
+            <Text style={{ fontFamily: NumFont.bold, fontSize: 22, color: '#fff', marginTop: 2 }}>
               EGP {heldEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
@@ -220,8 +221,8 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
 function SectionLabel({ title, total, totalColor, P }: { title: string; total?: string; totalColor?: string; P: ReturnType<typeof useScreenPalette> }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 2 }}>
-      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink3, letterSpacing: 1.2 }}>{title}</Text>
-      {total ? <Text style={{ fontFamily: NumFont.medium, fontSize: 12, color: totalColor ?? P.ink2 }}>{total}</Text> : null}
+      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.6 }}>{title}</Text>
+      {total ? <Text style={{ fontFamily: NumFont.semiBold, fontSize: 12, color: totalColor ?? P.ink2 }}>{total}</Text> : null}
     </View>
   );
 }
@@ -406,7 +407,7 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
+          <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
             {MONTH_NAMES[viewMonth]} {viewYear}
           </Text>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
@@ -541,7 +542,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
         <Pressable onPress={() => setYear(y => y - 1)} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink, letterSpacing: -0.3 }}>
+        <Text style={{ fontFamily: NumFont.bold, fontSize: 22, color: P.ink, letterSpacing: -0.3 }}>
           Financials, {year}
         </Text>
         <Pressable onPress={() => setYear(y => y + 1)} hitSlop={12}>
@@ -557,14 +558,14 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
       }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <View>
-            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 1 }}>INCOME</Text>
-            <Text style={{ fontFamily: NumFont.medium, fontSize: 17, color: C.green, marginTop: 2 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>INCOME</Text>
+            <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: C.green, marginTop: 2 }}>
               EGP {incomeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 1 }}>EXPENSES</Text>
-            <Text style={{ fontFamily: NumFont.medium, fontSize: 17, color: C.red, marginTop: 2 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>EXPENSES</Text>
+            <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: C.red, marginTop: 2 }}>
               ({expenseTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })})
             </Text>
           </View>
@@ -572,7 +573,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
         <View style={{ height: 1, backgroundColor: P.hairline }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink2 }}>NET THROUGH {MONTH_NAMES[new Date().getMonth()]}</Text>
-          <Text style={{ fontFamily: NumFont.medium, fontSize: 18, color: net >= 0 ? C.green : C.red }}>
+          <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: net >= 0 ? C.green : C.red }}>
             {net < 0 ? `(EGP ${Math.abs(net).toLocaleString('en-US', {maximumFractionDigits:0})})` : `EGP ${net.toLocaleString('en-US',{maximumFractionDigits:0})}`}
           </Text>
         </View>
@@ -724,7 +725,7 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
         <Pressable onPress={prevMonth} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
+        <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
           {MONTH_NAMES[viewMonth]} {viewYear}
         </Text>
         <Pressable onPress={nextMonth} hitSlop={12}>
@@ -1104,8 +1105,8 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
             borderWidth: 1, borderColor: P.hairline,
             ...Shadows.card,
           }}>
-            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 1 }}>INCOME</Text>
-            <Text style={{ fontFamily: NumFont.medium, fontSize: 17, color: C.green, marginTop: 4 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>INCOME</Text>
+            <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: C.green, marginTop: 4 }}>
               {fmt(incomeThisMonth, 'EGP')}
             </Text>
           </View>
@@ -1114,8 +1115,8 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
             borderWidth: 1, borderColor: P.hairline,
             ...Shadows.card,
           }}>
-            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 1 }}>EXPENSES</Text>
-            <Text style={{ fontFamily: NumFont.medium, fontSize: 17, color: C.red, marginTop: 4 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>EXPENSES</Text>
+            <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: C.red, marginTop: 4 }}>
               {fmt(expensesThisMonth, 'EGP')}
             </Text>
           </View>
