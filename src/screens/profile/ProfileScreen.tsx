@@ -42,11 +42,11 @@ export function ProfileScreen() {
             backgroundColor: P.isDark ? `${P.accent}25` : C.indigoSoft,
             alignItems: 'center', justifyContent: 'center',
           }}>
-            <Text style={{ fontFamily: UIFont.bold, fontSize: 28, color: P.accent }}>
+            <Text style={{ fontFamily: NumFont.bold, fontSize: 28, color: P.accent }}>
               {(user?.name ?? user?.email ?? '?').charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: P.ink }}>
+          <Text style={{ fontFamily: NumFont.bold, fontSize: 18, color: P.ink }}>
             {user?.name ?? 'Operator'}
           </Text>
           <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: P.ink3 }}>{user?.email ?? ''}</Text>

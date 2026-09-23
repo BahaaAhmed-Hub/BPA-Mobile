@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useEmailActionsStore } from '../../store/emailActionsStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
+import { useScreenPalette } from '../../theme/palette';
 import type { DbEmailAction, DbEmailClassification } from '../../types/database';
 import { UIFont, NumFont } from '../../theme/typography';
 
@@ -18,6 +19,7 @@ const FILTER_ORDER: Array<DbEmailClassification | 'all'> = ['all', 'decision', '
 
 export function InboxScreen() {
   const navigation = useNavigation();
+  const P = useScreenPalette();
   const actions  = useEmailActionsStore(s => s.actions);
   const load     = useEmailActionsStore(s => s.loadFromDB);
   const loading  = useEmailActionsStore(s => s.loading);
@@ -45,7 +47,7 @@ export function InboxScreen() {
   }, [actions]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
       {/* Header */}
       <View style={{
         paddingHorizontal: 14, paddingVertical: 10,
@@ -54,13 +56,13 @@ export function InboxScreen() {
         <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{
           width: 36, height: 36, borderRadius: 18,
           alignItems: 'center', justifyContent: 'center',
-          backgroundColor: C.card, borderWidth: 1, borderColor: C.hairline,
+          backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
         }}>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: C.ink, letterSpacing: -0.3 }}>Inbox</Text>
-          <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: C.ink3, marginTop: 1 }}>
+          <Text style={{ fontFamily: NumFont.bold, fontSize: 18, color: P.ink, letterSpacing: -0.3 }}>Inbox</Text>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 1 }}>
             {actions.length === 0 ? 'No items yet' : `${actions.length} action${actions.length === 1 ? '' : 's'} triaged`}
           </Text>
         </View>
@@ -75,20 +77,20 @@ export function InboxScreen() {
           const active = filter === f;
           const meta = f === 'all' ? null : CLASS_META[f];
           const label = f === 'all' ? 'All' : meta!.label;
-          const color = meta?.color ?? C.ink;
+          const color = meta?.color ?? P.ink;
           const count = counts[f] ?? 0;
           return (
             <Pressable key={f} onPress={() => setFilter(f)}>
               <View style={{
                 paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radii.pill,
-                backgroundColor: active ? color : C.card,
-                borderWidth: active ? 0 : 1, borderColor: C.hairline,
+                backgroundColor: active ? color : P.surface,
+                borderWidth: 1, borderColor: active ? color : P.hairline,
                 flexDirection: 'row', alignItems: 'center', gap: 6,
               }}>
                 <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? '#fff' : color }}>{label}</Text>
                 <View style={{
                   paddingHorizontal: 6, paddingVertical: 1, borderRadius: Radii.pill,
-                  backgroundColor: active ? 'rgba(255,255,255,0.25)' : '#fff',
+                  backgroundColor: active ? 'rgba(255,255,255,0.25)' : P.field,
                 }}>
                   <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: active ? '#fff' : color }}>
                     {count}
@@ -102,16 +104,16 @@ export function InboxScreen() {
 
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 10 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={C.indigo} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={P.accent} />}
       >
         {filtered.length === 0 ? (
           <View style={{
-            backgroundColor: C.card, borderRadius: Radii.md,
-            padding: 18, borderWidth: 1, borderColor: C.hairline,
+            backgroundColor: P.surface, borderRadius: Radii.md,
+            padding: 18, borderWidth: 1, borderColor: P.hairline,
             ...Shadows.card,
           }}>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: C.ink }}>Quiet inbox</Text>
-            <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: C.ink2, marginTop: 4 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>Quiet inbox</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink2, marginTop: 4 }}>
               {actions.length === 0
                 ? 'Once Gmail triage is wired, classified emails will land here for review. For now this reads from email_actions in Supabase — populate it from the web app or seed manually to see entries.'
                 : 'No items match this filter.'}
@@ -126,24 +128,24 @@ export function InboxScreen() {
       <Modal visible={!!previewing} animationType="slide" transparent onRequestClose={() => setPreviewing(null)}>
         <Pressable onPress={() => setPreviewing(null)} style={{ flex: 1, backgroundColor: 'rgba(11,18,32,0.55)', justifyContent: 'flex-end' }}>
           <Pressable onPress={() => {}}>
-            <View style={{ backgroundColor: C.card, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 12 }}>
+            <View style={{ backgroundColor: P.surface, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 12 }}>
               <View style={{ alignItems: 'center' }}>
-                <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: C.hairline }} />
+                <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: P.hairline }} />
               </View>
-              <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: C.ink }} numberOfLines={2}>
+              <Text style={{ fontFamily: NumFont.bold, fontSize: 18, color: P.ink }} numberOfLines={2}>
                 {previewing?.subject ?? '(no subject)'}
               </Text>
-              <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: C.ink3 }} numberOfLines={1}>
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3 }} numberOfLines={1}>
                 From {previewing?.from_email ?? 'unknown sender'}
               </Text>
               <View style={{
-                backgroundColor: C.bg, borderRadius: Radii.sm, padding: 14,
-                borderWidth: 1, borderColor: C.hairline,
+                backgroundColor: P.field, borderRadius: Radii.sm, padding: 14,
+                borderWidth: 1, borderColor: P.hairline,
               }}>
-                <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.6 }}>
                   SUGGESTED REPLY
                 </Text>
-                <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink, marginTop: 8, lineHeight: 20 }}>
+                <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink, marginTop: 8, lineHeight: 20 }}>
                   {previewing?.suggested_reply ?? '— No suggestion generated. Generate one from the web app or wait for the next AI triage pass.'}
                 </Text>
               </View>
@@ -162,14 +164,15 @@ function ActionRow({
   onPreview: () => void;
   onMark: (s: string | null) => void;
 }) {
+  const P = useScreenPalette();
   const k = action.classification ?? 'fyi';
   const meta = CLASS_META[k];
   const done = action.status === 'handled';
   return (
     <Pressable onPress={onPreview}>
       <View style={{
-        backgroundColor: C.card, borderRadius: Radii.md, padding: 14,
-        borderWidth: 1, borderColor: C.hairline,
+        backgroundColor: P.surface, borderRadius: Radii.md, padding: 14,
+        borderWidth: 1, borderColor: P.hairline,
         position: 'relative', overflow: 'hidden',
         ...Shadows.card,
         opacity: done ? 0.55 : 1,
@@ -184,10 +187,10 @@ function ActionRow({
             <Text style={{ fontSize: 14, color: meta.color }}>{meta.icon}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ fontFamily: UIFont.bold, fontSize: 14, color: C.ink, letterSpacing: -0.2 }} numberOfLines={1}>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 14, color: P.ink, letterSpacing: -0.2 }} numberOfLines={1}>
               {action.subject ?? '(no subject)'}
             </Text>
-            <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, marginTop: 3 }} numberOfLines={1}>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink2, marginTop: 3 }} numberOfLines={1}>
               {action.from_email ?? 'unknown sender'}
             </Text>
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, alignItems: 'center' }}>
@@ -200,7 +203,7 @@ function ActionRow({
                 </Text>
               </View>
               {action.follow_up_date ? (
-                <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: C.ink3 }}>
+                <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: P.ink3 }}>
                   ⏱ {action.follow_up_date}
                 </Text>
               ) : null}
@@ -209,8 +212,8 @@ function ActionRow({
           <Pressable onPress={() => onMark(done ? null : 'handled')} hitSlop={8}>
             <View style={{
               width: 22, height: 22, borderRadius: 11,
-              borderWidth: 2, borderColor: done ? C.green : C.hairline,
-              backgroundColor: done ? C.green : 'transparent',
+              borderWidth: 2, borderColor: done ? P.positive : P.hairline,
+              backgroundColor: done ? P.positive : 'transparent',
               alignItems: 'center', justifyContent: 'center',
               marginTop: 4,
             }}>

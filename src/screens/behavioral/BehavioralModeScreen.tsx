@@ -4,14 +4,16 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useBehavioralStore, MODES, BehavioralMode } from '../../store/behavioralStore';
 import { C, Radii } from '../../theme/tokens';
+import { useScreenPalette } from '../../theme/palette';
 import { UIFont, NumFont } from '../../theme/typography';
 
 export function BehavioralModeScreen() {
   const navigation = useNavigation();
+  const P = useScreenPalette();
   const { enabled, mode, setEnabled, setMode } = useBehavioralStore();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
       <View style={{
         paddingHorizontal: 14, paddingVertical: 10,
         flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -19,11 +21,11 @@ export function BehavioralModeScreen() {
         <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{
           width: 36, height: 36, borderRadius: 18,
           alignItems: 'center', justifyContent: 'center',
-          backgroundColor: C.card, borderWidth: 1, borderColor: C.hairline,
+          backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
         }}>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
         </Pressable>
-        <Text style={{ flex: 1, textAlign: 'center', fontFamily: UIFont.semiBold, fontSize: 14, color: C.ink2 }}>
+        <Text style={{ flex: 1, textAlign: 'center', fontFamily: NumFont.bold, fontSize: 14, color: P.ink }}>
           Behavioral OS
         </Text>
         <View style={{ width: 36 }} />
@@ -31,25 +33,25 @@ export function BehavioralModeScreen() {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 60, gap: 20 }}>
         <View>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.red, letterSpacing: 1.5 }}>MENTOR</Text>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 26, color: C.ink, letterSpacing: -0.5, marginTop: 6 }}>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.negative, letterSpacing: 1.6 }}>MENTOR</Text>
+          <Text style={{ fontFamily: NumFont.bold, fontSize: 26, color: P.ink, letterSpacing: -0.5, marginTop: 6 }}>
             Pick your mode.
           </Text>
-          <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink2, marginTop: 8, lineHeight: 20 }}>
-            Each behavioral mode reframes how your mentor talks to you and tints the visual mood of the app. Off keeps the default Navy Night theme.
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink2, marginTop: 8, lineHeight: 20 }}>
+            Each behavioral mode reframes how your mentor talks to you and tints the visual mood of the app. Off keeps the default Sunlit Bento theme.
           </Text>
         </View>
 
         {/* Master toggle */}
         <View style={{
-          backgroundColor: C.card, borderRadius: Radii.md,
-          borderWidth: 1, borderColor: C.hairline,
+          backgroundColor: P.surface, borderRadius: Radii.md,
+          borderWidth: 1, borderColor: P.hairline,
           paddingHorizontal: 16, paddingVertical: 14,
           flexDirection: 'row', alignItems: 'center', gap: 12,
         }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: C.ink }}>Behavioral Mode</Text>
-            <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink3, marginTop: 2 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }}>Behavioral Mode</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3, marginTop: 2 }}>
               {enabled ? 'Active — login + accents reflect your mode' : 'Off — default theme everywhere'}
             </Text>
           </View>
@@ -125,9 +127,10 @@ export function BehavioralModeScreen() {
         </View>
 
         <View style={{
-          padding: 14, backgroundColor: '#F7F8FB', borderRadius: Radii.sm,
+          padding: 14, backgroundColor: P.accentTint, borderRadius: Radii.sm,
+          borderWidth: 1, borderColor: P.accentBorder,
         }}>
-          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, lineHeight: 18 }}>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink2, lineHeight: 18 }}>
             ✦ Mode picker shipped. Full in-app theming (sidebar, cards, all surfaces re-tinted per mode) is on the roadmap — for now only the Login screen reflects your mode.
           </Text>
         </View>

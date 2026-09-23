@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { Logo } from '../../components/atoms/Logo';
 import { C, Radii } from '../../theme/tokens';
+import { useScreenPalette } from '../../theme/palette';
 import { UIFont, NumFont } from '../../theme/typography';
 
 export const WIZARD_DONE_KEY = 'bpa-wizard-done';
@@ -97,7 +98,8 @@ export function SetupWizard({ onDone }: { onDone: () => void }) {
 }
 
 function PageDots({ active, dark = false }: { active: number; dark?: boolean }) {
-  const baseColor = dark ? 'rgba(255,255,255,0.25)' : C.hairline;
+  const P = useScreenPalette();
+  const baseColor = dark ? 'rgba(255,255,255,0.25)' : P.hairline;
   return (
     <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>
       {[0, 1, 2, 3].map(i => (
@@ -107,7 +109,7 @@ function PageDots({ active, dark = false }: { active: number; dark?: boolean }) 
             width: i === active ? 24 : 7,
             height: 7,
             borderRadius: 4,
-            backgroundColor: i === active ? (dark ? '#fff' : C.ink) : baseColor,
+            backgroundColor: i === active ? (dark ? '#fff' : P.accent) : baseColor,
           }}
         />
       ))}
@@ -116,28 +118,27 @@ function PageDots({ active, dark = false }: { active: number; dark?: boolean }) 
 }
 
 function Step1Header({ step, onBack, onSkip }: { step: number; onBack: () => void; onSkip?: () => void }) {
+  const P = useScreenPalette();
   return (
     <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Pressable onPress={onBack} hitSlop={8} style={iconBtn}>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
+      <Pressable onPress={onBack} hitSlop={8} style={{
+        width: 36, height: 36, borderRadius: 18,
+        alignItems: 'center', justifyContent: 'center',
+        backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
+      }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
       </Pressable>
-      <Text style={{ flex: 1, textAlign: 'center', fontFamily: UIFont.semiBold, fontSize: 13, color: C.ink2 }}>
+      <Text style={{ flex: 1, textAlign: 'center', fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink2 }}>
         Step {step} of 4
       </Text>
       {onSkip ? (
         <Pressable onPress={onSkip} hitSlop={8}>
-          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: C.indigo }}>Skip</Text>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.accent }}>Skip</Text>
         </Pressable>
       ) : <View style={{ width: 36 }} />}
     </View>
   );
 }
-
-const iconBtn = {
-  width: 36, height: 36, borderRadius: 18,
-  alignItems: 'center' as const, justifyContent: 'center' as const,
-  backgroundColor: C.card, borderWidth: 1, borderColor: C.hairline,
-};
 
 // ─── Step 1 — Welcome ────────────────────────────────────────────────
 
@@ -155,11 +156,11 @@ function StepWelcome({ onGo, onSkip }: { onGo: () => void; onSkip: () => void })
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ padding: 28 }}><Logo size={48} /></View>
         <View style={{ flex: 1, paddingHorizontal: 28, justifyContent: 'center' }}>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 2 }}>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.6 }}>
             ✦ THE PROFESSOR
           </Text>
           <Text style={{
-            fontFamily: UIFont.bold, fontSize: 38, color: '#fff',
+            fontFamily: NumFont.bold, fontSize: 38, color: '#fff',
             letterSpacing: -1, lineHeight: 42, marginTop: 12,
           }}>
             Your daily{'\n'}discipline coach.
@@ -232,18 +233,19 @@ function StepVows({
     setPrefs({ ...prefs, vows: Array.from(set) });
   };
 
+  const P = useScreenPalette();
   const picks = prefs.vows.length;
   const canNext = picks >= 3;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top', 'bottom']}>
       <Step1Header step={2} onBack={onBack} onSkip={onSkip} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.red, letterSpacing: 1.5 }}>IDENTITY</Text>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.negative, letterSpacing: 1.6 }}>IDENTITY</Text>
+        <Text style={{ fontFamily: NumFont.bold, fontSize: 28, color: P.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
           What kind of person{'\n'}do you want to be?
         </Text>
-        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
+        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink2, marginTop: 10, lineHeight: 20 }}>
           Pick 3–5 vows. Your mentor will gently hold you to them.
         </Text>
 
@@ -254,21 +256,21 @@ function StepVows({
               <Pressable key={v.t} onPress={() => togglePick(v.t)} style={{ width: '48.5%' }}>
                 <View style={{
                   padding: 14, borderRadius: Radii.sm,
-                  backgroundColor: selected ? C.indigoSoft : C.card,
-                  borderWidth: 1.5, borderColor: selected ? C.indigo : C.hairline,
+                  backgroundColor: selected ? P.accentTint : P.surface,
+                  borderWidth: 1.5, borderColor: selected ? P.accentBorder : P.hairline,
                   position: 'relative',
                 }}>
                   <Text style={{ fontSize: 18, marginBottom: 8 }}>{v.e}</Text>
-                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: C.ink, lineHeight: 17 }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink, lineHeight: 17 }}>
                     {v.t}
                   </Text>
                   {selected ? (
                     <View style={{
                       position: 'absolute', top: 10, right: 10,
                       width: 18, height: 18, borderRadius: 9,
-                      backgroundColor: C.indigo, alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 11, lineHeight: 11 }}>✓</Text>
+                      <Text style={{ color: P.accentInk, fontFamily: UIFont.bold, fontSize: 11, lineHeight: 11 }}>✓</Text>
                     </View>
                   ) : null}
                 </View>
@@ -284,11 +286,12 @@ function StepVows({
           onPress={canNext ? onNext : undefined}
           disabled={!canNext}
           style={{
-            backgroundColor: canNext ? C.ink : C.hairline,
+            backgroundColor: canNext ? P.accent : P.hairline,
             paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center',
+            borderWidth: canNext ? 1 : 0, borderColor: P.accentBorder,
           }}
         >
-          <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>
+          <Text style={{ color: canNext ? P.accentInk : P.ink3, fontFamily: UIFont.bold, fontSize: 15 }}>
             {picks ? `${picks} selected · Continue` : 'Pick at least 3'}
           </Text>
         </Pressable>
@@ -310,15 +313,16 @@ function StepContexts({
     if (set.has(name)) set.delete(name); else set.add(name);
     setPrefs({ ...prefs, contexts: Array.from(set) });
   };
+  const P = useScreenPalette();
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top', 'bottom']}>
       <Step1Header step={3} onBack={onBack} onSkip={onSkip} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.red, letterSpacing: 1.5 }}>CONTEXTS</Text>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.negative, letterSpacing: 1.6 }}>CONTEXTS</Text>
+        <Text style={{ fontFamily: NumFont.bold, fontSize: 28, color: P.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
           The hats{'\n'}you wear.
         </Text>
-        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
+        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink2, marginTop: 10, lineHeight: 20 }}>
           Each context gets its own color so tasks stay sorted by life lane.
         </Text>
 
@@ -330,13 +334,13 @@ function StepContexts({
                 <View style={{
                   paddingHorizontal: 16, paddingVertical: 14,
                   borderRadius: Radii.sm,
-                  backgroundColor: on ? C.card : '#FAFBFD',
-                  borderWidth: 1.5, borderColor: on ? c.col : C.hairline,
+                  backgroundColor: on ? P.surface : P.field,
+                  borderWidth: 1.5, borderColor: on ? c.col : P.hairline,
                   flexDirection: 'row', alignItems: 'center', gap: 14,
                   opacity: on ? 1 : 0.6,
                 }}>
                   <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: c.col }} />
-                  <Text style={{ flex: 1, fontFamily: UIFont.semiBold, fontSize: 15, color: C.ink }}>{c.name}</Text>
+                  <Text style={{ flex: 1, fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }}>{c.name}</Text>
                   <Toggle on={on} color={c.col} />
                 </View>
               </Pressable>
@@ -349,9 +353,10 @@ function StepContexts({
         <PageDots active={2} />
         <Pressable
           onPress={onNext}
-          style={{ backgroundColor: C.ink, paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center' }}
+          style={{ backgroundColor: P.accent, paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center',
+            borderWidth: 1, borderColor: P.accentBorder }}
         >
-          <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>Continue</Text>
+          <Text style={{ color: P.accentInk, fontFamily: UIFont.bold, fontSize: 15 }}>Continue</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -387,44 +392,45 @@ function StepPermissions({
     { key: 'windDown',      icon: '🌙', t: 'Wind-down', sub: 'Switch to night mode after 9pm' },
   ] as const;
 
+  const P = useScreenPalette();
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top', 'bottom']}>
       <Step1Header step={4} onBack={onBack} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.red, letterSpacing: 1.5 }}>PERMISSIONS</Text>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.negative, letterSpacing: 1.6 }}>PERMISSIONS</Text>
+        <Text style={{ fontFamily: NumFont.bold, fontSize: 28, color: P.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
           Let's set the{'\n'}guardrails.
         </Text>
-        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
+        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink2, marginTop: 10, lineHeight: 20 }}>
           Choose what your mentor can do for you. You can change any of these later.
         </Text>
 
         <View style={{
-          marginTop: 22, backgroundColor: C.card, borderRadius: Radii.md,
-          borderWidth: 1, borderColor: C.hairline, overflow: 'hidden',
+          marginTop: 22, backgroundColor: P.surface, borderRadius: Radii.md,
+          borderWidth: 1, borderColor: P.hairline, overflow: 'hidden',
         }}>
           {perms.map((p, i) => (
             <View key={p.key} style={{
               paddingHorizontal: 16, paddingVertical: 14,
               flexDirection: 'row', alignItems: 'center', gap: 12,
               borderBottomWidth: i < perms.length - 1 ? 1 : 0,
-              borderBottomColor: C.hairline,
+              borderBottomColor: P.hairline,
             }}>
               <View style={{
                 width: 36, height: 36, borderRadius: 10,
-                backgroundColor: `${C.indigo}1A`,
+                backgroundColor: P.accentTint,
                 alignItems: 'center', justifyContent: 'center',
               }}>
                 <Text style={{ fontSize: 16 }}>{p.icon}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: C.ink }}>{p.t}</Text>
-                <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, marginTop: 1, lineHeight: 16 }}>{p.sub}</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{p.t}</Text>
+                <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink2, marginTop: 1, lineHeight: 16 }}>{p.sub}</Text>
               </View>
               <Switch
                 value={prefs.permissions[p.key]}
                 onValueChange={v => setPrefs({ ...prefs, permissions: { ...prefs.permissions, [p.key]: v } })}
-                trackColor={{ false: '#D8DDE6', true: C.green }}
+                trackColor={{ false: P.hairline, true: P.positive }}
                 thumbColor="#fff"
               />
             </View>
@@ -432,9 +438,10 @@ function StepPermissions({
         </View>
 
         <View style={{
-          marginTop: 16, padding: 14, backgroundColor: '#F7F8FB', borderRadius: Radii.sm,
+          marginTop: 16, padding: 14, backgroundColor: P.accentTint,
+          borderRadius: Radii.sm, borderWidth: 1, borderColor: P.accentBorder,
         }}>
-          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, lineHeight: 18 }}>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink2, lineHeight: 18 }}>
             ✦ Your mentor never sends messages without your permission. Quiet by default.
           </Text>
         </View>

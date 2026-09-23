@@ -157,11 +157,11 @@ export function NotificationsScreen() {
           return (
             <Pressable key={f} onPress={() => setFilter(f)}>
               <View style={{
-                paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radii.sm,
-                backgroundColor: active ? P.ink : P.surface,
-                borderWidth: active ? 0 : 1, borderColor: P.hairline,
+                paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radii.pill,
+                backgroundColor: active ? P.accent : P.surface,
+                borderWidth: 1, borderColor: active ? P.accentBorder : P.hairline,
               }}>
-                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? P.bg : P.ink }}>{f}</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? P.accentInk : P.ink }}>{f}</Text>
               </View>
             </Pressable>
           );

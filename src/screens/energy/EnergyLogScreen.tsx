@@ -145,7 +145,7 @@ export function EnergyLogScreen() {
         <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
           <Text style={{ fontSize: 22, color: P.ink, fontFamily: UIFont.bold }}>‹</Text>
         </Pressable>
-        <Text style={{ fontFamily: UIFont.bold, fontSize: 17, color: P.ink, letterSpacing: -0.3, flex: 1 }}>
+        <Text style={{ fontFamily: NumFont.bold, fontSize: 17, color: P.ink, letterSpacing: -0.3, flex: 1 }}>
           Energy Log
         </Text>
       </View>
@@ -164,8 +164,8 @@ export function EnergyLogScreen() {
             ...Shadows.card,
           }}>
             <Text style={{
-              fontFamily: UIFont.semiBold, fontSize: 12, color: P.ink2,
-              textTransform: 'uppercase', letterSpacing: 0.6,
+              fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4,
+              textTransform: 'uppercase', letterSpacing: 1.6,
             }}>
               Today · {formatDate(today)}
             </Text>
@@ -226,8 +226,8 @@ export function EnergyLogScreen() {
 
           {/* Past 14 days */}
           <Text style={{
-            fontFamily: UIFont.bold, fontSize: 11, color: P.ink,
-            letterSpacing: 0.5, textTransform: 'uppercase',
+            fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4,
+            letterSpacing: 1.6, textTransform: 'uppercase',
             marginTop: 4, marginHorizontal: 4,
           }}>
             Past 14 Days

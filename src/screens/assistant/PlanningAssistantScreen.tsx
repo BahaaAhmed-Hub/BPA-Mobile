@@ -177,7 +177,7 @@ export function PlanningAssistantScreen() {
             <Text style={{ color: C.indigo, fontSize: 22, fontFamily: UIFont.semiBold }}>‹</Text>
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: UIFont.bold, fontSize: 17, color: '#fff' }}>The Professor</Text>
+            <Text style={{ fontFamily: NumFont.bold, fontSize: 17, color: '#fff' }}>The Professor</Text>
             <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>
               AI Executive Coach
             </Text>
@@ -208,14 +208,14 @@ export function PlanningAssistantScreen() {
                   >
                     <Text style={{ fontSize: 28 }}>✦</Text>
                   </View>
-                  <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: '#fff', marginBottom: 4 }}>
+                  <Text style={{ fontFamily: NumFont.bold, fontSize: 18, color: '#fff', marginBottom: 4 }}>
                     The Professor
                   </Text>
                   <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
                     Your AI executive coach.{'\n'}Ask about your day, tasks, or strategy.
                   </Text>
                 </View>
-                <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 10, letterSpacing: 0.8 }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 10, letterSpacing: 1.6 }}>
                   SUGGESTIONS
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

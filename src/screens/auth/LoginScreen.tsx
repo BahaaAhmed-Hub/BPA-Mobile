@@ -55,7 +55,7 @@ export function LoginScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Logo size={44} />
             <View>
-              <Text style={{ color: T.text, fontFamily: UIFont.bold, fontSize: 20, letterSpacing: -0.3 }}>
+              <Text style={{ color: T.text, fontFamily: NumFont.bold, fontSize: 20, letterSpacing: -0.3 }}>
                 The Professor
               </Text>
               {T.badge ? (
@@ -72,10 +72,10 @@ export function LoginScreen() {
 
           {/* Hero copy */}
           <View>
-            <Text style={{ color: T.text, fontFamily: UIFont.bold, fontSize: 40, letterSpacing: -1.5, lineHeight: 44 }}>
+            <Text style={{ color: T.text, fontFamily: NumFont.bold, fontSize: 40, letterSpacing: -1.5, lineHeight: 44 }}>
               {T.id === 'samurai' ? 'Discipline.' : T.id === 'pharaoh' ? 'Build Your' : T.id === 'astral' ? 'Think in' : 'Your AI Executive'}
             </Text>
-            <Text style={{ color: T.accentBright, fontFamily: UIFont.bold, fontSize: 40, letterSpacing: -1.5, lineHeight: 44, marginTop: 4 }}>
+            <Text style={{ color: T.accentBright, fontFamily: NumFont.bold, fontSize: 40, letterSpacing: -1.5, lineHeight: 44, marginTop: 4 }}>
               {T.id === 'samurai' ? 'Precision. Mastery.' : T.id === 'pharaoh' ? 'Legacy.' : T.id === 'astral' ? 'Horizons.' : 'Operating System'}
             </Text>
             <Text style={{ color: T.textDim, fontFamily: UIFont.regular, fontSize: 15, lineHeight: 22, marginTop: 18, maxWidth: 320 }}>
