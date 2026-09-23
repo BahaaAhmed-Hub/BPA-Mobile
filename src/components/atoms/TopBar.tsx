@@ -36,7 +36,7 @@ export function TopBar({ title, subtitle, right, dark: forceDark }: TopBarProps)
           numberOfLines={1}
           style={{
             fontSize: 17,
-            fontFamily: UIFont.bold,
+            fontFamily: NumFont.bold,
             color: dark ? '#fff' : P.ink,
             letterSpacing: -0.3,
           }}
