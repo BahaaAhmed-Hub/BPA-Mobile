@@ -19,9 +19,11 @@ import { WeeklyReviewScreen } from '../screens/review/WeeklyReviewScreen';
 import { EnergyLogScreen } from '../screens/energy/EnergyLogScreen';
 import { PlanningAssistantScreen } from '../screens/assistant/PlanningAssistantScreen';
 import { HabitDetailScreen } from '../screens/habits/HabitDetailScreen';
+import { HabitEditScreen } from '../screens/habits/HabitEditScreen';
 import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
 import { AISettingsScreen } from '../screens/settings/AISettingsScreen';
 import { SettingsPlaceholderScreen } from '../screens/settings/SettingsPlaceholderScreen';
+import { SearchScreen } from '../screens/search/SearchScreen';
 
 export type RootStackParamList = {
   App: undefined;
@@ -35,9 +37,11 @@ export type RootStackParamList = {
   EnergyLog: undefined;
   PlanningAssistant: undefined;
   HabitDetail: { habitId: string };
+  HabitEdit: { habitId: string };
   SettingsAppearance: undefined;
   SettingsAI: undefined;
   SettingsDetail: { title: string };
+  Search: undefined;
 };
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
@@ -147,6 +151,16 @@ export function RootNavigator() {
               name="HabitDetail"
               component={HabitDetailScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="HabitEdit"
+              component={HabitEditScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Search"
+              component={SearchScreen}
+              options={{ presentation: 'fullScreenModal', animation: 'fade' }}
             />
             <Stack.Screen
               name="SettingsAppearance"

@@ -246,10 +246,18 @@ function CreateEventModal({
     const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0); return d;
   });
 
+  const [notes, setNotes] = useState('');
+  const [repeat, setRepeat] = useState<'none' | 'daily' | 'weekdays' | 'weekly' | 'monthly'>('none');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [showRepeatPicker, setShowRepeatPicker] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const REPEAT_LABELS: Record<typeof repeat, string> = {
+    none: 'Does not repeat', daily: 'Daily', weekdays: 'Every weekday (Mon–Fri)',
+    weekly: 'Weekly', monthly: 'Monthly',
+  };
 
   function buildIso(d: Date, t: Date): string {
     const out = new Date(d);
@@ -292,6 +300,7 @@ function CreateEventModal({
       onSaved();
       // Reset form
       setTitle(''); setLocation(''); setAllDay(false);
+      setNotes(''); setRepeat('none');
     } catch (e: unknown) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Failed to save');
     } finally {
@@ -417,6 +426,54 @@ function CreateEventModal({
                 )}
               </>
             )}
+
+            {/* Repeat */}
+            <Pressable onPress={() => setShowRepeatPicker(v => !v)}>
+              <View style={rowStyle}>
+                <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink }}>Repeat</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.accent }}>
+                  {REPEAT_LABELS[repeat]}
+                </Text>
+              </View>
+            </Pressable>
+            {showRepeatPicker && (
+              <View style={{
+                backgroundColor: P.surface, borderRadius: Radii.sm,
+                borderWidth: 1, borderColor: P.hairline, overflow: 'hidden',
+              }}>
+                {(Object.keys(REPEAT_LABELS) as (typeof repeat)[]).map((key, i, arr) => (
+                  <Pressable
+                    key={key}
+                    onPress={() => { setRepeat(key); setShowRepeatPicker(false); }}
+                  >
+                    <View style={{
+                      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                      paddingHorizontal: 14, paddingVertical: 12,
+                      borderBottomWidth: i < arr.length - 1 ? 1 : 0, borderColor: P.hairline,
+                      backgroundColor: repeat === key ? P.accentTint : 'transparent',
+                    }}>
+                      <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink }}>
+                        {REPEAT_LABELS[key]}
+                      </Text>
+                      {repeat === key && (
+                        <Text style={{ color: P.accent, fontFamily: UIFont.bold, fontSize: 14 }}>✓</Text>
+                      )}
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            {/* Notes */}
+            <TextInput
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Notes (optional)"
+              placeholderTextColor={P.ink3}
+              multiline
+              numberOfLines={3}
+              style={[inputStyle, { minHeight: 72, textAlignVertical: 'top' }]}
+            />
 
             {/* Save */}
             <Pressable onPress={() => { void handleSave(); }} disabled={saving} style={{ marginTop: 8 }}>

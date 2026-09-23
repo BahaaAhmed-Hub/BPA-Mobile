@@ -97,7 +97,17 @@ export function HabitDetailScreen() {
         <Text style={{ flex: 1, textAlign: 'center', fontFamily: NumFont.bold, fontSize: 15, color: P.ink }}>
           {habit.name.replace(/^\p{Emoji}\s*/u, '')}
         </Text>
-        <View style={{ width: 36 }} />
+        <Pressable
+          onPress={() => navigation.navigate('HabitEdit', { habitId: habit.id })}
+          hitSlop={8}
+          style={{
+            width: 36, height: 36, borderRadius: 18,
+            alignItems: 'center', justifyContent: 'center',
+            backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
+          }}
+        >
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>✎</Text>
+        </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 16 }}>

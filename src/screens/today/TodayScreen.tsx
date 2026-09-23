@@ -117,11 +117,18 @@ export function TodayScreen() {
           </View>
           <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink4, letterSpacing: 1.4 }}>BPA</Text>
         </View>
-        <Pressable onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline, alignItems: 'center', justifyContent: 'center' }}>
-            <Bell size={16} color={P.ink2} strokeWidth={2} />
-          </View>
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Pressable onPress={() => navigation.navigate('Search')} hitSlop={8}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 15, color: P.ink2 }}>🔍</Text>
+            </View>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline, alignItems: 'center', justifyContent: 'center' }}>
+              <Bell size={16} color={P.ink2} strokeWidth={2} />
+            </View>
+          </Pressable>
+        </View>
       </View>
 
       {/* ── Hero greeting ── */}
