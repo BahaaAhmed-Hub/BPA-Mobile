@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { C, Radii, Quadrants, QuadrantId } from '../../theme/tokens';
 import { useTaskStore } from '../../store/taskStore';
+import { UIFont, NumFont } from '../../theme/typography';
 
 const QUADRANT_ORDER: QuadrantId[] = ['urgent_important', 'important_not_urgent', 'urgent_not_important', 'neither'];
 
@@ -34,7 +35,7 @@ export function AddTaskSheet({ visible, onClose }: { visible: boolean; onClose: 
               <View style={{ alignItems: 'center', marginTop: -6 }}>
                 <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: C.hairline }} />
               </View>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: C.ink }}>New task</Text>
+              <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: C.ink }}>New task</Text>
 
               <TextInput
                 placeholder="What needs to be done?"
@@ -46,12 +47,12 @@ export function AddTaskSheet({ visible, onClose }: { visible: boolean; onClose: 
                   borderWidth: 1, borderColor: C.hairline,
                   borderRadius: Radii.sm,
                   paddingHorizontal: 14, paddingVertical: 12,
-                  fontFamily: 'Inter_500Medium', fontSize: 15, color: C.ink,
+                  fontFamily: UIFont.medium, fontSize: 15, color: C.ink,
                 }}
               />
 
               <View style={{ gap: 8 }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>QUADRANT</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>QUADRANT</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {QUADRANT_ORDER.map(id => {
                     const meta = Quadrants[id];
@@ -62,7 +63,7 @@ export function AddTaskSheet({ visible, onClose }: { visible: boolean; onClose: 
                           paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radii.pill,
                           backgroundColor: active ? meta.color : meta.soft,
                         }}>
-                          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: active ? '#fff' : meta.color }}>
+                          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? '#fff' : meta.color }}>
                             {meta.label}
                           </Text>
                         </View>
@@ -73,7 +74,7 @@ export function AddTaskSheet({ visible, onClose }: { visible: boolean; onClose: 
               </View>
 
               <View style={{ gap: 8 }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>EFFORT (MIN)</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>EFFORT (MIN)</Text>
                 <TextInput
                   placeholder="e.g. 25"
                   placeholderTextColor={C.ink3}
@@ -84,7 +85,7 @@ export function AddTaskSheet({ visible, onClose }: { visible: boolean; onClose: 
                     borderWidth: 1, borderColor: C.hairline,
                     borderRadius: Radii.sm,
                     paddingHorizontal: 14, paddingVertical: 10,
-                    fontFamily: 'JetBrainsMono_500Medium', fontSize: 15, color: C.ink,
+                    fontFamily: NumFont.medium, fontSize: 15, color: C.ink,
                   }}
                 />
               </View>
@@ -97,7 +98,7 @@ export function AddTaskSheet({ visible, onClose }: { visible: boolean; onClose: 
                   paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center', marginTop: 4, marginBottom: 8,
                 }}
               >
-                <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 15 }}>Add task</Text>
+                <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>Add task</Text>
               </Pressable>
             </View>
           </Pressable>

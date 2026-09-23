@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { C, Radii } from '../../theme/tokens';
+import { UIFont, NumFont } from '../../theme/typography';
 
 interface PillProps {
   label: string;
@@ -22,7 +23,7 @@ export function Pill({ label, color = C.ink, soft = C.indigoSoft, small = false 
       <Text
         style={{
           color,
-          fontFamily: 'Inter_600SemiBold',
+          fontFamily: UIFont.semiBold,
           fontSize: small ? 10 : 11,
           letterSpacing: 0.3,
         }}

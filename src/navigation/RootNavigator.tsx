@@ -1,6 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as Linking from 'expo-linking';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
@@ -8,10 +8,46 @@ import { handleAuthCallback } from '../lib/google';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { TabNavigator } from './TabNavigator';
 import { LoadingScreen } from '../screens/LoadingScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TaskDetailScreen } from '../screens/tasks/TaskDetailScreen';
+import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
+import { SetupWizard, WIZARD_DONE_KEY } from '../screens/wizard/SetupWizard';
+import { BehavioralModeScreen } from '../screens/behavioral/BehavioralModeScreen';
+import { InboxScreen } from '../screens/inbox/InboxScreen';
+import { EventDetailScreen } from '../screens/calendar/EventDetailScreen';
+import { WeeklyReviewScreen } from '../screens/review/WeeklyReviewScreen';
+import { EnergyLogScreen } from '../screens/energy/EnergyLogScreen';
+import { PlanningAssistantScreen } from '../screens/assistant/PlanningAssistantScreen';
+import { HabitDetailScreen } from '../screens/habits/HabitDetailScreen';
+import { HabitEditScreen } from '../screens/habits/HabitEditScreen';
+import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
+import { AISettingsScreen } from '../screens/settings/AISettingsScreen';
+import { SettingsPlaceholderScreen } from '../screens/settings/SettingsPlaceholderScreen';
+import { SearchScreen } from '../screens/search/SearchScreen';
+
+export type RootStackParamList = {
+  App: undefined;
+  Login: undefined;
+  TaskDetail: { taskId: string };
+  Notifications: undefined;
+  BehavioralMode: undefined;
+  Inbox: undefined;
+  EventDetail: { eventId: string };
+  WeeklyReview: undefined;
+  EnergyLog: undefined;
+  PlanningAssistant: undefined;
+  HabitDetail: { habitId: string };
+  HabitEdit: { habitId: string };
+  SettingsAppearance: undefined;
+  SettingsAI: undefined;
+  SettingsDetail: { title: string };
+  Search: undefined;
+};
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
+import { useCompanyStore } from '../store/companyStore';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const user      = useAuthStore(s => s.user);
@@ -34,7 +70,10 @@ export function RootNavigator() {
       const u = session?.user;
       setUser(u ? { id: u.id, email: u.email ?? '', name: u.user_metadata?.full_name as string | undefined, avatarUrl: u.user_metadata?.avatar_url as string | undefined } : null);
       setLoading(false);
-      if (!session) { clearTasks(); clearHabits(); }
+      if (session) {
+        void import('../lib/pushNotifications').then(m => m.registerForPushNotifications());
+      }
+      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); }
     });
 
     // Deep-link OAuth callback (when the in-app browser hands the URL back)
@@ -47,14 +86,101 @@ export function RootNavigator() {
     };
   }, [setUser, setLoading, clearTasks, clearHabits]);
 
+  const [wizardChecked, setWizardChecked] = useState(false);
+  const [showWizard, setShowWizard]       = useState(false);
+
+  useEffect(() => {
+    if (!user) { setWizardChecked(false); setShowWizard(false); return; }
+    void AsyncStorage.getItem(WIZARD_DONE_KEY).then(v => {
+      setShowWizard(v !== '1');
+      setWizardChecked(true);
+    });
+  }, [user]);
+
   if (loading) return <LoadingScreen />;
+  if (user && !wizardChecked) return <LoadingScreen />;
+  if (user && showWizard) return <SetupWizard onDone={() => setShowWizard(false)} />;
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user
-          ? <Stack.Screen name="App" component={TabNavigator} />
-          : <Stack.Screen name="Login" component={LoginScreen} />}
+        {user ? (
+          <>
+            <Stack.Screen name="App" component={TabNavigator} />
+            <Stack.Screen
+              name="TaskDetail"
+              component={TaskDetailScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="BehavioralMode"
+              component={BehavioralModeScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Inbox"
+              component={InboxScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="EventDetail"
+              component={EventDetailScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="WeeklyReview"
+              component={WeeklyReviewScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="EnergyLog"
+              component={EnergyLogScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="PlanningAssistant"
+              component={PlanningAssistantScreen}
+              options={{ presentation: 'card', animation: 'slide_from_bottom' }}
+            />
+            <Stack.Screen
+              name="HabitDetail"
+              component={HabitDetailScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="HabitEdit"
+              component={HabitEditScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Search"
+              component={SearchScreen}
+              options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+            />
+            <Stack.Screen
+              name="SettingsAppearance"
+              component={AppearanceScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="SettingsAI"
+              component={AISettingsScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="SettingsDetail"
+              component={SettingsPlaceholderScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+          </>
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

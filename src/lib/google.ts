@@ -60,6 +60,35 @@ export async function handleAuthCallback(url: string): Promise<void> {
   const refresh_token = params.get('refresh_token');
   if (!access_token || !refresh_token) return;
   await supabase.auth.setSession({ access_token, refresh_token });
+  // Capture the Google provider token from the same callback so the calendar
+  // sync Edge Function can use it. The supabase-js session also surfaces it via
+  // provider_token / provider_refresh_token — register both with the existing
+  // google-oauth Edge Function so the web app's plumbing keeps working too.
+  const provider_token         = params.get('provider_token');
+  const provider_refresh_token = params.get('provider_refresh_token');
+  if (provider_token) await registerPrimaryGoogle(provider_token, provider_refresh_token);
+}
+
+/**
+ * Hand the Google access token (and optionally refresh token) to the
+ * google-oauth Edge Function the web app already has — it stores them
+ * server-side under the primary user so google-calendar-sync can use them.
+ */
+async function registerPrimaryGoogle(accessToken: string, refreshToken: string | null): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const body: Record<string, unknown> = {
+    action: 'save_primary',
+    email: user.email,
+    name:  (user.user_metadata?.full_name as string | undefined) ?? null,
+    avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+    access_token: accessToken,
+    expires_at: new Date(Date.now() + 3500 * 1000).toISOString(),
+    scopes: ['calendar', 'calendar.events', 'gmail.readonly'],
+  };
+  if (refreshToken) body.refresh_token = refreshToken;
+  const { error } = await supabase.functions.invoke('google-oauth', { body });
+  if (error) console.warn('[google] save_primary failed:', error.message);
 }
 
 export async function signOut(): Promise<void> {
