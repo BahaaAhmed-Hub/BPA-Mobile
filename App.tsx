@@ -21,18 +21,15 @@ import {
   Outfit_800ExtraBold,
 } from '@expo-google-fonts/outfit';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { LoadingScreen } from './src/screens/LoadingScreen';
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
-    // Legacy fonts — used by atoms not yet redesigned
+  useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
     Inter_800ExtraBold,
     JetBrainsMono_500Medium,
-    // Sunlit Bento design system fonts
     InstrumentSans_400Regular,
     InstrumentSans_500Medium,
     InstrumentSans_600SemiBold,
@@ -43,8 +40,6 @@ export default function App() {
     Outfit_700Bold,
     Outfit_800ExtraBold,
   });
-
-  if (!fontsLoaded) return <LoadingScreen />;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
