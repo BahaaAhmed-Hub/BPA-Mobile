@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { View, Text, Animated } from 'react-native';
 import { RectButton, Swipeable } from 'react-native-gesture-handler';
 import { C, Radii } from '../../theme/tokens';
+import { UIFont, NumFont } from '../../theme/typography';
 
 export interface SwipeAction {
   label: string;
@@ -31,7 +32,7 @@ export function SwipeRow({ children, leftAction, rightAction }: SwipeRowProps) {
             borderBottomLeftRadius: Radii.md,
           }}>
             <Animated.Text style={{
-              fontFamily: 'Inter_700Bold', fontSize: 14,
+              fontFamily: UIFont.bold, fontSize: 14,
               color: leftAction.textColor ?? '#fff', letterSpacing: 0.4,
               transform: [{ scale }],
             }}>
@@ -56,7 +57,7 @@ export function SwipeRow({ children, leftAction, rightAction }: SwipeRowProps) {
               height: '100%',
             }}>
               <Animated.Text style={{
-                fontFamily: 'Inter_700Bold', fontSize: 14,
+                fontFamily: UIFont.bold, fontSize: 14,
                 color: rightAction.textColor ?? '#fff', letterSpacing: 0.4,
                 transform: [{ scale }],
               }}>

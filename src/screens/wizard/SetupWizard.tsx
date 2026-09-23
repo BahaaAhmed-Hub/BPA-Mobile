@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { Logo } from '../../components/atoms/Logo';
 import { C, Radii } from '../../theme/tokens';
+import { UIFont, NumFont } from '../../theme/typography';
 
 export const WIZARD_DONE_KEY = 'bpa-wizard-done';
 export const WIZARD_PREFS_KEY = 'bpa-wizard-prefs';
@@ -118,14 +119,14 @@ function Step1Header({ step, onBack, onSkip }: { step: number; onBack: () => voi
   return (
     <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
       <Pressable onPress={onBack} hitSlop={8} style={iconBtn}>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
       </Pressable>
-      <Text style={{ flex: 1, textAlign: 'center', fontFamily: 'Inter_600SemiBold', fontSize: 13, color: C.ink2 }}>
+      <Text style={{ flex: 1, textAlign: 'center', fontFamily: UIFont.semiBold, fontSize: 13, color: C.ink2 }}>
         Step {step} of 4
       </Text>
       {onSkip ? (
         <Pressable onPress={onSkip} hitSlop={8}>
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: C.indigo }}>Skip</Text>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: C.indigo }}>Skip</Text>
         </Pressable>
       ) : <View style={{ width: 36 }} />}
     </View>
@@ -154,17 +155,17 @@ function StepWelcome({ onGo, onSkip }: { onGo: () => void; onSkip: () => void })
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ padding: 28 }}><Logo size={48} /></View>
         <View style={{ flex: 1, paddingHorizontal: 28, justifyContent: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 2 }}>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 2 }}>
             ✦ THE PROFESSOR
           </Text>
           <Text style={{
-            fontFamily: 'Inter_700Bold', fontSize: 38, color: '#fff',
+            fontFamily: UIFont.bold, fontSize: 38, color: '#fff',
             letterSpacing: -1, lineHeight: 42, marginTop: 12,
           }}>
             Your daily{'\n'}discipline coach.
           </Text>
           <Text style={{
-            fontFamily: 'Inter_400Regular', fontSize: 16, color: 'rgba(255,255,255,0.7)',
+            fontFamily: UIFont.regular, fontSize: 16, color: 'rgba(255,255,255,0.7)',
             lineHeight: 22, marginTop: 18,
           }}>
             A gentle, samurai-inspired companion for everything you want to ship and become.
@@ -190,7 +191,7 @@ function StepWelcome({ onGo, onSkip }: { onGo: () => void; onSkip: () => void })
                 }}>
                   <Text style={{ fontSize: 14 }}>{f.icon}</Text>
                 </View>
-                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: '#fff' }}>{f.t}</Text>
+                <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: '#fff' }}>{f.t}</Text>
               </View>
             ))}
           </View>
@@ -203,11 +204,11 @@ function StepWelcome({ onGo, onSkip }: { onGo: () => void; onSkip: () => void })
               colors={['#3A4FE3', '#B23A36']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={{ paddingVertical: 15, paddingHorizontal: 22, borderRadius: Radii.sm, alignItems: 'center' }}
             >
-              <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 15 }}>Get started</Text>
+              <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>Get started</Text>
             </LinearGradient>
           </Pressable>
           <Pressable onPress={onSkip}>
-            <Text style={{ textAlign: 'center', fontFamily: 'Inter_500Medium', fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
+            <Text style={{ textAlign: 'center', fontFamily: UIFont.medium, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
               Skip setup for now
             </Text>
           </Pressable>
@@ -238,11 +239,11 @@ function StepVows({
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
       <Step1Header step={2} onBack={onBack} onSkip={onSkip} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: C.red, letterSpacing: 1.5 }}>IDENTITY</Text>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.red, letterSpacing: 1.5 }}>IDENTITY</Text>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
           What kind of person{'\n'}do you want to be?
         </Text>
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
+        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
           Pick 3–5 vows. Your mentor will gently hold you to them.
         </Text>
 
@@ -258,7 +259,7 @@ function StepVows({
                   position: 'relative',
                 }}>
                   <Text style={{ fontSize: 18, marginBottom: 8 }}>{v.e}</Text>
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: C.ink, lineHeight: 17 }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: C.ink, lineHeight: 17 }}>
                     {v.t}
                   </Text>
                   {selected ? (
@@ -267,7 +268,7 @@ function StepVows({
                       width: 18, height: 18, borderRadius: 9,
                       backgroundColor: C.indigo, alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 11, lineHeight: 11 }}>✓</Text>
+                      <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 11, lineHeight: 11 }}>✓</Text>
                     </View>
                   ) : null}
                 </View>
@@ -287,7 +288,7 @@ function StepVows({
             paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center',
           }}
         >
-          <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 15 }}>
+          <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>
             {picks ? `${picks} selected · Continue` : 'Pick at least 3'}
           </Text>
         </Pressable>
@@ -313,11 +314,11 @@ function StepContexts({
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
       <Step1Header step={3} onBack={onBack} onSkip={onSkip} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: C.red, letterSpacing: 1.5 }}>CONTEXTS</Text>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.red, letterSpacing: 1.5 }}>CONTEXTS</Text>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
           The hats{'\n'}you wear.
         </Text>
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
+        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
           Each context gets its own color so tasks stay sorted by life lane.
         </Text>
 
@@ -335,7 +336,7 @@ function StepContexts({
                   opacity: on ? 1 : 0.6,
                 }}>
                   <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: c.col }} />
-                  <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>{c.name}</Text>
+                  <Text style={{ flex: 1, fontFamily: UIFont.semiBold, fontSize: 15, color: C.ink }}>{c.name}</Text>
                   <Toggle on={on} color={c.col} />
                 </View>
               </Pressable>
@@ -350,7 +351,7 @@ function StepContexts({
           onPress={onNext}
           style={{ backgroundColor: C.ink, paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center' }}
         >
-          <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 15 }}>Continue</Text>
+          <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>Continue</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -390,11 +391,11 @@ function StepPermissions({
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }} edges={['top', 'bottom']}>
       <Step1Header step={4} onBack={onBack} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: C.red, letterSpacing: 1.5 }}>PERMISSIONS</Text>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.red, letterSpacing: 1.5 }}>PERMISSIONS</Text>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 28, color: C.ink, letterSpacing: -0.7, lineHeight: 32, marginTop: 8 }}>
           Let's set the{'\n'}guardrails.
         </Text>
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
+        <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink2, marginTop: 10, lineHeight: 20 }}>
           Choose what your mentor can do for you. You can change any of these later.
         </Text>
 
@@ -417,8 +418,8 @@ function StepPermissions({
                 <Text style={{ fontSize: 16 }}>{p.icon}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: C.ink }}>{p.t}</Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink2, marginTop: 1, lineHeight: 16 }}>{p.sub}</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: C.ink }}>{p.t}</Text>
+                <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, marginTop: 1, lineHeight: 16 }}>{p.sub}</Text>
               </View>
               <Switch
                 value={prefs.permissions[p.key]}
@@ -433,7 +434,7 @@ function StepPermissions({
         <View style={{
           marginTop: 16, padding: 14, backgroundColor: '#F7F8FB', borderRadius: Radii.sm,
         }}>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink2, lineHeight: 18 }}>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, lineHeight: 18 }}>
             ✦ Your mentor never sends messages without your permission. Quiet by default.
           </Text>
         </View>
@@ -446,7 +447,7 @@ function StepPermissions({
             colors={['#3A4FE3', '#B23A36']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             style={{ paddingVertical: 15, paddingHorizontal: 22, borderRadius: Radii.sm, alignItems: 'center' }}
           >
-            <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 15 }}>You're set — let's begin</Text>
+            <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>You're set — let's begin</Text>
           </LinearGradient>
         </Pressable>
       </View>

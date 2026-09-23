@@ -9,6 +9,7 @@ import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { supabase } from '../../lib/supabase';
 import type { DbWeeklyReview } from '../../types/database';
+import { UIFont, NumFont } from '../../theme/typography';
 
 // Returns "YYYY-MM-DD" for the Monday of the week containing d
 function mondayOfWeek(d: Date): string {
@@ -123,14 +124,14 @@ export function WeeklyReviewScreen() {
     borderRadius: Radii.sm,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontFamily: 'Inter_500Medium' as const,
+    fontFamily: UIFont.medium,
     fontSize: 15,
     color: P.ink,
     textAlign: 'center' as const,
   };
 
   const labelStyle = {
-    fontFamily: 'Inter_500Medium' as const,
+    fontFamily: UIFont.medium,
     fontSize: 12,
     color: P.ink3,
     marginBottom: 4,
@@ -145,9 +146,9 @@ export function WeeklyReviewScreen() {
         paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14, gap: 12,
       }}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
-          <Text style={{ fontSize: 22, color: P.ink, fontFamily: 'Inter_700Bold' }}>‹</Text>
+          <Text style={{ fontSize: 22, color: P.ink, fontFamily: UIFont.bold }}>‹</Text>
         </Pressable>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 17, color: P.ink, letterSpacing: -0.3, flex: 1 }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 17, color: P.ink, letterSpacing: -0.3, flex: 1 }}>
           Weekly Review
         </Text>
       </View>
@@ -166,7 +167,7 @@ export function WeeklyReviewScreen() {
             ...Shadows.card,
           }}>
             <Text style={{
-              fontFamily: 'Inter_600SemiBold', fontSize: 12, color: P.ink2,
+              fontFamily: UIFont.semiBold, fontSize: 12, color: P.ink2,
               textTransform: 'uppercase', letterSpacing: 0.6,
             }}>
               Week of {formatMonday(thisMonday)}
@@ -232,7 +233,7 @@ export function WeeklyReviewScreen() {
                 borderRadius: Radii.sm,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
-                fontFamily: 'Inter_400Regular',
+                fontFamily: UIFont.regular,
                 fontSize: 14,
                 color: P.ink,
                 minHeight: 80,
@@ -256,14 +257,14 @@ export function WeeklyReviewScreen() {
               }}>
                 {saving
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff' }}>Save Review</Text>}
+                  : <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: '#fff' }}>Save Review</Text>}
               </View>
             </Pressable>
           </View>
 
           {/* History */}
           <Text style={{
-            fontFamily: 'Inter_700Bold', fontSize: 11, color: P.ink,
+            fontFamily: UIFont.bold, fontSize: 11, color: P.ink,
             letterSpacing: 0.5, textTransform: 'uppercase',
             marginTop: 4, marginHorizontal: 4,
           }}>
@@ -277,7 +278,7 @@ export function WeeklyReviewScreen() {
               backgroundColor: P.surface, borderRadius: Radii.md,
               padding: 16, borderWidth: 1, borderColor: P.hairline, ...Shadows.card,
             }}>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: P.ink2 }}>
+              <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink2 }}>
                 No past reviews yet.
               </Text>
             </View>
@@ -290,7 +291,7 @@ export function WeeklyReviewScreen() {
                   padding: 14, borderWidth: 1, borderColor: P.hairline,
                   gap: 8, ...Shadows.card,
                 }}>
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
                     {weekRangeLabel(r.week_of)}
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -300,7 +301,7 @@ export function WeeklyReviewScreen() {
                         paddingHorizontal: 10, paddingVertical: 3,
                         borderWidth: 1, borderColor: `${C.green}30`,
                       }}>
-                        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: C.green }}>
+                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: C.green }}>
                           ✓ {r.shipped_count} shipped
                         </Text>
                       </View>
@@ -311,21 +312,21 @@ export function WeeklyReviewScreen() {
                         paddingHorizontal: 10, paddingVertical: 3,
                         borderWidth: 1, borderColor: `${C.orange}30`,
                       }}>
-                        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: C.orange }}>
+                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: C.orange }}>
                           ↷ {r.slipped_count} slipped
                         </Text>
                       </View>
                     )}
                   </View>
                   {(r.focus_hours != null || r.meeting_hours != null) && (
-                    <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: P.ink3 }}>
+                    <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3 }}>
                       {r.focus_hours != null ? `${r.focus_hours}h focus` : ''}
                       {r.focus_hours != null && r.meeting_hours != null ? '  ·  ' : ''}
                       {r.meeting_hours != null ? `${r.meeting_hours}h meetings` : ''}
                     </Text>
                   )}
                   {r.professor_insight ? (
-                    <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink2 }} numberOfLines={2}>
+                    <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink2 }} numberOfLines={2}>
                       {r.professor_insight}
                     </Text>
                   ) : null}

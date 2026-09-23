@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { C, Radii } from '../../theme/tokens';
 import { Logo } from '../../components/atoms/Logo';
 import { MODES, useBehavioralStore } from '../../store/behavioralStore';
+import { UIFont, NumFont } from '../../theme/typography';
 
 export function LoginScreen() {
   const [signing, setSigning] = useState(false);
@@ -54,15 +55,15 @@ export function LoginScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Logo size={44} />
             <View>
-              <Text style={{ color: T.text, fontFamily: 'Inter_800ExtraBold', fontSize: 20, letterSpacing: -0.3 }}>
+              <Text style={{ color: T.text, fontFamily: UIFont.bold, fontSize: 20, letterSpacing: -0.3 }}>
                 The Professor
               </Text>
               {T.badge ? (
-                <Text style={{ color: T.accentBright, fontFamily: 'Inter_700Bold', fontSize: 10, marginTop: 3, letterSpacing: 2 }}>
+                <Text style={{ color: T.accentBright, fontFamily: UIFont.bold, fontSize: 10, marginTop: 3, letterSpacing: 2 }}>
                   {T.badge}
                 </Text>
               ) : (
-                <Text style={{ color: T.textDim, fontFamily: 'Inter_500Medium', fontSize: 11, marginTop: 2, letterSpacing: 1.4 }}>
+                <Text style={{ color: T.textDim, fontFamily: UIFont.medium, fontSize: 11, marginTop: 2, letterSpacing: 1.4 }}>
                   BPA · DAILY DISCIPLINE
                 </Text>
               )}
@@ -71,13 +72,13 @@ export function LoginScreen() {
 
           {/* Hero copy */}
           <View>
-            <Text style={{ color: T.text, fontFamily: 'Inter_800ExtraBold', fontSize: 40, letterSpacing: -1.5, lineHeight: 44 }}>
+            <Text style={{ color: T.text, fontFamily: UIFont.bold, fontSize: 40, letterSpacing: -1.5, lineHeight: 44 }}>
               {T.id === 'samurai' ? 'Discipline.' : T.id === 'pharaoh' ? 'Build Your' : T.id === 'astral' ? 'Think in' : 'Your AI Executive'}
             </Text>
-            <Text style={{ color: T.accentBright, fontFamily: 'Inter_800ExtraBold', fontSize: 40, letterSpacing: -1.5, lineHeight: 44, marginTop: 4 }}>
+            <Text style={{ color: T.accentBright, fontFamily: UIFont.bold, fontSize: 40, letterSpacing: -1.5, lineHeight: 44, marginTop: 4 }}>
               {T.id === 'samurai' ? 'Precision. Mastery.' : T.id === 'pharaoh' ? 'Legacy.' : T.id === 'astral' ? 'Horizons.' : 'Operating System'}
             </Text>
-            <Text style={{ color: T.textDim, fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 22, marginTop: 18, maxWidth: 320 }}>
+            <Text style={{ color: T.textDim, fontFamily: UIFont.regular, fontSize: 15, lineHeight: 22, marginTop: 18, maxWidth: 320 }}>
               {T.tagline}
             </Text>
           </View>
@@ -116,7 +117,7 @@ export function LoginScreen() {
                 >
                   {signing
                     ? <ActivityIndicator color="#fff" />
-                    : <Text style={{ color: T.bg, fontFamily: 'Inter_700Bold', fontSize: 15 }}>Sign in with email</Text>}
+                    : <Text style={{ color: T.bg, fontFamily: UIFont.bold, fontSize: 15 }}>Sign in with email</Text>}
                 </Pressable>
               </View>
             )}
@@ -139,18 +140,18 @@ export function LoginScreen() {
               })}
             >
               <GoogleG />
-              <Text style={{ color: T.text, fontFamily: 'Inter_700Bold', fontSize: 15 }}>
+              <Text style={{ color: T.text, fontFamily: UIFont.bold, fontSize: 15 }}>
                 {signing ? 'Redirecting…' : 'Continue with Google'}
               </Text>
             </Pressable>
 
             <Pressable onPress={() => setShowEmail(s => !s)}>
-              <Text style={{ color: T.textDim, fontFamily: 'Inter_500Medium', fontSize: 13, textAlign: 'center' }}>
+              <Text style={{ color: T.textDim, fontFamily: UIFont.medium, fontSize: 13, textAlign: 'center' }}>
                 {showEmail ? 'Hide email sign-in' : 'Use email and password instead'}
               </Text>
             </Pressable>
 
-            <Text style={{ color: T.textDim, opacity: 0.6, fontFamily: 'Inter_400Regular', fontSize: 11, textAlign: 'center', marginTop: 4 }}>
+            <Text style={{ color: T.textDim, opacity: 0.6, fontFamily: UIFont.regular, fontSize: 11, textAlign: 'center', marginTop: 4 }}>
               Your data is isolated and encrypted. Only you can access it.
             </Text>
           </View>
@@ -168,7 +169,7 @@ const inputStyle = {
   paddingHorizontal: 16,
   paddingVertical: 14,
   color: '#E8EAF6',
-  fontFamily: 'Inter_500Medium',
+  fontFamily: UIFont.medium,
   fontSize: 15,
 } as const;
 

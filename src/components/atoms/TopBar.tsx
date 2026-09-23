@@ -5,6 +5,7 @@ import { Bell } from 'lucide-react-native';
 import { Logo } from './Logo';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScreenPalette } from '../../theme/palette';
+import { UIFont, NumFont } from '../../theme/typography';
 
 interface TopBarProps {
   title: string;
@@ -35,7 +36,7 @@ export function TopBar({ title, subtitle, right, dark: forceDark }: TopBarProps)
           numberOfLines={1}
           style={{
             fontSize: 17,
-            fontFamily: 'Inter_700Bold',
+            fontFamily: UIFont.bold,
             color: dark ? '#fff' : P.ink,
             letterSpacing: -0.3,
           }}
@@ -49,7 +50,7 @@ export function TopBar({ title, subtitle, right, dark: forceDark }: TopBarProps)
               fontSize: 12,
               color: dark ? 'rgba(255,255,255,0.6)' : P.ink3,
               marginTop: 2,
-              fontFamily: 'Inter_500Medium',
+              fontFamily: UIFont.medium,
             }}
           >
             {subtitle}

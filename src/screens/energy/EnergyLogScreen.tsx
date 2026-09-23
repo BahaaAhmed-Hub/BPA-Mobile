@@ -9,6 +9,7 @@ import { C, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { supabase } from '../../lib/supabase';
 import type { DbEnergyLog } from '../../types/database';
+import { UIFont, NumFont } from '../../theme/typography';
 
 function todayIso(): string {
   const d = new Date();
@@ -142,9 +143,9 @@ export function EnergyLogScreen() {
         paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14, gap: 12,
       }}>
         <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
-          <Text style={{ fontSize: 22, color: P.ink, fontFamily: 'Inter_700Bold' }}>‹</Text>
+          <Text style={{ fontSize: 22, color: P.ink, fontFamily: UIFont.bold }}>‹</Text>
         </Pressable>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 17, color: P.ink, letterSpacing: -0.3, flex: 1 }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 17, color: P.ink, letterSpacing: -0.3, flex: 1 }}>
           Energy Log
         </Text>
       </View>
@@ -163,7 +164,7 @@ export function EnergyLogScreen() {
             ...Shadows.card,
           }}>
             <Text style={{
-              fontFamily: 'Inter_600SemiBold', fontSize: 12, color: P.ink2,
+              fontFamily: UIFont.semiBold, fontSize: 12, color: P.ink2,
               textTransform: 'uppercase', letterSpacing: 0.6,
             }}>
               Today · {formatDate(today)}
@@ -171,7 +172,7 @@ export function EnergyLogScreen() {
 
             {/* Morning Energy */}
             <View style={{ gap: 8 }}>
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>
+              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
                 Morning Energy
               </Text>
               <DotRating value={morningLevel} onChange={setMorningLevel} />
@@ -179,7 +180,7 @@ export function EnergyLogScreen() {
 
             {/* Afternoon Energy */}
             <View style={{ gap: 8 }}>
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>
+              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
                 Afternoon Energy
               </Text>
               <DotRating value={afternoonLevel} onChange={setAfternoonLevel} />
@@ -194,7 +195,7 @@ export function EnergyLogScreen() {
                 borderRadius: Radii.sm,
                 paddingHorizontal: 12,
                 paddingVertical: 10,
-                fontFamily: 'Inter_400Regular',
+                fontFamily: UIFont.regular,
                 fontSize: 14,
                 color: P.ink,
                 minHeight: 72,
@@ -218,14 +219,14 @@ export function EnergyLogScreen() {
               }}>
                 {saving
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#fff' }}>Save Log</Text>}
+                  : <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: '#fff' }}>Save Log</Text>}
               </View>
             </Pressable>
           </View>
 
           {/* Past 14 days */}
           <Text style={{
-            fontFamily: 'Inter_700Bold', fontSize: 11, color: P.ink,
+            fontFamily: UIFont.bold, fontSize: 11, color: P.ink,
             letterSpacing: 0.5, textTransform: 'uppercase',
             marginTop: 4, marginHorizontal: 4,
           }}>
@@ -239,7 +240,7 @@ export function EnergyLogScreen() {
               backgroundColor: P.surface, borderRadius: Radii.md,
               padding: 16, borderWidth: 1, borderColor: P.hairline, ...Shadows.card,
             }}>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: P.ink2 }}>
+              <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink2 }}>
                 No past logs yet.
               </Text>
             </View>
@@ -252,21 +253,21 @@ export function EnergyLogScreen() {
                   padding: 14, borderWidth: 1, borderColor: P.hairline,
                   gap: 8, ...Shadows.card,
                 }}>
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: P.ink }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink }}>
                     {formatDate(r.date)}
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
                     <View style={{ gap: 4 }}>
-                      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: P.ink3 }}>Morning</Text>
+                      <Text style={{ fontFamily: UIFont.regular, fontSize: 11, color: P.ink3 }}>Morning</Text>
                       <MiniDotRating value={r.morning_level} />
                     </View>
                     <View style={{ gap: 4 }}>
-                      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: P.ink3 }}>Afternoon</Text>
+                      <Text style={{ fontFamily: UIFont.regular, fontSize: 11, color: P.ink3 }}>Afternoon</Text>
                       <MiniDotRating value={r.afternoon_level} />
                     </View>
                   </View>
                   {r.notes ? (
-                    <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: P.ink2 }} numberOfLines={2}>
+                    <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink2 }} numberOfLines={2}>
                       {r.notes}
                     </Text>
                   ) : null}

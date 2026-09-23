@@ -1,5 +1,6 @@
 import { View, Text, Pressable, ViewStyle } from 'react-native';
 import { C, Radii } from '../../theme/tokens';
+import { UIFont, NumFont } from '../../theme/typography';
 
 /**
  * iOS-style grouped section list — a card with hairline dividers between rows.
@@ -12,7 +13,7 @@ export function ListSection({
     <View style={[{ gap: 8 }, style]}>
       {title ? (
         <Text style={{
-          fontFamily: 'Inter_600SemiBold', fontSize: 12, color: C.ink3,
+          fontFamily: UIFont.semiBold, fontSize: 12, color: C.ink3,
           letterSpacing: 0.5, marginLeft: 14, textTransform: 'uppercase',
         }}>
           {title}
@@ -59,7 +60,7 @@ export function ListRow({ label, right, expanded, active, onPress, last, accent 
       }}>
         {accent ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: accent }} /> : null}
         <Text style={{
-          fontFamily: 'Inter_500Medium', fontSize: 14,
+          fontFamily: UIFont.medium, fontSize: 14,
           color: active ? C.indigo : C.ink, flex: right ? undefined : 1,
         }}>
           {label}

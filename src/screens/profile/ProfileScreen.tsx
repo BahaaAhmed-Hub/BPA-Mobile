@@ -9,6 +9,7 @@ import { C, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
+import { UIFont, NumFont } from '../../theme/typography';
 
 export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -41,14 +42,14 @@ export function ProfileScreen() {
             backgroundColor: P.isDark ? `${P.accent}25` : C.indigoSoft,
             alignItems: 'center', justifyContent: 'center',
           }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 28, color: P.accent }}>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 28, color: P.accent }}>
               {(user?.name ?? user?.email ?? '?').charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: P.ink }}>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: P.ink }}>
             {user?.name ?? 'Operator'}
           </Text>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: P.ink3 }}>{user?.email ?? ''}</Text>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: P.ink3 }}>{user?.email ?? ''}</Text>
         </View>
 
         <SettingsRow
@@ -93,7 +94,7 @@ export function ProfileScreen() {
             borderRadius: Radii.md, padding: 16, alignItems: 'center',
             borderWidth: 1, borderColor: 'rgba(178,58,54,0.18)',
           }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: C.red }}>Sign out</Text>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: C.red }}>Sign out</Text>
           </View>
         </Pressable>
       </ScrollView>
@@ -115,8 +116,8 @@ function SettingsRow({
       opacity: disabled ? 0.6 : 1,
     }}>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: P.ink }}>{label}</Text>
-        {hint ? <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: P.ink3, marginTop: 2 }}>{hint}</Text> : null}
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }}>{label}</Text>
+        {hint ? <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3, marginTop: 2 }}>{hint}</Text> : null}
       </View>
       <Text style={{ color: P.ink3, fontSize: 18 }}>›</Text>
     </View>

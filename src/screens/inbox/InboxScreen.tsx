@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useEmailActionsStore } from '../../store/emailActionsStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
 import type { DbEmailAction, DbEmailClassification } from '../../types/database';
+import { UIFont, NumFont } from '../../theme/typography';
 
 const CLASS_META: Record<DbEmailClassification, { label: string; color: string; soft: string; icon: string }> = {
   decision: { label: 'Decision', color: C.red,    soft: 'rgba(178,58,54,0.10)', icon: '⚡' },
@@ -55,11 +56,11 @@ export function InboxScreen() {
           alignItems: 'center', justifyContent: 'center',
           backgroundColor: C.card, borderWidth: 1, borderColor: C.hairline,
         }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: C.ink, letterSpacing: -0.3 }}>Inbox</Text>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: C.ink3, marginTop: 1 }}>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: C.ink, letterSpacing: -0.3 }}>Inbox</Text>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: C.ink3, marginTop: 1 }}>
             {actions.length === 0 ? 'No items yet' : `${actions.length} action${actions.length === 1 ? '' : 's'} triaged`}
           </Text>
         </View>
@@ -84,12 +85,12 @@ export function InboxScreen() {
                 borderWidth: active ? 0 : 1, borderColor: C.hairline,
                 flexDirection: 'row', alignItems: 'center', gap: 6,
               }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: active ? '#fff' : color }}>{label}</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? '#fff' : color }}>{label}</Text>
                 <View style={{
                   paddingHorizontal: 6, paddingVertical: 1, borderRadius: Radii.pill,
                   backgroundColor: active ? 'rgba(255,255,255,0.25)' : '#fff',
                 }}>
-                  <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, color: active ? '#fff' : color }}>
+                  <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: active ? '#fff' : color }}>
                     {count}
                   </Text>
                 </View>
@@ -109,8 +110,8 @@ export function InboxScreen() {
             padding: 18, borderWidth: 1, borderColor: C.hairline,
             ...Shadows.card,
           }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: C.ink }}>Quiet inbox</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: C.ink2, marginTop: 4 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: C.ink }}>Quiet inbox</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: C.ink2, marginTop: 4 }}>
               {actions.length === 0
                 ? 'Once Gmail triage is wired, classified emails will land here for review. For now this reads from email_actions in Supabase — populate it from the web app or seed manually to see entries.'
                 : 'No items match this filter.'}
@@ -129,20 +130,20 @@ export function InboxScreen() {
               <View style={{ alignItems: 'center' }}>
                 <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: C.hairline }} />
               </View>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: C.ink }} numberOfLines={2}>
+              <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: C.ink }} numberOfLines={2}>
                 {previewing?.subject ?? '(no subject)'}
               </Text>
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: C.ink3 }} numberOfLines={1}>
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: C.ink3 }} numberOfLines={1}>
                 From {previewing?.from_email ?? 'unknown sender'}
               </Text>
               <View style={{
                 backgroundColor: C.bg, borderRadius: Radii.sm, padding: 14,
                 borderWidth: 1, borderColor: C.hairline,
               }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>
+                <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>
                   SUGGESTED REPLY
                 </Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: C.ink, marginTop: 8, lineHeight: 20 }}>
+                <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink, marginTop: 8, lineHeight: 20 }}>
                   {previewing?.suggested_reply ?? '— No suggestion generated. Generate one from the web app or wait for the next AI triage pass.'}
                 </Text>
               </View>
@@ -183,10 +184,10 @@ function ActionRow({
             <Text style={{ fontSize: 14, color: meta.color }}>{meta.icon}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: C.ink, letterSpacing: -0.2 }} numberOfLines={1}>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 14, color: C.ink, letterSpacing: -0.2 }} numberOfLines={1}>
               {action.subject ?? '(no subject)'}
             </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink2, marginTop: 3 }} numberOfLines={1}>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, marginTop: 3 }} numberOfLines={1}>
               {action.from_email ?? 'unknown sender'}
             </Text>
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, alignItems: 'center' }}>
@@ -194,12 +195,12 @@ function ActionRow({
                 paddingHorizontal: 8, paddingVertical: 2, borderRadius: Radii.pill,
                 backgroundColor: meta.soft,
               }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: meta.color, letterSpacing: 0.4 }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: meta.color, letterSpacing: 0.4 }}>
                   {meta.label.toUpperCase()}
                 </Text>
               </View>
               {action.follow_up_date ? (
-                <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, color: C.ink3 }}>
+                <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: C.ink3 }}>
                   ⏱ {action.follow_up_date}
                 </Text>
               ) : null}
@@ -213,7 +214,7 @@ function ActionRow({
               alignItems: 'center', justifyContent: 'center',
               marginTop: 4,
             }}>
-              {done ? <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 12, lineHeight: 12 }}>✓</Text> : null}
+              {done ? <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 12, lineHeight: 12 }}>✓</Text> : null}
             </View>
           </Pressable>
         </View>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import { C, Radii } from '../../theme/tokens';
+import { UIFont, NumFont } from '../../theme/typography';
 
 interface Props {
   label: string;
@@ -47,7 +48,7 @@ export function InlineEdit({
 
   return (
     <View style={{ gap: 6 }}>
-      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>
+      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: C.ink3, letterSpacing: 1.2 }}>
         {label.toUpperCase()}
       </Text>
       {editing && !readOnly ? (
@@ -68,7 +69,7 @@ export function InlineEdit({
             borderRadius: Radii.sm,
             borderWidth: 1, borderColor: C.indigo,
             paddingHorizontal: 14, paddingVertical: 12,
-            fontFamily: monospace ? 'JetBrainsMono_500Medium' : 'Inter_400Regular',
+            fontFamily: monospace ? NumFont.medium : UIFont.regular,
             fontSize: 15, color: C.ink, minHeight: multiline ? 64 : 44,
           }}
         />
@@ -84,7 +85,7 @@ export function InlineEdit({
             opacity: readOnly ? 0.6 : 1,
           }}>
             <Text style={{
-              fontFamily: monospace ? 'JetBrainsMono_500Medium' : 'Inter_400Regular',
+              fontFamily: monospace ? NumFont.medium : UIFont.regular,
               fontSize: 15,
               color: value ? C.ink : C.ink3,
             }}>

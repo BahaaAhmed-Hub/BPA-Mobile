@@ -11,6 +11,7 @@ import { useScreenPalette, type ScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { DbTask, DbHabit, DbCalendarEvent } from '../../types/database';
+import { UIFont, NumFont } from '../../theme/typography';
 
 type Signal =
   | { kind: 'overdue';   id: string; task: DbTask;   accent: string; icon: string; sortAt: number; }
@@ -160,7 +161,7 @@ export function NotificationsScreen() {
                 backgroundColor: active ? P.ink : P.surface,
                 borderWidth: active ? 0 : 1, borderColor: P.hairline,
               }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: active ? P.bg : P.ink }}>{f}</Text>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? P.bg : P.ink }}>{f}</Text>
               </View>
             </Pressable>
           );
@@ -173,8 +174,8 @@ export function NotificationsScreen() {
       >
         {filtered.length === 0 ? (
           <View style={{ padding: 32, alignItems: 'center' }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: P.ink2 }}>You're caught up</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink3, marginTop: 6, textAlign: 'center' }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 16, color: P.ink2 }}>You're caught up</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink3, marginTop: 6, textAlign: 'center' }}>
               No active signals match this filter.
             </Text>
           </View>
@@ -213,9 +214,9 @@ function SignalCard({ signal, onOpen }: { signal: Signal; onOpen: (s: Signal) =>
             <Text style={{ fontSize: 14, color: signal.accent }}>{signal.icon}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: P.ink, letterSpacing: -0.2 }} numberOfLines={1}>{title}</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: P.ink2, marginTop: 3, lineHeight: 18 }}>{body}</Text>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, marginTop: 6 }}>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 14, color: P.ink, letterSpacing: -0.2 }} numberOfLines={1}>{title}</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: P.ink2, marginTop: 3, lineHeight: 18 }}>{body}</Text>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, marginTop: 6 }}>
               {fmtRelative(new Date(signal.sortAt))}
             </Text>
           </View>

@@ -6,6 +6,7 @@ import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceBudget, DbFinanceBill, DbFinanceGoal, TxType } from '../../types/financeTypes';
+import { UIFont, NumFont } from '../../theme/typography';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ export function FinanceScreen() {
               backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center',
             }}
           >
-            <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 18, lineHeight: 18 }}>＋</Text>
+            <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 18, lineHeight: 18 }}>＋</Text>
           </Pressable>
         }
       />
@@ -75,7 +76,7 @@ export function FinanceScreen() {
                 backgroundColor: active ? P.ink : P.surface,
                 borderWidth: active ? 0 : 1, borderColor: P.hairline,
               }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: active ? P.bg : P.ink }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: active ? P.bg : P.ink }}>
                   {t}
                 </Text>
               </View>
@@ -135,11 +136,11 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         padding: 20, gap: 12,
         ...Shadows.pop,
       }}>
-        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.4 }}>
+        <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.4 }}>
           NET POSITION
         </Text>
         <Text style={{
-          fontFamily: 'Inter_700Bold', fontSize: 32, letterSpacing: -0.8,
+          fontFamily: UIFont.bold, fontSize: 32, letterSpacing: -0.8,
           color: netEGP >= 0 ? '#4ADE80' : '#F87171',
         }}>
           {netEGP < 0 ? `(EGP ${Math.abs(netEGP).toLocaleString('en-US', { maximumFractionDigits: 0 })})` : `EGP ${netEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
@@ -148,8 +149,8 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         {/* Held / Owed bar */}
         <View style={{ gap: 6 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>HELD</Text>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>OWED</Text>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>HELD</Text>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>OWED</Text>
           </View>
           <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 3, overflow: 'hidden' }}>
             {owedEGP + heldEGP > 0 ? (
@@ -161,10 +162,10 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
             ) : null}
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#4ADE80' }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: '#4ADE80' }}>
               EGP {heldEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#F87171' }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: '#F87171' }}>
               EGP {owedEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
@@ -173,12 +174,12 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1 }}>SAFE TO SPEND</Text>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: '#fff', marginTop: 2 }}>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1 }}>SAFE TO SPEND</Text>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: '#fff', marginTop: 2 }}>
               EGP {heldEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>After unpaid bills</Text>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>After unpaid bills</Text>
         </View>
       </View>
 
@@ -219,8 +220,8 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
 function SectionLabel({ title, total, totalColor, P }: { title: string; total?: string; totalColor?: string; P: ReturnType<typeof useScreenPalette> }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 2 }}>
-      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: P.ink3, letterSpacing: 1.2 }}>{title}</Text>
-      {total ? <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, color: totalColor ?? P.ink2 }}>{total}</Text> : null}
+      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink3, letterSpacing: 1.2 }}>{title}</Text>
+      {total ? <Text style={{ fontFamily: NumFont.medium, fontSize: 12, color: totalColor ?? P.ink2 }}>{total}</Text> : null}
     </View>
   );
 }
@@ -242,11 +243,11 @@ function AccountRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnTyp
         <Text style={{ fontSize: 20 }}>{a.emoji}</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>{a.name}</Text>
-        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: P.ink3, marginTop: 1 }}>{a.bank}</Text>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{a.name}</Text>
+        <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 1 }}>{a.bank}</Text>
       </View>
       <Text style={{
-        fontFamily: 'JetBrainsMono_500Medium', fontSize: 15,
+        fontFamily: NumFont.medium, fontSize: 15,
         color: isNeg ? C.red : P.ink,
       }}>
         {fmt(a.balance, a.currency)}
@@ -276,10 +277,10 @@ function CardRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<t
           <Text style={{ fontSize: 20 }}>{a.emoji}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>{a.name}</Text>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: P.ink3, marginTop: 1 }}>{a.bank}</Text>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{a.name}</Text>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 1 }}>{a.bank}</Text>
         </View>
-        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 15, color: C.red }}>
+        <Text style={{ fontFamily: NumFont.medium, fontSize: 15, color: C.red }}>
           {fmt(-owed, a.currency)}
         </Text>
       </View>
@@ -288,7 +289,7 @@ function CardRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<t
           <View style={{ height: 4, backgroundColor: P.hairline, borderRadius: 2, overflow: 'hidden' }}>
             <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${used * 100}%`, backgroundColor: used > 0.8 ? C.red : C.orange, borderRadius: 2 }} />
           </View>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3 }}>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
             {Math.round(used * 100)}% of {fmt(limit, a.currency)} limit used
           </Text>
         </View>
@@ -321,10 +322,10 @@ function TxRow({ tx, P }: { tx: DbFinanceTransaction; P: ReturnType<typeof useSc
         <Text style={{ fontSize: 16 }}>{cat?.icon ?? (isIncome ? '💰' : '💸')}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }} numberOfLines={1}>{tx.payee || cat?.name || 'Transaction'}</Text>
-        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: P.ink3, marginTop: 1 }}>{dayLabel}{cat ? ` · ${cat.name}` : ''}</Text>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }} numberOfLines={1}>{tx.payee || cat?.name || 'Transaction'}</Text>
+        <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 1 }}>{dayLabel}{cat ? ` · ${cat.name}` : ''}</Text>
       </View>
-      <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: amtColor }}>
+      <Text style={{ fontFamily: NumFont.medium, fontSize: 14, color: amtColor }}>
         {prefix}{tx.currency} {tx.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
       </Text>
     </View>
@@ -402,23 +403,23 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
       {/* Month header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Pressable onPress={prevMonth} hitSlop={12}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink3 }}>‹</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
             {MONTH_NAMES[viewMonth]} {viewYear}
           </Text>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, color: C.red }}>
+            <Text style={{ fontFamily: NumFont.medium, fontSize: 12, color: C.red }}>
               OUT ({monthOut.toLocaleString('en-US', { maximumFractionDigits: 0 })})
             </Text>
-            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, color: C.green }}>
+            <Text style={{ fontFamily: NumFont.medium, fontSize: 12, color: C.green }}>
               IN {monthIn.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
         </View>
         <Pressable onPress={nextMonth} hitSlop={12}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink3 }}>›</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>›</Text>
         </Pressable>
       </View>
 
@@ -426,7 +427,7 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
       <View style={{ flexDirection: 'row' }}>
         {DAY_LETTERS.map((l, i) => (
           <View key={i} style={{ flex: 1, alignItems: 'center', paddingBottom: 6 }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: P.ink3 }}>{l}</Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink3 }}>{l}</Text>
           </View>
         ))}
       </View>
@@ -453,12 +454,12 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
                     paddingVertical: 8, alignItems: 'center', minHeight: 56,
                   }}>
                     <Text style={{
-                      fontFamily: 'Inter_700Bold', fontSize: 14,
+                      fontFamily: UIFont.bold, fontSize: 14,
                       color: isSelected ? P.bg : isToday ? P.accent : P.ink,
                     }}>{day}</Text>
                     {hasActivity ? (
                       <Text style={{
-                        fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, marginTop: 2,
+                        fontFamily: NumFont.medium, fontSize: 9, marginTop: 2,
                         color: isSelected ? P.bg : net >= 0 ? C.green : C.red,
                       }} numberOfLines={1}>
                         {fmtCompact(net)}
@@ -474,12 +475,12 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
 
       {/* Selected day transactions */}
       <View style={{ gap: 8 }}>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: P.ink2, letterSpacing: 1.2 }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 13, color: P.ink2, letterSpacing: 1.2 }}>
           {new Date(`${selectedDay}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
         </Text>
         {selectedTxs.length === 0 ? (
           <View style={{ padding: 24, alignItems: 'center' }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink3 }}>Nothing on this day</Text>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink3 }}>Nothing on this day</Text>
           </View>
         ) : (
           selectedTxs.map(t => <TxRow key={t.id} tx={t} P={P} />)
@@ -538,13 +539,13 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
       {/* Year selector */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
         <Pressable onPress={() => setYear(y => y - 1)} hitSlop={12}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink3 }}>‹</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink, letterSpacing: -0.3 }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink, letterSpacing: -0.3 }}>
           Financials, {year}
         </Text>
         <Pressable onPress={() => setYear(y => y + 1)} hitSlop={12}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink3 }}>›</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>›</Text>
         </Pressable>
       </View>
 
@@ -556,22 +557,22 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
       }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <View>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, letterSpacing: 1 }}>INCOME</Text>
-            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 17, color: C.green, marginTop: 2 }}>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 1 }}>INCOME</Text>
+            <Text style={{ fontFamily: NumFont.medium, fontSize: 17, color: C.green, marginTop: 2 }}>
               EGP {incomeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, letterSpacing: 1 }}>EXPENSES</Text>
-            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 17, color: C.red, marginTop: 2 }}>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 1 }}>EXPENSES</Text>
+            <Text style={{ fontFamily: NumFont.medium, fontSize: 17, color: C.red, marginTop: 2 }}>
               ({expenseTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })})
             </Text>
           </View>
         </View>
         <View style={{ height: 1, backgroundColor: P.hairline }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: P.ink2 }}>NET THROUGH {MONTH_NAMES[new Date().getMonth()]}</Text>
-          <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 18, color: net >= 0 ? C.green : C.red }}>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink2 }}>NET THROUGH {MONTH_NAMES[new Date().getMonth()]}</Text>
+          <Text style={{ fontFamily: NumFont.medium, fontSize: 18, color: net >= 0 ? C.green : C.red }}>
             {net < 0 ? `(EGP ${Math.abs(net).toLocaleString('en-US', {maximumFractionDigits:0})})` : `EGP ${net.toLocaleString('en-US',{maximumFractionDigits:0})}`}
           </Text>
         </View>
@@ -590,7 +591,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
                 borderColor: active ? color : P.hairline,
                 backgroundColor: active ? `${color}15` : P.surface,
               }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: active ? color : P.ink2, textTransform: 'capitalize' }}>
+                <Text style={{ fontFamily: UIFont.bold, fontSize: 13, color: active ? color : P.ink2, textTransform: 'capitalize' }}>
                   {s}
                 </Text>
               </View>
@@ -602,7 +603,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
       {/* Category breakdown */}
       {byCategory.length === 0 ? (
         <View style={{ padding: 32, alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink3 }}>No {section} data for {year}</Text>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink3 }}>No {section} data for {year}</Text>
         </View>
       ) : (
         <View style={{ gap: 8 }}>
@@ -624,8 +625,8 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>{cat?.name ?? 'Uncategorized'}</Text>
-                      <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: section === 'income' ? C.green : C.red }}>
+                      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{cat?.name ?? 'Uncategorized'}</Text>
+                      <Text style={{ fontFamily: NumFont.medium, fontSize: 14, color: section === 'income' ? C.green : C.red }}>
                         {total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                       </Text>
                     </View>
@@ -637,7 +638,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
                         borderRadius: 2,
                       }} />
                     </View>
-                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, marginTop: 3 }}>
+                    <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, marginTop: 3 }}>
                       {Math.round(pct * 100)}% of total {section}
                     </Text>
                   </View>
@@ -653,8 +654,8 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
             borderWidth: 1, borderColor: section === 'income' ? `${C.green}30` : `${C.red}30`,
             flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: P.ink }}>Total {section}</Text>
-            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 16, color: section === 'income' ? C.green : C.red }}>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 14, color: P.ink }}>Total {section}</Text>
+            <Text style={{ fontFamily: NumFont.medium, fontSize: 16, color: section === 'income' ? C.green : C.red }}>
               EGP {grandTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
@@ -721,20 +722,20 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
       {/* Month navigator */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Pressable onPress={prevMonth} hitSlop={12}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink3 }}>‹</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
+        <Text style={{ fontFamily: UIFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
           {MONTH_NAMES[viewMonth]} {viewYear}
         </Text>
         <Pressable onPress={nextMonth} hitSlop={12}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: P.ink3 }}>›</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>›</Text>
         </Pressable>
       </View>
 
       {/* Budget rows */}
       {monthBudgets.length === 0 ? (
         <View style={{ padding: 40, alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink3 }}>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink3 }}>
             No budgets set for this month
           </Text>
         </View>
@@ -763,15 +764,15 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
                     <Text style={{ fontSize: 16 }}>{cat?.icon ?? '📁'}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>
+                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
                       {cat?.name ?? 'Uncategorized'}
                     </Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, color: P.ink3 }}>
+                    <Text style={{ fontFamily: NumFont.medium, fontSize: 12, color: P.ink3 }}>
                       planned {budget.currency} {budget.planned_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </Text>
-                    <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 13, color: over ? C.red : P.ink2, marginTop: 1 }}>
+                    <Text style={{ fontFamily: NumFont.medium, fontSize: 13, color: over ? C.red : P.ink2, marginTop: 1 }}>
                       spent {spent.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </Text>
                   </View>
@@ -784,7 +785,7 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
                       backgroundColor: barColor, borderRadius: 3,
                     }} />
                   </View>
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: over ? C.red : P.ink3 }}>
+                  <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: over ? C.red : P.ink3 }}>
                     {Math.round(pct * 100)}% used{over ? ' — OVER BUDGET' : ''}
                   </Text>
                 </View>
@@ -816,8 +817,8 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
                   <Text style={{ fontSize: 16 }}>{cat?.icon ?? '🧾'}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>{bill.name}</Text>
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: P.ink3, marginTop: 1 }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{bill.name}</Text>
+                  <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 1 }}>
                     Due day {bill.due_day}
                   </Text>
                 </View>
@@ -826,12 +827,12 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
                     backgroundColor: `${C.orange}20`, borderRadius: Radii.pill,
                     paddingHorizontal: 8, paddingVertical: 3, marginRight: 6,
                   }}>
-                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: C.orange, letterSpacing: 0.6 }}>
+                    <Text style={{ fontFamily: UIFont.bold, fontSize: 10, color: C.orange, letterSpacing: 0.6 }}>
                       DUE SOON
                     </Text>
                   </View>
                 ) : null}
-                <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: P.ink }}>
+                <Text style={{ fontFamily: NumFont.medium, fontSize: 14, color: P.ink }}>
                   {bill.currency} {bill.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </Text>
               </View>
@@ -858,7 +859,7 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
         contentContainerStyle={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 120 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={P.accent} />}
       >
-        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink3 }}>No goals yet</Text>
+        <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink3 }}>No goals yet</Text>
       </ScrollView>
     );
   }
@@ -899,7 +900,7 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
                     backgroundColor: `${goal.color}30`, borderRadius: Radii.pill,
                     paddingHorizontal: 7, paddingVertical: 2,
                   }}>
-                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: goal.color }}>
+                    <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: goal.color }}>
                       {Math.round(pct * 100)}%
                     </Text>
                   </View>
@@ -907,11 +908,11 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
 
                 {/* Name + sub_label */}
                 <View>
-                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: P.ink }} numberOfLines={1}>
+                  <Text style={{ fontFamily: UIFont.bold, fontSize: 14, color: P.ink }} numberOfLines={1}>
                     {goal.name}
                   </Text>
                   {goal.sub_label ? (
-                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, marginTop: 1 }} numberOfLines={1}>
+                    <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, marginTop: 1 }} numberOfLines={1}>
                       {goal.sub_label}
                     </Text>
                   ) : null}
@@ -928,10 +929,10 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
 
                 {/* Amounts */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 13, color: goal.color }}>
+                  <Text style={{ fontFamily: NumFont.medium, fontSize: 13, color: goal.color }}>
                     {goal.current_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                   </Text>
-                  <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 11, color: P.ink3 }}>
+                  <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: P.ink3 }}>
                     / {goal.target_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                   </Text>
                 </View>
@@ -1025,13 +1026,13 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
                     borderTopLeftRadius: 4, borderTopRightRadius: 4,
                   }} />
                   <Text style={{
-                    fontFamily: m.isCurrent ? 'Inter_700Bold' : 'Inter_400Regular',
+                    fontFamily: m.isCurrent ? UIFont.bold : UIFont.regular,
                     fontSize: 10,
                     color: m.isCurrent ? P.ink : P.ink3,
                   }}>
                     {m.label}
                   </Text>
-                  <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 9, color: P.ink3 }}>
+                  <Text style={{ fontFamily: NumFont.medium, fontSize: 9, color: P.ink3 }}>
                     {fmtCompact(m.total)}
                   </Text>
                 </View>
@@ -1047,7 +1048,7 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         <View style={{ gap: 8, marginTop: 8 }}>
           {topCategories.length === 0 ? (
             <View style={{ padding: 24, alignItems: 'center' }}>
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: P.ink3 }}>No expense data this month</Text>
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink3 }}>No expense data this month</Text>
             </View>
           ) : (
             topCategories.map(({ cat, total }) => {
@@ -1068,10 +1069,10 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
                     </View>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: P.ink }}>
+                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
                           {cat?.name ?? 'Uncategorized'}
                         </Text>
-                        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: C.red }}>
+                        <Text style={{ fontFamily: NumFont.medium, fontSize: 14, color: C.red }}>
                           {total.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                         </Text>
                       </View>
@@ -1082,7 +1083,7 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
                           backgroundColor: cat?.color ?? C.red, borderRadius: 2,
                         }} />
                       </View>
-                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, marginTop: 3 }}>
+                      <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, marginTop: 3 }}>
                         {Math.round(pct * 100)}% of total expenses
                       </Text>
                     </View>
@@ -1103,8 +1104,8 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
             borderWidth: 1, borderColor: P.hairline,
             ...Shadows.card,
           }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, letterSpacing: 1 }}>INCOME</Text>
-            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 17, color: C.green, marginTop: 4 }}>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 1 }}>INCOME</Text>
+            <Text style={{ fontFamily: NumFont.medium, fontSize: 17, color: C.green, marginTop: 4 }}>
               {fmt(incomeThisMonth, 'EGP')}
             </Text>
           </View>
@@ -1113,8 +1114,8 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
             borderWidth: 1, borderColor: P.hairline,
             ...Shadows.card,
           }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: P.ink3, letterSpacing: 1 }}>EXPENSES</Text>
-            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 17, color: C.red, marginTop: 4 }}>
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3, letterSpacing: 1 }}>EXPENSES</Text>
+            <Text style={{ fontFamily: NumFont.medium, fontSize: 17, color: C.red, marginTop: 4 }}>
               {fmt(expensesThisMonth, 'EGP')}
             </Text>
           </View>
@@ -1162,7 +1163,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable onPress={onClose} style={{ flex: 1, backgroundColor: 'rgba(11,18,32,0.5)', justifyContent: 'flex-end' }}>
         <Pressable onPress={() => {}} style={{ backgroundColor: P.surface, padding: 20, borderTopLeftRadius: 28, borderTopRightRadius: 28, gap: 14 }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: P.ink }}>Add transaction</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: P.ink }}>Add transaction</Text>
 
           {/* Type toggle */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -1177,7 +1178,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
                     borderColor: active ? color : P.hairline,
                     backgroundColor: active ? `${color}15` : 'transparent',
                   }}>
-                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: active ? color : P.ink2, textTransform: 'capitalize' }}>
+                    <Text style={{ fontFamily: UIFont.bold, fontSize: 13, color: active ? color : P.ink2, textTransform: 'capitalize' }}>
                       {t}
                     </Text>
                   </View>
@@ -1196,7 +1197,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
             style={{
               borderWidth: 1, borderColor: P.hairline, borderRadius: Radii.sm,
               paddingHorizontal: 14, paddingVertical: 12,
-              fontFamily: 'JetBrainsMono_500Medium', fontSize: 22, color: P.ink,
+              fontFamily: NumFont.medium, fontSize: 22, color: P.ink,
               textAlign: 'center',
             }}
           />
@@ -1210,7 +1211,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
             style={{
               borderWidth: 1, borderColor: P.hairline, borderRadius: Radii.sm,
               paddingHorizontal: 14, paddingVertical: 12,
-              fontFamily: 'Inter_500Medium', fontSize: 15, color: P.ink,
+              fontFamily: UIFont.medium, fontSize: 15, color: P.ink,
             }}
           />
 
@@ -1228,7 +1229,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
                     backgroundColor: active ? `${c.color}20` : 'transparent',
                   }}>
                     <Text style={{ fontSize: 14 }}>{c.icon}</Text>
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: active ? c.color : P.ink2 }}>{c.name}</Text>
+                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? c.color : P.ink2 }}>{c.name}</Text>
                   </View>
                 </Pressable>
               );
@@ -1249,7 +1250,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
                     backgroundColor: active ? `${a.color}20` : 'transparent',
                   }}>
                     <Text style={{ fontSize: 14 }}>{a.emoji}</Text>
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: active ? a.color : P.ink2 }}>{a.name}</Text>
+                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? a.color : P.ink2 }}>{a.name}</Text>
                   </View>
                 </Pressable>
               );
@@ -1265,7 +1266,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
               paddingVertical: 14, borderRadius: Radii.sm, alignItems: 'center',
             }}
           >
-            <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 15 }}>Save</Text>
+            <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 15 }}>Save</Text>
           </Pressable>
         </Pressable>
       </Pressable>

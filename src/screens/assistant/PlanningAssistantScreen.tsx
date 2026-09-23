@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { C, Radii } from '../../theme/tokens';
 import { supabase } from '../../lib/supabase';
+import { UIFont, NumFont } from '../../theme/typography';
 
 type Msg = { id: string; role: 'user' | 'assistant'; text: string; ts: number };
 
@@ -33,7 +34,7 @@ function TypingBubble() {
   }, []);
   return (
     <View style={{ alignItems: 'flex-start', marginBottom: 12, maxWidth: '85%' }}>
-      <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontFamily: 'Inter_500Medium' }}>
+      <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontFamily: UIFont.medium }}>
         ✦ The Professor
       </Text>
       <View
@@ -46,7 +47,7 @@ function TypingBubble() {
           paddingVertical: 10,
         }}
       >
-        <Text style={{ color: '#fff', fontFamily: 'Inter_400Regular', fontSize: 15, letterSpacing: 2 }}>
+        <Text style={{ color: '#fff', fontFamily: UIFont.regular, fontSize: 15, letterSpacing: 2 }}>
           {dots}
         </Text>
       </View>
@@ -68,11 +69,11 @@ function MessageBubble({ msg }: { msg: Msg }) {
             maxWidth: '78%',
           }}
         >
-          <Text style={{ color: '#fff', fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 22 }}>
+          <Text style={{ color: '#fff', fontFamily: UIFont.regular, fontSize: 15, lineHeight: 22 }}>
             {msg.text}
           </Text>
         </View>
-        <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, fontFamily: 'Inter_400Regular' }}>
+        <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, fontFamily: UIFont.regular }}>
           {formatTime(msg.ts)}
         </Text>
       </View>
@@ -80,7 +81,7 @@ function MessageBubble({ msg }: { msg: Msg }) {
   }
   return (
     <View style={{ alignItems: 'flex-start', marginBottom: 12, maxWidth: '85%' }}>
-      <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontFamily: 'Inter_500Medium' }}>
+      <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 4, fontFamily: UIFont.medium }}>
         ✦ The Professor
       </Text>
       <View
@@ -93,11 +94,11 @@ function MessageBubble({ msg }: { msg: Msg }) {
           paddingVertical: 10,
         }}
       >
-        <Text style={{ color: '#fff', fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 22 }}>
+        <Text style={{ color: '#fff', fontFamily: UIFont.regular, fontSize: 15, lineHeight: 22 }}>
           {msg.text}
         </Text>
       </View>
-      <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, fontFamily: 'Inter_400Regular' }}>
+      <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, fontFamily: UIFont.regular }}>
         {formatTime(msg.ts)}
       </Text>
     </View>
@@ -173,11 +174,11 @@ export function PlanningAssistantScreen() {
           }}
         >
           <Pressable onPress={() => navigation.goBack()} hitSlop={12} style={{ marginRight: 12 }}>
-            <Text style={{ color: C.indigo, fontSize: 22, fontFamily: 'Inter_600SemiBold' }}>‹</Text>
+            <Text style={{ color: C.indigo, fontSize: 22, fontFamily: UIFont.semiBold }}>‹</Text>
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 17, color: '#fff' }}>The Professor</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 17, color: '#fff' }}>The Professor</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 1 }}>
               AI Executive Coach
             </Text>
           </View>
@@ -207,14 +208,14 @@ export function PlanningAssistantScreen() {
                   >
                     <Text style={{ fontSize: 28 }}>✦</Text>
                   </View>
-                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: '#fff', marginBottom: 4 }}>
+                  <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: '#fff', marginBottom: 4 }}>
                     The Professor
                   </Text>
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
+                  <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
                     Your AI executive coach.{'\n'}Ask about your day, tasks, or strategy.
                   </Text>
                 </View>
-                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 10, letterSpacing: 0.8 }}>
+                <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 10, letterSpacing: 0.8 }}>
                   SUGGESTIONS
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -231,7 +232,7 @@ export function PlanningAssistantScreen() {
                         paddingVertical: 8,
                       })}
                     >
-                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: '#fff' }}>{chip}</Text>
+                      <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: '#fff' }}>{chip}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -261,7 +262,7 @@ export function PlanningAssistantScreen() {
             style={{
               flex: 1,
               color: '#fff',
-              fontFamily: 'Inter_400Regular',
+              fontFamily: UIFont.regular,
               fontSize: 15,
               lineHeight: 22,
               maxHeight: 96,
@@ -296,7 +297,7 @@ export function PlanningAssistantScreen() {
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={{ color: '#fff', fontSize: 20, lineHeight: 22, fontFamily: 'Inter_600SemiBold' }}>↑</Text>
+              <Text style={{ color: '#fff', fontSize: 20, lineHeight: 22, fontFamily: UIFont.semiBold }}>↑</Text>
             )}
           </Pressable>
         </View>

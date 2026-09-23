@@ -7,6 +7,7 @@ import { useCalendarStore } from '../../store/calendarStore';
 import { C, Radii } from '../../theme/tokens';
 import { ListRow, ListSection } from '../../components/atoms/ListRow';
 import type { DbCalendarEvent } from '../../types/database';
+import { UIFont, NumFont } from '../../theme/typography';
 
 type DetailRoute = RouteProp<{ EventDetail: { eventId: string } }, 'EventDetail'>;
 
@@ -40,7 +41,7 @@ export function EventDetailScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
         <Header onBack={() => navigation.goBack()} />
         <View style={{ padding: 24, alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_500Medium', color: C.ink2 }}>Event not found.</Text>
+          <Text style={{ fontFamily: UIFont.medium, color: C.ink2 }}>Event not found.</Text>
         </View>
       </SafeAreaView>
     );
@@ -119,7 +120,7 @@ export function EventDetailScreen() {
                   placeholder="Title"
                   placeholderTextColor={C.ink3}
                   style={{
-                    fontFamily: 'Inter_700Bold', fontSize: 20, color: C.ink,
+                    fontFamily: UIFont.bold, fontSize: 20, color: C.ink,
                     padding: 0, letterSpacing: -0.3,
                   }}
                 />
@@ -135,7 +136,7 @@ export function EventDetailScreen() {
                 placeholderTextColor={C.ink3}
                 autoCapitalize="words"
                 style={{
-                  fontFamily: 'Inter_500Medium', fontSize: 15, color: C.ink,
+                  fontFamily: UIFont.medium, fontSize: 15, color: C.ink,
                   padding: 0,
                 }}
               />
@@ -161,11 +162,11 @@ export function EventDetailScreen() {
               onPress={() => setOpenPicker(openPicker === 'start' ? null : 'start')}
               right={
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: openPicker === 'start' ? C.indigo : C.ink2 }}>
+                  <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: openPicker === 'start' ? C.indigo : C.ink2 }}>
                     {dayFmt.format(new Date(event.start_time))}
                   </Text>
                   {!allDay ? (
-                    <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: openPicker === 'start' ? C.indigo : C.ink }}>
+                    <Text style={{ fontFamily: NumFont.medium, fontSize: 14, color: openPicker === 'start' ? C.indigo : C.ink }}>
                       {timeFmt.format(new Date(event.start_time))}
                     </Text>
                   ) : null}
@@ -190,11 +191,11 @@ export function EventDetailScreen() {
               onPress={() => setOpenPicker(openPicker === 'end' ? null : 'end')}
               right={
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: openPicker === 'end' ? C.indigo : C.ink2 }}>
+                  <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: openPicker === 'end' ? C.indigo : C.ink2 }}>
                     {dayFmt.format(new Date(event.end_time))}
                   </Text>
                   {!allDay ? (
-                    <Text style={{ fontFamily: 'JetBrainsMono_500Medium', fontSize: 14, color: openPicker === 'end' ? C.indigo : C.ink }}>
+                    <Text style={{ fontFamily: NumFont.medium, fontSize: 14, color: openPicker === 'end' ? C.indigo : C.ink }}>
                       {timeFmt.format(new Date(event.end_time))}
                     </Text>
                   ) : null}
@@ -222,7 +223,7 @@ export function EventDetailScreen() {
               accent={isGoogleSourced ? C.blue : C.indigo}
               last
               right={
-                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: C.ink2 }}>
+                <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: C.ink2 }}>
                   {isGoogleSourced ? 'Google Calendar' : 'BPA · Local'}
                 </Text>
               }
@@ -241,7 +242,7 @@ export function EventDetailScreen() {
                 multiline
                 textAlignVertical="top"
                 style={{
-                  fontFamily: 'Inter_400Regular', fontSize: 15, color: C.ink,
+                  fontFamily: UIFont.regular, fontSize: 15, color: C.ink,
                   padding: 0, minHeight: 72,
                 }}
               />
@@ -250,7 +251,7 @@ export function EventDetailScreen() {
 
           {isGoogleSourced ? (
             <View style={{ padding: 12, backgroundColor: 'rgba(47,110,214,0.07)', borderRadius: Radii.sm }}>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink2, lineHeight: 18 }}>
+              <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, lineHeight: 18 }}>
                 ✦ Changes to this Google Calendar event are written back to Google automatically.
               </Text>
             </View>
@@ -268,7 +269,7 @@ function Header({ onBack }: { onBack: () => void }) {
       flexDirection: 'row', alignItems: 'center', gap: 10,
     }}>
       <Pressable onPress={onBack} hitSlop={8}>
-        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 17, color: C.indigo }}>‹ Calendar</Text>
+        <Text style={{ fontFamily: UIFont.medium, fontSize: 17, color: C.indigo }}>‹ Calendar</Text>
       </Pressable>
       <View style={{ flex: 1 }} />
     </View>

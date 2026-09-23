@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useBehavioralStore, MODES, BehavioralMode } from '../../store/behavioralStore';
 import { C, Radii } from '../../theme/tokens';
+import { UIFont, NumFont } from '../../theme/typography';
 
 export function BehavioralModeScreen() {
   const navigation = useNavigation();
@@ -20,9 +21,9 @@ export function BehavioralModeScreen() {
           alignItems: 'center', justifyContent: 'center',
           backgroundColor: C.card, borderWidth: 1, borderColor: C.hairline,
         }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: C.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
         </Pressable>
-        <Text style={{ flex: 1, textAlign: 'center', fontFamily: 'Inter_600SemiBold', fontSize: 14, color: C.ink2 }}>
+        <Text style={{ flex: 1, textAlign: 'center', fontFamily: UIFont.semiBold, fontSize: 14, color: C.ink2 }}>
           Behavioral OS
         </Text>
         <View style={{ width: 36 }} />
@@ -30,11 +31,11 @@ export function BehavioralModeScreen() {
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 60, gap: 20 }}>
         <View>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: C.red, letterSpacing: 1.5 }}>MENTOR</Text>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 26, color: C.ink, letterSpacing: -0.5, marginTop: 6 }}>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: C.red, letterSpacing: 1.5 }}>MENTOR</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 26, color: C.ink, letterSpacing: -0.5, marginTop: 6 }}>
             Pick your mode.
           </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: C.ink2, marginTop: 8, lineHeight: 20 }}>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: C.ink2, marginTop: 8, lineHeight: 20 }}>
             Each behavioral mode reframes how your mentor talks to you and tints the visual mood of the app. Off keeps the default Navy Night theme.
           </Text>
         </View>
@@ -47,8 +48,8 @@ export function BehavioralModeScreen() {
           flexDirection: 'row', alignItems: 'center', gap: 12,
         }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: C.ink }}>Behavioral Mode</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink3, marginTop: 2 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: C.ink }}>Behavioral Mode</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink3, marginTop: 2 }}>
               {enabled ? 'Active — login + accents reflect your mode' : 'Off — default theme everywhere'}
             </Text>
           </View>
@@ -89,9 +90,9 @@ export function BehavioralModeScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <Text style={{ fontSize: 24 }}>{m.emoji}</Text>
                         <View>
-                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 18, color: m.text }}>{m.name}</Text>
+                          <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: m.text }}>{m.name}</Text>
                           {m.badge ? (
-                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9, color: m.accentBright, letterSpacing: 2, marginTop: 2 }}>
+                            <Text style={{ fontFamily: UIFont.bold, fontSize: 9, color: m.accentBright, letterSpacing: 2, marginTop: 2 }}>
                               {m.badge}
                             </Text>
                           ) : null}
@@ -99,7 +100,7 @@ export function BehavioralModeScreen() {
                       </View>
                       {!m.available ? (
                         <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radii.pill, backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>
+                          <Text style={{ fontFamily: UIFont.bold, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>
                             COMING SOON
                           </Text>
                         </View>
@@ -109,11 +110,11 @@ export function BehavioralModeScreen() {
                           backgroundColor: m.accentBright,
                           alignItems: 'center', justifyContent: 'center',
                         }}>
-                          <Text style={{ color: m.bg, fontFamily: 'Inter_700Bold', fontSize: 13, lineHeight: 13 }}>✓</Text>
+                          <Text style={{ color: m.bg, fontFamily: UIFont.bold, fontSize: 13, lineHeight: 13 }}>✓</Text>
                         </View>
                       ) : null}
                     </View>
-                    <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: m.textDim, marginTop: 14, lineHeight: 19 }}>
+                    <Text style={{ fontFamily: UIFont.regular, fontSize: 13, color: m.textDim, marginTop: 14, lineHeight: 19 }}>
                       {m.tagline}
                     </Text>
                   </LinearGradient>
@@ -126,7 +127,7 @@ export function BehavioralModeScreen() {
         <View style={{
           padding: 14, backgroundColor: '#F7F8FB', borderRadius: Radii.sm,
         }}>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: C.ink2, lineHeight: 18 }}>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: C.ink2, lineHeight: 18 }}>
             ✦ Mode picker shipped. Full in-app theming (sidebar, cards, all surfaces re-tinted per mode) is on the roadmap — for now only the Login screen reflects your mode.
           </Text>
         </View>
