@@ -6,6 +6,13 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function parseTarget(name: string): number | null {
+  const m = name.match(/\((\d+)\)/);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  return n > 1 ? n : null;
+}
+
 interface HabitState {
   habits: DbHabit[];
   logsByHabit: Record<string, DbHabitLog[]>;
@@ -49,7 +56,19 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     for (const log of logs) {
       (logsByHabit[log.habit_id] ??= []).push(log);
     }
-    set({ habits, logsByHabit, loading: false });
+
+    // Restore countToday: for count habits completed today, seed count = target
+    // so the stepper shows target/target instead of 0/target after restart.
+    const today = todayIso();
+    const countToday: Record<string, number> = {};
+    for (const habit of habits) {
+      const target = parseTarget(habit.name);
+      if (target && (logsByHabit[habit.id] ?? []).some(l => l.date === today && l.completed)) {
+        countToday[habit.id] = target;
+      }
+    }
+
+    set({ habits, logsByHabit, countToday, loading: false });
   },
 
   async addHabit(name, frequency) {
@@ -92,7 +111,18 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   },
 
   async toggleToday(habitId) {
-    return get().toggleOn(habitId, todayIso());
+    const today = todayIso();
+    await get().toggleOn(habitId, today);
+    // Sync countToday for count habits so TodayScreen/HabitDetailScreen toggles
+    // don't leave the stepper stuck at 0/N when the habit was just marked done.
+    const habit = get().habits.find(h => h.id === habitId);
+    if (habit) {
+      const target = parseTarget(habit.name);
+      if (target) {
+        const isDoneNow = get().isCompletedOn(habitId, today);
+        set({ countToday: { ...get().countToday, [habitId]: isDoneNow ? target : 0 } });
+      }
+    }
   },
 
   async removeHabit(id) {
@@ -119,9 +149,11 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   },
 
   async decrementCount(habitId, target) {
-    const current = Math.max(0, (get().countToday[habitId] ?? 0) - 1);
-    set({ countToday: { ...get().countToday, [habitId]: current } });
-    if (current < target && get().isCompletedOn(habitId, todayIso())) {
+    const current = get().countToday[habitId] ?? 0;
+    if (current === 0) return; // already at floor — never un-complete silently
+    const next = current - 1;
+    set({ countToday: { ...get().countToday, [habitId]: next } });
+    if (next < target && get().isCompletedOn(habitId, todayIso())) {
       await get().toggleOn(habitId, todayIso());
     }
   },

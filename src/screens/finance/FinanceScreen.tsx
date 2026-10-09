@@ -57,7 +57,7 @@ export function FinanceScreen() {
       });
       setAuthState(result.success ? 'unlocked' : 'failed');
     } catch {
-      setAuthState('unlocked'); // allow through if biometrics errored
+      setAuthState('failed'); // hardware exception → require explicit retry, don't silently grant access
     }
   }, []);
 
@@ -789,7 +789,7 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
   const monthBudgets = useMemo(
     () => budgets.filter(b => {
       if (!b.month) return true; // null month = applies to all months
-      return (b.month ?? '').slice(0, 7) === monthKey;
+      return b.month.slice(0, 7) === monthKey;
     }),
     [budgets, monthKey],
   );
