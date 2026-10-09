@@ -1,16 +1,14 @@
-import { registerRootComponent } from 'expo';
-import { Alert } from 'react-native';
-import App from './App';
-
-// Catch JS errors that crash before React renders and surface them as alerts
-const origHandler = ErrorUtils.getGlobalHandler();
-ErrorUtils.setGlobalHandler((error, isFatal) => {
-  Alert.alert(
-    isFatal ? 'Fatal JS Error' : 'JS Error',
-    `${error?.message ?? String(error)}\n\n${error?.stack?.slice(0, 400) ?? ''}`,
-    [{ text: 'OK' }],
-  );
-  origHandler?.(error, isFatal);
-});
-
-registerRootComponent(App);
+// Use require() instead of import so we can catch errors during module loading.
+// Static import statements are hoisted and evaluated before any code runs,
+// meaning a crash in the import chain would bypass ErrorUtils handlers.
+try {
+  const { registerRootComponent } = require('expo');
+  const App = require('./App').default;
+  registerRootComponent(App);
+} catch (e: unknown) {
+  // If the app crashes during startup (import-time error), show an alert.
+  const { Alert } = require('react-native');
+  const msg = e instanceof Error ? `${e.message}\n\n${(e.stack ?? '').slice(0, 600)}` : String(e);
+  // Use setTimeout so the React Native bridge has time to initialize before Alert.
+  setTimeout(() => Alert.alert('Startup Crash', msg, [{ text: 'OK' }]), 500);
+}
