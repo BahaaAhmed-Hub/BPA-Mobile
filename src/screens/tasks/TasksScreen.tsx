@@ -922,6 +922,7 @@ function CompanyFilterRow({
   return (
     <ScrollView
       horizontal showsHorizontalScrollIndicator={false}
+      style={{ flexShrink: 0 }}
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, gap: 8 }}
     >
       <Pressable onPress={() => setCompanyFilter(null)}>

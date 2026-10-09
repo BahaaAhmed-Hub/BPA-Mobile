@@ -127,17 +127,19 @@ export function EventDetailScreen() {
               </View>
             </Pressable>
             <View style={{ height: 1, backgroundColor: C.hairline, marginLeft: 14 }} />
-            <View style={{ paddingHorizontal: 14, paddingVertical: 12, minHeight: 44 }}>
+            <View style={{ paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+              <Text style={{ fontSize: 16, marginTop: 2 }}>📍</Text>
               <TextInput
                 value={locationDraft}
                 onChangeText={setLocationDraft}
                 onBlur={() => void commitLocation()}
-                placeholder="Location"
+                placeholder="Location or URL"
                 placeholderTextColor={C.ink3}
                 autoCapitalize="words"
+                multiline
                 style={{
                   fontFamily: UIFont.medium, fontSize: 15, color: C.ink,
-                  padding: 0,
+                  padding: 0, flex: 1, minHeight: 20,
                 }}
               />
             </View>
@@ -224,7 +226,7 @@ export function EventDetailScreen() {
               last
               right={
                 <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: C.ink2 }}>
-                  {isGoogleSourced ? 'Google Calendar' : 'BPA · Local'}
+                  {isGoogleSourced ? 'Google Calendar' : 'Local'}
                 </Text>
               }
             />

@@ -9,21 +9,27 @@ function todayIso(): string {
 interface HabitState {
   habits: DbHabit[];
   logsByHabit: Record<string, DbHabitLog[]>;
+  countToday: Record<string, number>;
   loading: boolean;
   error: string | null;
 
   loadFromDB: () => Promise<void>;
   addHabit: (name: string, frequency: DbHabitFrequency) => Promise<void>;
   toggleToday: (habitId: string) => Promise<void>;
+  toggleOn: (habitId: string, date: string) => Promise<void>;
   removeHabit: (id: string) => Promise<void>;
   clearAll: () => void;
 
   isCompletedToday: (habitId: string) => boolean;
+  isCompletedOn: (habitId: string, date: string) => boolean;
+  incrementCount: (habitId: string, target: number) => Promise<void>;
+  decrementCount: (habitId: string, target: number) => Promise<void>;
 }
 
 export const useHabitStore = create<HabitState>((set, get) => ({
   habits: [],
   logsByHabit: {},
+  countToday: {},
   loading: false,
   error: null,
 
@@ -58,14 +64,12 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     set({ habits: [...get().habits, data as DbHabit] });
   },
 
-  async toggleToday(habitId) {
+  async toggleOn(habitId, date) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const date = todayIso();
     const existing = (get().logsByHabit[habitId] ?? []).find(l => l.date === date);
     const completed = !(existing?.completed ?? false);
 
-    // Optimistic update
     const next = { ...get().logsByHabit };
     if (existing) {
       next[habitId] = (next[habitId] ?? []).map(l => l.id === existing.id ? { ...l, completed } : l);
@@ -82,10 +86,13 @@ export const useHabitStore = create<HabitState>((set, get) => ({
       .single();
     if (error || !data) return;
 
-    // Replace optimistic row with real one
     const after = { ...get().logsByHabit };
     after[habitId] = (after[habitId] ?? []).map(l => l.date === date ? (data as DbHabitLog) : l);
     set({ logsByHabit: after });
+  },
+
+  async toggleToday(habitId) {
+    return get().toggleOn(habitId, todayIso());
   },
 
   async removeHabit(id) {
@@ -93,10 +100,29 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     await supabase.from('habits').update({ is_active: false }).eq('id', id);
   },
 
-  clearAll() { set({ habits: [], logsByHabit: {}, error: null }); },
+  clearAll() { set({ habits: [], logsByHabit: {}, countToday: {}, error: null }); },
 
   isCompletedToday(habitId) {
-    const date = todayIso();
+    return get().isCompletedOn(habitId, todayIso());
+  },
+
+  isCompletedOn(habitId, date) {
     return (get().logsByHabit[habitId] ?? []).some(l => l.date === date && l.completed);
+  },
+
+  async incrementCount(habitId, target) {
+    const current = (get().countToday[habitId] ?? 0) + 1;
+    set({ countToday: { ...get().countToday, [habitId]: current } });
+    if (current >= target && !get().isCompletedOn(habitId, todayIso())) {
+      await get().toggleOn(habitId, todayIso());
+    }
+  },
+
+  async decrementCount(habitId, target) {
+    const current = Math.max(0, (get().countToday[habitId] ?? 0) - 1);
+    set({ countToday: { ...get().countToday, [habitId]: current } });
+    if (current < target && get().isCompletedOn(habitId, todayIso())) {
+      await get().toggleOn(habitId, todayIso());
+    }
   },
 }));

@@ -547,6 +547,7 @@ function EventCard({ event, highlighted, dimmed, P }: { event: DbCalendarEvent; 
         paddingVertical: 10, paddingHorizontal: 12,
         borderLeftWidth: 3, borderLeftColor: accent,
         opacity: dimmed ? 0.55 : 1,
+        minHeight: Math.max(52, durMin(event.start_time, event.end_time) * 0.9),
       }}>
         <Text style={{
           fontFamily: UIFont.bold, fontSize: 13,

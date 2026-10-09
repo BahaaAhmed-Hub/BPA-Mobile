@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFinanceStore } from '../../store/financeStore';
 import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
@@ -37,11 +38,62 @@ export function FinanceScreen() {
   const P = useScreenPalette();
   const [activeTab, setActiveTab] = useState<SubTab>('Balance');
   const [addOpen, setAddOpen] = useState(false);
+  const [authState, setAuthState] = useState<'pending' | 'unlocked' | 'failed'>('pending');
 
   const loadAll   = useFinanceStore(s => s.loadAll);
   const loading   = useFinanceStore(s => s.loading);
 
-  useEffect(() => { void loadAll(); }, [loadAll]);
+  const authenticate = useCallback(async () => {
+    setAuthState('pending');
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      if (!hasHardware) { setAuthState('unlocked'); return; }
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!enrolled) { setAuthState('unlocked'); return; }
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Unlock Finance',
+        fallbackLabel: 'Use PIN',
+        cancelLabel: 'Cancel',
+      });
+      setAuthState(result.success ? 'unlocked' : 'failed');
+    } catch {
+      setAuthState('unlocked'); // allow through if biometrics errored
+    }
+  }, []);
+
+  useEffect(() => { void authenticate(); }, [authenticate]);
+  useEffect(() => { if (authState === 'unlocked') void loadAll(); }, [authState, loadAll]);
+
+  if (authState !== 'unlocked') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, paddingHorizontal: 40 }}>
+          <Text style={{ fontSize: 48 }}>🔒</Text>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 20, color: P.ink, textAlign: 'center' }}>
+            Finance is locked
+          </Text>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink3, textAlign: 'center', lineHeight: 20 }}>
+            {authState === 'pending'
+              ? 'Authenticating…'
+              : 'Authentication cancelled. Tap to try again.'}
+          </Text>
+          {authState === 'failed' && (
+            <Pressable
+              onPress={() => void authenticate()}
+              style={{
+                backgroundColor: P.accent, paddingHorizontal: 28, paddingVertical: 13,
+                borderRadius: 999, borderWidth: 1, borderColor: P.accentBorder,
+              }}
+            >
+              <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: P.accentInk }}>
+                Unlock Finance
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
@@ -65,7 +117,8 @@ export function FinanceScreen() {
       {/* Sub-tab pills */}
       <ScrollView
         horizontal showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 8 }}
+        style={{ flexShrink: 0 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 8, gap: 8 }}
       >
         {SUB_TABS.map(t => {
           const active = activeTab === t;
@@ -498,14 +551,31 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
   const transactions = useFinanceStore(s => s.transactions);
   const categories   = useFinanceStore(s => s.categories);
   const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<'annual' | 'monthly'>('annual');
   const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth());
   const [section, setSection] = useState<'income' | 'expenses'>('income');
 
   async function handleRefresh() { setRefreshing(true); await onRefresh(); setRefreshing(false); }
 
+  function prevPeriod() {
+    if (viewMode === 'annual') { setYear(y => y - 1); }
+    else if (month === 0) { setMonth(11); setYear(y => y - 1); }
+    else setMonth(m => m - 1);
+  }
+  function nextPeriod() {
+    if (viewMode === 'annual') { setYear(y => y + 1); }
+    else if (month === 11) { setMonth(0); setYear(y => y + 1); }
+    else setMonth(m => m + 1);
+  }
+
+  const periodPrefix = viewMode === 'annual'
+    ? String(year)
+    : `${year}-${String(month + 1).padStart(2, '0')}`;
+
   const yearTxs = useMemo(
-    () => transactions.filter(t => t.date.startsWith(String(year)) && t.currency === 'EGP'),
-    [transactions, year],
+    () => transactions.filter(t => t.date.startsWith(periodPrefix) && t.currency === 'EGP'),
+    [transactions, periodPrefix],
   );
 
   // Group by root category
@@ -537,15 +607,36 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
       contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 16 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={P.accent} />}
     >
-      {/* Year selector */}
+      {/* View mode toggle */}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {(['annual', 'monthly'] as const).map(m => {
+          const active = viewMode === m;
+          return (
+            <Pressable key={m} onPress={() => setViewMode(m)} style={{ flex: 1 }}>
+              <View style={{
+                paddingVertical: 9, borderRadius: Radii.sm, alignItems: 'center',
+                borderWidth: 1,
+                borderColor: active ? P.accentBorder : P.hairline,
+                backgroundColor: active ? P.accentTint : P.surface,
+              }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: active ? P.ink : P.ink2, textTransform: 'capitalize' }}>
+                  {m}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Period navigator */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-        <Pressable onPress={() => setYear(y => y - 1)} hitSlop={12}>
+        <Pressable onPress={prevPeriod} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
-        <Text style={{ fontFamily: NumFont.bold, fontSize: 22, color: P.ink, letterSpacing: -0.3 }}>
-          Financials, {year}
+        <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
+          {viewMode === 'annual' ? String(year) : `${MONTH_NAMES[month]} ${year}`}
         </Text>
-        <Pressable onPress={() => setYear(y => y + 1)} hitSlop={12}>
+        <Pressable onPress={nextPeriod} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>›</Text>
         </Pressable>
       </View>
@@ -572,7 +663,9 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
         </View>
         <View style={{ height: 1, backgroundColor: P.hairline }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink2 }}>NET THROUGH {MONTH_NAMES[new Date().getMonth()]}</Text>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink2 }}>
+            {viewMode === 'annual' ? `NET THROUGH ${MONTH_NAMES[new Date().getMonth()]}` : `NET · ${MONTH_NAMES[month]} ${year}`}
+          </Text>
           <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: net >= 0 ? C.green : C.red }}>
             {net < 0 ? `(EGP ${Math.abs(net).toLocaleString('en-US', {maximumFractionDigits:0})})` : `EGP ${net.toLocaleString('en-US',{maximumFractionDigits:0})}`}
           </Text>
@@ -694,7 +787,10 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
   const monthKey = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
 
   const monthBudgets = useMemo(
-    () => budgets.filter(b => b.month === monthKey),
+    () => budgets.filter(b => {
+      if (!b.month) return true; // null month = applies to all months
+      return (b.month ?? '').slice(0, 7) === monthKey;
+    }),
     [budgets, monthKey],
   );
 

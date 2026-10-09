@@ -137,7 +137,7 @@ export function PlanningAssistantScreen() {
         body: { message: trimmed, context: 'mobile' },
       });
       const reply = error
-        ? "I'm offline right now. Try again shortly."
+        ? `The AI coach isn't available right now (${(error as { message?: string }).message ?? 'connection error'}). Check your internet and try again.`
         : (data?.reply ?? data?.message ?? 'Thinking…');
       setMessages(prev => [
         ...prev,

@@ -198,15 +198,7 @@ export function TodayScreen() {
         paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <View style={{
-            width: 28, height: 28, borderRadius: 8,
-            backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Text style={{ fontFamily: NumFont.bold, fontSize: 14, color: P.accentInk }}>B</Text>
-          </View>
-          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink4, letterSpacing: 1.4 }}>BPA</Text>
-        </View>
+        <View />
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Pressable onPress={() => navigation.navigate('Search')} hitSlop={8}>
             <View style={{

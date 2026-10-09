@@ -2,7 +2,6 @@ import { View, Text, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Bell } from 'lucide-react-native';
-import { Logo } from './Logo';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScreenPalette } from '../../theme/palette';
 import { UIFont, NumFont } from '../../theme/typography';
@@ -30,7 +29,6 @@ export function TopBar({ title, subtitle, right, dark: forceDark }: TopBarProps)
         gap: 12,
       }}
     >
-      <Logo size={32} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text
           numberOfLines={1}

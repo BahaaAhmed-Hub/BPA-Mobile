@@ -86,11 +86,44 @@ export function TaskDetailScreen() {
             }}
           />
 
+          {/* Done/undone CTA */}
+          {task.status !== 'done' ? (
+            <Pressable
+              onPress={() => void setStat(task.id, 'done')}
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? C.green : `${C.green}18`,
+                borderRadius: Radii.md, paddingVertical: 13,
+                borderWidth: 1.5, borderColor: C.green,
+                alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
+              })}
+            >
+              <View style={{
+                width: 22, height: 22, borderRadius: 11,
+                backgroundColor: C.green, alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 14, lineHeight: 14 }}>✓</Text>
+              </View>
+              <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: C.green }}>Mark done</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => void setStat(task.id, 'todo')}
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? `${C.green}30` : `${C.green}12`,
+                borderRadius: Radii.md, paddingVertical: 13,
+                borderWidth: 1.5, borderColor: `${C.green}50`,
+                alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
+              })}
+            >
+              <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: C.green }}>✓ Completed — tap to undo</Text>
+            </Pressable>
+          )}
+
           {/* Status pills */}
           <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-            {STATUS_ORDER.map(s => {
+            {STATUS_ORDER.filter(s => s !== 'done').map(s => {
               const active = task.status === s;
-              const accent = s === 'done' ? C.green : s === 'in_progress' ? C.blue : s === 'deferred' ? C.slate : P.ink2;
+              const accent = s === 'in_progress' ? C.blue : s === 'deferred' ? C.slate : P.ink2;
               return (
                 <Pressable key={s} onPress={() => void setStat(task.id, s)}>
                   <View style={{
