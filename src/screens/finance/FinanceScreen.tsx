@@ -280,8 +280,30 @@ function SectionLabel({ title, total, totalColor, P }: { title: string; total?: 
   );
 }
 
+function accountEmoji(a: DbFinanceAccount): string {
+  if (a.emoji) return a.emoji;
+  switch (a.account_type) {
+    case 'credit_card': return '💳';
+    case 'asset':       return '🏠';
+    case 'wallet':      return '👛';
+    default:            return '🏦';
+  }
+}
+
+function accountColor(a: DbFinanceAccount): string {
+  if (a.color) return a.color;
+  switch (a.account_type) {
+    case 'credit_card': return '#EF4444';
+    case 'asset':       return '#8B5CF6';
+    case 'wallet':      return '#F59E0B';
+    default:            return '#3B82F6';
+  }
+}
+
 function AccountRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<typeof useScreenPalette> }) {
   const isNeg = a.balance < 0;
+  const emoji = accountEmoji(a);
+  const color = accountColor(a);
   return (
     <View style={{
       backgroundColor: P.surface, borderRadius: Radii.md, padding: 14,
@@ -291,10 +313,10 @@ function AccountRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnTyp
     }}>
       <View style={{
         width: 40, height: 40, borderRadius: 12,
-        backgroundColor: `${a.color}20`,
+        backgroundColor: `${color}20`,
         alignItems: 'center', justifyContent: 'center',
       }}>
-        <Text style={{ fontSize: 20 }}>{a.emoji}</Text>
+        <Text style={{ fontSize: 20 }}>{emoji}</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{a.name}</Text>
@@ -314,6 +336,8 @@ function CardRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<t
   const owed = Math.abs(a.balance);
   const limit = a.credit_limit ?? 0;
   const used = limit > 0 ? Math.min(1, owed / limit) : 0;
+  const emoji = accountEmoji(a);
+  const color = accountColor(a);
 
   return (
     <View style={{
@@ -325,10 +349,10 @@ function CardRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<t
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{
           width: 40, height: 40, borderRadius: 12,
-          backgroundColor: `${a.color}20`,
+          backgroundColor: `${color}20`,
           alignItems: 'center', justifyContent: 'center',
         }}>
-          <Text style={{ fontSize: 20 }}>{a.emoji}</Text>
+          <Text style={{ fontSize: 20 }}>{emoji}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{a.name}</Text>
