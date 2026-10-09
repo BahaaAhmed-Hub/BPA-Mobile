@@ -9,15 +9,34 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { CalendarScreen } from '../screens/calendar/CalendarScreen';
 import { FinanceScreen } from '../screens/finance/FinanceScreen';
 import { AddTaskSheet } from '../components/atoms/AddTaskSheet';
+import { AddEventSheet } from '../components/atoms/AddEventSheet';
+import { AddExpenseSheet } from '../components/atoms/AddExpenseSheet';
 import { C, Shadows } from '../theme/tokens';
+import { UIFont } from '../theme/typography';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useIsTablet } from '../lib/layout';
 
 const Tab = createBottomTabNavigator();
 
+const TAB_H = 84;
+
+type Sheet = 'task' | 'event' | 'expense' | null;
+
+const DIAL_ITEMS: { id: Sheet; label: string; color: string; Icon: typeof CheckSquare }[] = [
+  { id: 'task',    label: 'Task',    color: C.violet,   Icon: CheckSquare },
+  { id: 'event',   label: 'Event',   color: C.cat4,     Icon: CalendarDays },
+  { id: 'expense', label: 'Expense', color: C.negative, Icon: Wallet },
+];
+
 export function TabNavigator() {
-  const [addTaskOpen, setAddTaskOpen] = useState(false);
+  const [dialOpen, setDialOpen]   = useState(false);
+  const [sheet, setSheet]         = useState<Sheet>(null);
   const tablet = useIsTablet();
+
+  function openSheet(id: Sheet) {
+    setDialOpen(false);
+    setSheet(id);
+  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -44,7 +63,7 @@ export function TabNavigator() {
                 backgroundColor: C.card,
                 borderTopColor: C.hairline,
                 paddingTop: 6,
-                height: 84,
+                height: TAB_H,
               },
           tabBarItemStyle: tablet
             ? { paddingVertical: 4, marginHorizontal: 8, borderRadius: 12 }
@@ -65,30 +84,101 @@ export function TabNavigator() {
           options={{ tabBarIcon: ({ color, size }) => <User color={color} size={size - 2} /> }} />
       </Tab.Navigator>
 
-      {/* Center FAB — bottom on phone, bottom-right above sidebar on tablet */}
-      <View
-        pointerEvents="box-none"
-        style={tablet
-          ? { position: 'absolute', bottom: 32, right: 32 }
-          : { position: 'absolute', bottom: 38, left: 0, right: 0, alignItems: 'center' }
-        }
-      >
-        <Pressable onPress={() => setAddTaskOpen(true)} hitSlop={8}>
-          <LinearGradient
-            colors={['#2A3FD9', '#B23A36']}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={{
-              width: 56, height: 56, borderRadius: 28,
-              alignItems: 'center', justifyContent: 'center',
-              ...Shadows.pop,
-            }}
-          >
-            <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 28, lineHeight: 28 }}>＋</Text>
-          </LinearGradient>
-        </Pressable>
-      </View>
+      {/* Speed-dial backdrop — dismiss on outside tap */}
+      {dialOpen && (
+        <Pressable
+          onPress={() => setDialOpen(false)}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+      )}
 
-      <AddTaskSheet visible={addTaskOpen} onClose={() => setAddTaskOpen(false)} />
+      {/* FAB + speed-dial — floats above the tab bar */}
+      {!tablet && (
+        <View
+          pointerEvents="box-none"
+          style={{ position: 'absolute', bottom: TAB_H + 12, left: 0, right: 0, alignItems: 'center' }}
+        >
+          {/* Speed-dial options (visible when open) */}
+          {dialOpen && (
+            <View style={{ alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              {DIAL_ITEMS.map(({ id, label, color, Icon }) => (
+                <Pressable
+                  key={id}
+                  onPress={() => openSheet(id)}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    backgroundColor: C.card,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 24,
+                    opacity: pressed ? 0.8 : 1,
+                    ...Shadows.card,
+                  })}
+                >
+                  <View style={{
+                    width: 32, height: 32, borderRadius: 16,
+                    backgroundColor: `${color}18`,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Icon size={16} color={color} />
+                  </View>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: C.ink }}>
+                    {label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+
+          {/* Main FAB */}
+          <Pressable onPress={() => setDialOpen(o => !o)} hitSlop={8}>
+            <LinearGradient
+              colors={dialOpen ? ['#B23A36', '#2A3FD9'] : ['#2A3FD9', '#B23A36']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={{
+                width: 56, height: 56, borderRadius: 28,
+                alignItems: 'center', justifyContent: 'center',
+                ...Shadows.pop,
+              }}
+            >
+              <Text style={{
+                color: '#fff',
+                fontFamily: 'Inter_700Bold',
+                fontSize: 28,
+                lineHeight: 30,
+                transform: [{ rotate: dialOpen ? '45deg' : '0deg' }],
+              }}>
+                ＋
+              </Text>
+            </LinearGradient>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Tablet FAB (bottom-right) */}
+      {tablet && (
+        <View style={{ position: 'absolute', bottom: 32, right: 32 }}>
+          <Pressable onPress={() => setDialOpen(o => !o)} hitSlop={8}>
+            <LinearGradient
+              colors={['#2A3FD9', '#B23A36']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={{
+                width: 56, height: 56, borderRadius: 28,
+                alignItems: 'center', justifyContent: 'center',
+                ...Shadows.pop,
+              }}
+            >
+              <Text style={{ color: '#fff', fontFamily: 'Inter_700Bold', fontSize: 28, lineHeight: 30 }}>＋</Text>
+            </LinearGradient>
+          </Pressable>
+        </View>
+      )}
+
+      <AddTaskSheet    visible={sheet === 'task'}    onClose={() => setSheet(null)} />
+      <AddEventSheet   visible={sheet === 'event'}   onClose={() => setSheet(null)} />
+      <AddExpenseSheet visible={sheet === 'expense'} onClose={() => setSheet(null)} />
     </View>
   );
 }
