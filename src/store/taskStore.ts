@@ -21,6 +21,7 @@ interface TaskState {
 // the row with what the server held before the write, undoing the edit on
 // screen — the same fault the web app guards with markLocalWrite.
 const inFlight = new Map<string, number>();
+export const taskWritesInFlight = () => inFlight.size;
 const begin = (id: string) => inFlight.set(id, (inFlight.get(id) ?? 0) + 1);
 const finish = (id: string) => {
   const n = (inFlight.get(id) ?? 1) - 1;

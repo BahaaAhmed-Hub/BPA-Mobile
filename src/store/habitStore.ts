@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import type { DbHabit, DbHabitLog, DbHabitFrequency } from '../types/database';
+import { notify } from './feedbackStore';
+
+// Ticks still being written. A refresh that lands meanwhile would replace the
+// logs with what the server held before the tick and un-tick it on screen.
+let writesInFlight = 0;
+export const habitWritesInFlight = () => writesInFlight;
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -133,14 +139,23 @@ export const useHabitStore = create<HabitState>((set, get) => ({
       const optimistic: DbHabitLog = { id: `tmp_${Date.now()}`, habit_id: habitId, user_id: user.id, date, completed };
       next[habitId] = [optimistic, ...(next[habitId] ?? [])];
     }
+    const before = get().logsByHabit[habitId] ?? [];
     set({ logsByHabit: next, habits: withStreaks(get().habits, next) });
 
+    writesInFlight++;
     const { data, error } = await supabase
       .from('habit_logs')
       .upsert({ habit_id: habitId, user_id: user.id, date, completed }, { onConflict: 'habit_id,date' })
       .select()
       .single();
-    if (error || !data) return;
+    writesInFlight--;
+    if (error || !data) {
+      // Put this habit's days back as they were, and say so.
+      const reverted = { ...get().logsByHabit, [habitId]: before };
+      set({ logsByHabit: reverted, habits: withStreaks(get().habits, reverted) });
+      notify('error', "Couldn't save that tick, so it was undone.");
+      return;
+    }
 
     const after = { ...get().logsByHabit };
     after[habitId] = (after[habitId] ?? []).map(l => l.date === date ? (data as DbHabitLog) : l);

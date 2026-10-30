@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { strainAwareFetch } from './serverStrain';
 
 // Web app reuses these - same Supabase project, served via the be2.life custom domain.
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://api.be2.life';
@@ -37,6 +38,7 @@ const LargeSecureStore = {
 };
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  global: { fetch: strainAwareFetch },
   auth: {
     storage: LargeSecureStore as never,
     storageKey: AUTH_STORAGE_KEY,

@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
@@ -43,6 +44,7 @@ export type RootStackParamList = {
   SettingsDetail: { title: string };
   Search: undefined;
 };
+import { refreshIfStale } from '../lib/refresh';
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
 import { useCompanyStore } from '../store/companyStore';
@@ -85,6 +87,16 @@ export function RootNavigator() {
       sub.remove();
     };
   }, [setUser, setLoading, clearTasks, clearHabits]);
+
+  // Coming back to the app pulls fresh data, at most once a minute and never
+  // while the server is failing — see lib/refresh.ts.
+  useEffect(() => {
+    if (!user) return;
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') void refreshIfStale();
+    });
+    return () => sub.remove();
+  }, [user]);
 
   const [wizardChecked, setWizardChecked] = useState(false);
   const [showWizard, setShowWizard]       = useState(false);
