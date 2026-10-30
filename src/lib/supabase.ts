@@ -4,8 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-// Web app reuses these — same Supabase project.
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://gyvgqhaepfsqnydhhbnk.supabase.co';
+// Web app reuses these - same Supabase project, served via the be2.life custom domain.
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://api.be2.life';
+
+// supabase-js derives the session key from the URL host. Pin it to the key used
+// before the custom domain so existing sessions survive the domain switch.
+const AUTH_STORAGE_KEY = 'sb-gyvgqhaepfsqnydhhbnk-auth-token';
 const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY ?? 'sb_publishable_RUVaTh2GKj2e91oSBuRQxQ_wgN63A4e';
 
 // SecureStore has a 2KB per-value limit. Supabase session JSON can exceed that
@@ -35,6 +39,7 @@ const LargeSecureStore = {
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     storage: LargeSecureStore as never,
+    storageKey: AUTH_STORAGE_KEY,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
