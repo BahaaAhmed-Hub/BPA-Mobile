@@ -15,6 +15,7 @@ import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
 import { useIsTablet } from '../../lib/layout';
+import { isActionable, taskCompanyId } from '../../lib/tasks';
 import type { DbTask, DbTaskStatus } from '../../types/database';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -307,7 +308,7 @@ function NewTaskSheet({ visible, onClose, onSave }: {
 function BoardCard({ task, onPress }: { task: DbTask; onPress: () => void }) {
   const P = useScreenPalette();
   const companies = useCompanyStore(s => s.companies);
-  const company = companies.find(c => c.id === task.company_id);
+  const company = companies.find(c => c.id === taskCompanyId(task, companies));
   const priority = priorityLabel(task);
 
   return (
@@ -638,17 +639,17 @@ export function TasksScreen() {
       urgent_important: [], important_not_urgent: [], urgent_not_important: [], neither: [],
     };
     for (const t of tasks) {
-      if (t.status === 'done' || t.status === 'deferred') continue;
-      if (companyFilter && t.company_id !== companyFilter) continue;
+      if (!isActionable(t)) continue;
+      if (companyFilter && taskCompanyId(t, companies) !== companyFilter) continue;
       const q = (t.quadrant ?? 'neither') as QuadrantId;
       groups[q].push(t);
     }
     return groups;
-  }, [tasks, companyFilter]);
+  }, [tasks, companyFilter, companies]);
 
   const activeTasks = useMemo(() =>
-    tasks.filter(t => t.status !== 'done' && (!companyFilter || t.company_id === companyFilter)),
-    [tasks, companyFilter],
+    tasks.filter(t => isActionable(t) && (!companyFilter || taskCompanyId(t, companies) === companyFilter)),
+    [tasks, companyFilter, companies],
   );
 
   const [localOrders, setLocalOrders] = useState<Record<string, string[]>>({});
@@ -667,9 +668,13 @@ export function TasksScreen() {
   function getOrderedTasks(quadrant: QuadrantId): DbTask[] {
     const qTasks = byQuadrant[quadrant];
     const order  = localOrders[quadrant];
-    if (!order) return qTasks;
+    if (!order || order.length === 0) return qTasks;
     const map = Object.fromEntries(qTasks.map(t => [t.id, t]));
-    return order.map(id => map[id]).filter(Boolean) as DbTask[];
+    const ordered = order.map(id => map[id]).filter(Boolean) as DbTask[];
+    // The saved order was taken before the tasks had loaded, or before a new one
+    // arrived. A task it has never heard of still belongs in the list.
+    const known = new Set(order);
+    return [...ordered, ...qTasks.filter(t => !known.has(t.id))];
   }
 
   function setQuadrantOrder(quadrant: QuadrantId, ids: string[]) {
@@ -809,7 +814,7 @@ export function TasksScreen() {
       {/* Board view (horizontal scroll outside of main scroll) */}
       {viewMode === 'board' ? (
         <BoardView
-          tasks={companyFilter ? tasks.filter(t => t.company_id === companyFilter) : tasks}
+          tasks={companyFilter ? tasks.filter(t => taskCompanyId(t, companies) === companyFilter) : tasks}
           onPress={id => navigation.navigate('TaskDetail', { taskId: id })}
         />
       ) : (
@@ -922,7 +927,9 @@ function CompanyFilterRow({
   return (
     <ScrollView
       horizontal showsHorizontalScrollIndicator={false}
-      style={{ flexShrink: 0 }}
+      // A ScrollView grows by default, which split the screen's height with the
+      // list below and left a gap under the chips.
+      style={{ flexGrow: 0, flexShrink: 0 }}
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, gap: 8 }}
     >
       <Pressable onPress={() => setCompanyFilter(null)}>

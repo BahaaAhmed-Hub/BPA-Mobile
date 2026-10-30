@@ -14,6 +14,7 @@ import { C, Quadrants, Radii, Shadows } from '../../theme/tokens';
 import { UIFont, NumFont } from '../../theme/typography';
 import { useScreenPalette } from '../../theme/palette';
 import { useIsTablet } from '../../lib/layout';
+import { isActionable } from '../../lib/tasks';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -111,7 +112,7 @@ export function TodayScreen() {
   );
 
   const { topTasks, doneToday, totalOpen, weeklyScore } = useMemo(() => {
-    const open = tasks.filter(t => t.status !== 'done');
+    const open = tasks.filter(isActionable);
     const ranked = [...open].sort((a, b) => {
       const ord: Record<string, number> = { urgent_important: 0, important_not_urgent: 1, urgent_not_important: 2, neither: 3 };
       return (ord[a.quadrant ?? 'neither'] ?? 4) - (ord[b.quadrant ?? 'neither'] ?? 4);
@@ -324,11 +325,11 @@ export function TodayScreen() {
               ].map(m => (
                 <View key={m.label} style={{ flex: 1, gap: 4 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 9, color: 'rgba(253,248,231,0.45)', letterSpacing: 1.2 }}>
+                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(253,248,231,0.62)', letterSpacing: 1 }}>
                       {m.label}
                     </Text>
-                    <Text style={{ fontFamily: NumFont.semiBold, fontSize: 10, color: 'rgba(253,248,231,0.70)' }}>
-                      {m.value}
+                    <Text style={{ fontFamily: NumFont.semiBold, fontSize: 11, color: 'rgba(253,248,231,0.85)' }}>
+                      {m.value}%
                     </Text>
                   </View>
                   <View style={{ height: 3, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 2, overflow: 'hidden' }}>

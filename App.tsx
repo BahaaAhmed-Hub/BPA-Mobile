@@ -21,6 +21,7 @@ import {
   Outfit_800ExtraBold,
 } from '@expo-google-fonts/outfit';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { FeedbackBanner } from './src/components/atoms/FeedbackBanner';
 
 export default function App() {
   useFonts({
@@ -45,6 +46,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <RootNavigator />
+        <FeedbackBanner />
         <StatusBar style="auto" />
       </SafeAreaProvider>
     </GestureHandlerRootView>

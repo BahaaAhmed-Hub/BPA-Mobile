@@ -43,6 +43,27 @@ export interface DbTask {
   done_looks_like: string | null;
   created_at: string;
   completed_at: string | null;
+  /** Added by web migration 20240002; the web app reads this before `status`. */
+  completed?: boolean;
+  // Columns the web app has added since the initial schema (migrations
+  // 20240002, 20260003, 20260042). Optional because a database that has not
+  // run them returns none of these; the mobile app only reads them for now.
+  planned_time?: string | null;
+  owner_id?: string | null;
+  company_tag?: string | null;
+  task_type?: string | null;
+  priority?: string | null;
+  board_status?: string | null;
+  calendar_id?: string | null;
+  gcal_event_id?: string | null;
+  parent_task_id?: string | null;
+  captured_via?: 'voice' | 'mail' | 'manual' | null;
+  urgent?: boolean;
+  checklist?: { id: string; text: string; done: boolean }[];
+  attachments?: { id: string; name: string; size: number; source?: string; addedAt: string }[];
+  links?: string[];
+  project_id?: string | null;
+  milestone_id?: string | null;
 }
 
 export type DbHabitFrequency = 'daily' | 'weekdays' | 'weekly';
@@ -55,6 +76,13 @@ export interface DbHabit {
   current_streak: number;
   longest_streak: number;
   is_active: boolean;
+  // Columns the web app adds to a habit; absent on a database that has not run them.
+  emoji?: string | null;
+  color?: string | null;
+  type?: string | null;
+  goal?: number | null;
+  unit?: string | null;
+  image?: string | null;
 }
 
 export interface DbHabitLog {
@@ -78,6 +106,8 @@ export interface DbCalendarEvent {
   id: string;
   user_id: string;
   company_id: string | null;
+  /** Which Google calendar the event lives on, kept so an edit can be written back to it. */
+  calendar_id?: string | null;
   google_event_id: string | null;
   title: string;
   start_time: string;
