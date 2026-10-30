@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
+import { notify } from '../../store/feedbackStore';
 import { Logo } from '../../components/atoms/Logo';
 import { C, Radii } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
@@ -61,7 +62,23 @@ export function SetupWizard({ onDone }: { onDone: () => void }) {
     // Persist schedule preferences to Supabase
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('users').update({ schedule_rules: prefs as unknown as Record<string, unknown> }).eq('id', user.id);
+      // `schedule_rules` is shared with the web app, which keeps connected
+      // Google accounts, shared prefs (AI key, persona, budget rules) and the
+      // profile in it. Replacing the column would wipe all of that, so read
+      // it, keep it, and put these answers under their own key. If the read
+      // fails, write nothing: a blind write is exactly the destructive one.
+      const { data: existing, error: readError } = await supabase
+        .from('users').select('schedule_rules').eq('id', user.id).maybeSingle();
+      if (readError) {
+        notify('error', "Couldn't save your setup answers. You can change them later.");
+      } else {
+        const prev = (existing?.schedule_rules ?? {}) as Record<string, unknown>;
+        const { error } = await supabase
+          .from('users')
+          .update({ schedule_rules: { ...prev, mobile_wizard: prefs } })
+          .eq('id', user.id);
+        if (error) notify('error', "Couldn't save your setup answers. You can change them later.");
+      }
     }
     onDone();
   }

@@ -6,7 +6,6 @@
 // once we add those modules in a later phase.
 
 import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
 import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -26,7 +25,12 @@ const GOOGLE_SCOPES = [
  * URL scheme defined in app.json. Resolves once the session is set.
  */
 export async function signInWithGoogle(): Promise<void> {
-  const redirectTo = Linking.createURL('auth-callback');
+  // A fixed address, not Linking.createURL(): in Expo Go that produces an
+  // exp://<this Mac's IP>:8081/... address that changes with the network and
+  // has to be allow-listed in Supabase each time. `bpa` is the scheme in
+  // app.json, so this is also the address a real build uses. The auth session
+  // watches for it itself, so Expo Go does not need to own the scheme.
+  const redirectTo = 'bpa://auth-callback';
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
