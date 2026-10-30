@@ -56,7 +56,7 @@ const SECTIONS: Array<{
       { label: 'Inbox', hint: 'Triaged email actions', route: 'Inbox' },
       { label: 'Weekly Review', hint: 'Shipped, slipped, focus & meeting hours', route: 'WeeklyReview' },
       { label: 'Energy Log', hint: 'Daily morning & afternoon energy', route: 'EnergyLog' },
-      { label: 'Planning Assistant', hint: 'AI executive coaching · ask anything', route: 'PlanningAssistant' },
+      { label: 'Assistant', hint: 'Ask anything · manages your tasks, habits and calendar', route: 'PlanningAssistant' },
       { label: 'Notifications', hint: 'Activity signals', route: 'Notifications' },
     ],
   },

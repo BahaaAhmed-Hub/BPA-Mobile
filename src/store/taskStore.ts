@@ -9,7 +9,7 @@ interface TaskState {
   error: string | null;
 
   loadFromDB: () => Promise<void>;
-  addTask: (input: Partial<DbTask> & { title: string }) => Promise<void>;
+  addTask: (input: Partial<DbTask> & { title: string }) => Promise<DbTask | null>;
   updateTask: (id: string, patch: Partial<DbTask>) => Promise<void>;
   moveToQuadrant: (id: string, q: DbQuadrant) => Promise<void>;
   setStatus: (id: string, s: DbTaskStatus) => Promise<void>;
@@ -50,7 +50,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   async addTask(input) {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return null;
     const { data, error } = await supabase
       .from('tasks')
       .insert({
@@ -68,9 +68,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     if (error || !data) {
       set({ error: error?.message ?? 'Could not save the task' });
       notify('error', "Couldn't add that task. Check your connection and try again.");
-      return;
+      return null;
     }
     set({ tasks: [data as DbTask, ...get().tasks] });
+    return data as DbTask;
   },
 
   async updateTask(id, patch) {

@@ -108,6 +108,9 @@ export interface DbCalendarEvent {
   company_id: string | null;
   /** Which Google calendar the event lives on, kept so an edit can be written back to it. */
   calendar_id?: string | null;
+  /** The Google account the event belongs to; the write function needs one. */
+  account_email?: string | null;
+  account_id?: string | null;
   google_event_id: string | null;
   title: string;
   start_time: string;

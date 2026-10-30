@@ -54,6 +54,10 @@ function parseTarget(name: string): number | null {
   return n > 1 ? n : null;
 }
 
+/** Columns the web app keeps on a habit beyond its name and frequency. */
+export interface HabitExtra { emoji?: string; type?: 'boolean' | 'quantity'; goal?: number; unit?: string }
+export type HabitPatch = Partial<HabitExtra> & { name?: string; frequency?: DbHabitFrequency; is_active?: boolean };
+
 interface HabitState {
   habits: DbHabit[];
   logsByHabit: Record<string, DbHabitLog[]>;
@@ -62,7 +66,8 @@ interface HabitState {
   error: string | null;
 
   loadFromDB: () => Promise<void>;
-  addHabit: (name: string, frequency: DbHabitFrequency) => Promise<void>;
+  addHabit: (name: string, frequency: DbHabitFrequency, extra?: HabitExtra) => Promise<DbHabit | null>;
+  updateHabit: (id: string, patch: HabitPatch) => Promise<boolean>;
   toggleToday: (habitId: string) => Promise<void>;
   toggleOn: (habitId: string, date: string) => Promise<void>;
   removeHabit: (id: string) => Promise<void>;
@@ -114,16 +119,31 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     set({ habits, logsByHabit, countToday, loading: false });
   },
 
-  async addHabit(name, frequency) {
+  async addHabit(name, frequency, extra) {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return null;
     const { data, error } = await supabase
       .from('habits')
-      .insert({ user_id: user.id, name, frequency })
+      .insert({ user_id: user.id, name, frequency, ...(extra ?? {}) })
       .select()
       .single();
-    if (error || !data) return;
+    if (error || !data) {
+      notify('error', "Couldn't add that habit. Check your connection and try again.");
+      return null;
+    }
     set({ habits: [...get().habits, data as DbHabit] });
+    return data as DbHabit;
+  },
+
+  async updateHabit(id, patch) {
+    const before = get().habits.find(h => h.id === id);
+    if (!before) return false;
+    set({ habits: get().habits.map(h => h.id === id ? { ...h, ...patch } : h) });
+    const { error } = await supabase.from('habits').update(patch).eq('id', id);
+    if (!error) return true;
+    set({ habits: get().habits.map(h => h.id === id ? before : h) });
+    notify('error', "Couldn't save that habit change, so it was undone.");
+    return false;
   },
 
   async toggleOn(habitId, date) {

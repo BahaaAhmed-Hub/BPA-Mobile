@@ -18,7 +18,7 @@ import { InboxScreen } from '../screens/inbox/InboxScreen';
 import { EventDetailScreen } from '../screens/calendar/EventDetailScreen';
 import { WeeklyReviewScreen } from '../screens/review/WeeklyReviewScreen';
 import { EnergyLogScreen } from '../screens/energy/EnergyLogScreen';
-import { PlanningAssistantScreen } from '../screens/assistant/PlanningAssistantScreen';
+import { AssistantScreen } from '../screens/assistant/AssistantScreen';
 import { HabitDetailScreen } from '../screens/habits/HabitDetailScreen';
 import { HabitEditScreen } from '../screens/habits/HabitEditScreen';
 import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
@@ -154,7 +154,7 @@ export function RootNavigator() {
             />
             <Stack.Screen
               name="PlanningAssistant"
-              component={PlanningAssistantScreen}
+              component={AssistantScreen}
               options={{ presentation: 'card', animation: 'slide_from_bottom' }}
             />
             <Stack.Screen
