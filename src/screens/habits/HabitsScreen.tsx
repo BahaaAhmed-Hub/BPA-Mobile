@@ -37,8 +37,10 @@ function parseHabitTarget(name: string): number | null {
   return null;
 }
 
-function habitEmoji(name: string): string {
-  return name.match(/^\p{Emoji}/u)?.[0] ?? '🎯';
+function habitEmoji(h: { name: string; emoji?: string | null }): string {
+  // The web keeps a habit's emoji in its own column; a name that starts with one
+  // is how this app used to store it.
+  return h.emoji || h.name.match(/^\p{Emoji}/u)?.[0] || '🎯';
 }
 
 function habitLabel(name: string): string {
@@ -274,7 +276,7 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
   interactive: boolean;
 }) {
   const P = useScreenPalette();
-  const emoji = habitEmoji(habit.name);
+  const emoji = habitEmoji(habit);
   const label = habitLabel(habit.name);
   const isCount = target !== null && target > 1;
 
@@ -532,7 +534,7 @@ export function HabitsScreen() {
             const done = isCompletedOn(h.id, selectedDate);
             const target = parseHabitTarget(h.name);
             const count = countToday[h.id] ?? 0;
-            const emoji = habitEmoji(h.name);
+            const emoji = habitEmoji(h);
             const label = habitLabel(h.name);
             const isCount = target !== null && target > 1;
             return (

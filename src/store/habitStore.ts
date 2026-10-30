@@ -6,6 +6,41 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function shiftDay(iso: string, by: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + by);
+  return d.toISOString().slice(0, 10);
+}
+
+/** The web app never stores a streak: it writes 0 to `current_streak` on every
+ *  save and works the number out from the daily logs. Reading the column here
+ *  showed 0 for every habit. Same rule as the web's `calcStreak`: consecutive
+ *  completed days ending today. */
+function streaksFrom(logs: DbHabitLog[]): { current: number; longest: number } {
+  const done = new Set(logs.filter(l => l.completed !== false).map(l => l.date));
+  let current = 0;
+  for (let day = todayIso(); done.has(day); day = shiftDay(day, -1)) current++;
+  let longest = 0;
+  let run = 0;
+  let prev = '';
+  for (const day of [...done].sort()) {
+    run = prev && shiftDay(prev, 1) === day ? run + 1 : 1;
+    if (run > longest) longest = run;
+    prev = day;
+  }
+  return { current, longest };
+}
+
+/** Put the computed streaks on each habit, so every screen that reads
+ *  `habit.current_streak` gets the real one. Logs only reach back 60 days, so
+ *  "best" is the best the server remembers or the best seen here, whichever is more. */
+function withStreaks(habits: DbHabit[], logsByHabit: Record<string, DbHabitLog[]>): DbHabit[] {
+  return habits.map(h => {
+    const { current, longest } = streaksFrom(logsByHabit[h.id] ?? []);
+    return { ...h, current_streak: current, longest_streak: Math.max(h.longest_streak ?? 0, longest) };
+  });
+}
+
 function parseTarget(name: string): number | null {
   const m = name.match(/\((\d+)\)/);
   if (!m) return null;
@@ -50,12 +85,14 @@ export const useHabitStore = create<HabitState>((set, get) => ({
         .gte('date', new Date(Date.now() - 60 * 86400_000).toISOString().slice(0, 10)),
     ]);
     if (habitsRes.error) { set({ error: habitsRes.error.message, loading: false }); return; }
-    const habits = (habitsRes.data ?? []) as DbHabit[];
+    const rawHabits = (habitsRes.data ?? []) as DbHabit[];
     const logs = (logsRes.data ?? []) as DbHabitLog[];
     const logsByHabit: Record<string, DbHabitLog[]> = {};
     for (const log of logs) {
       (logsByHabit[log.habit_id] ??= []).push(log);
     }
+
+    const habits = withStreaks(rawHabits, logsByHabit);
 
     // Restore countToday: for count habits completed today, seed count = target
     // so the stepper shows target/target instead of 0/target after restart.
@@ -96,7 +133,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
       const optimistic: DbHabitLog = { id: `tmp_${Date.now()}`, habit_id: habitId, user_id: user.id, date, completed };
       next[habitId] = [optimistic, ...(next[habitId] ?? [])];
     }
-    set({ logsByHabit: next });
+    set({ logsByHabit: next, habits: withStreaks(get().habits, next) });
 
     const { data, error } = await supabase
       .from('habit_logs')
@@ -107,7 +144,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
 
     const after = { ...get().logsByHabit };
     after[habitId] = (after[habitId] ?? []).map(l => l.date === date ? (data as DbHabitLog) : l);
-    set({ logsByHabit: after });
+    set({ logsByHabit: after, habits: withStreaks(get().habits, after) });
   },
 
   async toggleToday(habitId) {
