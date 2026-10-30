@@ -6,6 +6,7 @@ import { useFinanceStore } from '../../store/financeStore';
 import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
+import { Glyph } from '../../components/atoms/Glyph';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceBudget, DbFinanceBill, DbFinanceGoal, TxType } from '../../types/financeTypes';
 import { UIFont, NumFont } from '../../theme/typography';
 
@@ -316,7 +317,7 @@ function AccountRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnTyp
         backgroundColor: `${color}20`,
         alignItems: 'center', justifyContent: 'center',
       }}>
-        <Text style={{ fontSize: 20 }}>{emoji}</Text>
+        <Glyph icon={emoji} size={20} box={40} color={P.ink} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{a.name}</Text>
@@ -352,7 +353,7 @@ function CardRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<t
           backgroundColor: `${color}20`,
           alignItems: 'center', justifyContent: 'center',
         }}>
-          <Text style={{ fontSize: 20 }}>{emoji}</Text>
+          <Glyph icon={emoji} size={20} box={40} color={P.ink} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{a.name}</Text>
@@ -397,7 +398,7 @@ function TxRow({ tx, P }: { tx: DbFinanceTransaction; P: ReturnType<typeof useSc
         backgroundColor: cat ? `${cat.color}20` : P.hairline,
         alignItems: 'center', justifyContent: 'center', flexShrink: 0,
       }}>
-        <Text style={{ fontSize: 16 }}>{cat?.icon ?? (isIncome ? '💰' : '💸')}</Text>
+        <Glyph icon={cat?.icon ?? (isIncome ? '💰' : '💸')} size={16} box={36} color={cat?.color ?? P.ink} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }} numberOfLines={1}>{tx.payee || cat?.name || 'Transaction'}</Text>
@@ -739,7 +740,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
                     backgroundColor: cat ? `${cat.color}20` : P.hairline,
                     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <Text style={{ fontSize: 16 }}>{cat?.icon ?? '📁'}</Text>
+                    <Glyph icon={cat?.icon ?? '📁'} size={16} box={36} color={cat?.color ?? P.ink} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -882,7 +883,7 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
                     backgroundColor: cat ? `${cat.color}20` : P.hairline,
                     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <Text style={{ fontSize: 16 }}>{cat?.icon ?? '📁'}</Text>
+                    <Glyph icon={cat?.icon ?? '📁'} size={16} box={36} color={cat?.color ?? P.ink} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
@@ -935,7 +936,7 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
                   backgroundColor: cat ? `${cat.color}20` : P.hairline,
                   alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 }}>
-                  <Text style={{ fontSize: 16 }}>{cat?.icon ?? '🧾'}</Text>
+                  <Glyph icon={cat?.icon ?? '🧾'} size={16} box={36} color={cat?.color ?? P.ink} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{bill.name}</Text>
@@ -1016,7 +1017,7 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
               }}>
                 {/* % complete badge top-right */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Text style={{ fontSize: 28 }}>{goal.icon}</Text>
+                  <Glyph icon={goal.icon} size={28} box={36} color={P.ink} />
                   <View style={{
                     backgroundColor: `${goal.color}30`, borderRadius: Radii.pill,
                     paddingHorizontal: 7, paddingVertical: 2,
@@ -1186,7 +1187,7 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
                       backgroundColor: cat ? `${cat.color}20` : P.hairline,
                       alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
-                      <Text style={{ fontSize: 16 }}>{cat?.icon ?? '📁'}</Text>
+                      <Glyph icon={cat?.icon ?? '📁'} size={16} box={36} color={cat?.color ?? P.ink} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1349,7 +1350,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
                     borderColor: active ? c.color : P.hairline,
                     backgroundColor: active ? `${c.color}20` : 'transparent',
                   }}>
-                    <Text style={{ fontSize: 14 }}>{c.icon}</Text>
+                    <Glyph icon={c.icon} size={14} box={18} color={P.ink} />
                     <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? c.color : P.ink2 }}>{c.name}</Text>
                   </View>
                 </Pressable>
@@ -1370,7 +1371,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
                     borderColor: active ? a.color : P.hairline,
                     backgroundColor: active ? `${a.color}20` : 'transparent',
                   }}>
-                    <Text style={{ fontSize: 14 }}>{a.emoji}</Text>
+                    <Glyph icon={a.emoji} size={14} box={18} color={P.ink} />
                     <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: active ? a.color : P.ink2 }}>{a.name}</Text>
                   </View>
                 </Pressable>
