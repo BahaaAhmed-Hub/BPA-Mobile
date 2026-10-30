@@ -76,7 +76,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
       e => !e.google_event_id || !googleIds.has(e.google_event_id),
     );
     const merged = [...result.events.map(toDbEvent), ...filtered]
-      .sort((a, b) => a.start_time.localeCompare(b.start_time));
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
     set({
       events: merged,
       syncing: false,
