@@ -22,7 +22,6 @@ import { PlanningAssistantScreen } from '../screens/assistant/PlanningAssistantS
 import { HabitDetailScreen } from '../screens/habits/HabitDetailScreen';
 import { HabitEditScreen } from '../screens/habits/HabitEditScreen';
 import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
-import { AISettingsScreen } from '../screens/settings/AISettingsScreen';
 import { SettingsPlaceholderScreen } from '../screens/settings/SettingsPlaceholderScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
 
@@ -40,7 +39,6 @@ export type RootStackParamList = {
   HabitDetail: { habitId: string };
   HabitEdit: { habitId: string };
   SettingsAppearance: undefined;
-  SettingsAI: undefined;
   SettingsDetail: { title: string };
   Search: undefined;
 };
@@ -177,11 +175,6 @@ export function RootNavigator() {
             <Stack.Screen
               name="SettingsAppearance"
               component={AppearanceScreen}
-              options={{ presentation: 'card', animation: 'slide_from_right' }}
-            />
-            <Stack.Screen
-              name="SettingsAI"
-              component={AISettingsScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
             <Stack.Screen

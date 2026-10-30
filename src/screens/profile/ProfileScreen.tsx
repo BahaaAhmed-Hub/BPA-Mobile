@@ -35,7 +35,6 @@ const SECTIONS: Array<{
     eyebrow: 'WORKSPACE',
     rows: [
       { label: 'Accounts & companies', hint: 'Connected Google accounts and companies', route: 'SettingsDetail', routeParams: { title: 'Accounts' } },
-      { label: 'AI', hint: 'Model, autonomy and tone', route: 'SettingsAI' },
       { label: 'Schedule rules', hint: 'Focus hours, buffers, protections', route: 'SettingsDetail', routeParams: { title: 'Schedule' } },
       { label: 'Integrations', hint: 'Notion, Asana and more', route: 'SettingsDetail', routeParams: { title: 'Integrations' } },
       { label: 'Tasks', hint: 'Board statuses and task types', route: 'SettingsDetail', routeParams: { title: 'TasksConfig' } },
@@ -148,8 +147,6 @@ export function ProfileScreen() {
                   if (!row.route) return;
                   if (row.route === 'SettingsDetail' && row.routeParams) {
                     navigation.navigate('SettingsDetail', row.routeParams as { title: string });
-                  } else if (row.route === 'SettingsAI') {
-                    navigation.navigate('SettingsAI');
                   } else if (row.route === 'SettingsAppearance') {
                     navigation.navigate('SettingsAppearance');
                   } else if (row.route === 'BehavioralMode') {
