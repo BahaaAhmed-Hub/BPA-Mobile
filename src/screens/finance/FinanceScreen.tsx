@@ -7,6 +7,8 @@ import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Glyph } from '../../components/atoms/Glyph';
+import { liveBalances, positionFrom, groupOf, isSettled } from '../../lib/finance/balances';
+import { toBase } from '../../lib/finance/fx';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceBudget, DbFinanceBill, DbFinanceGoal, TxType } from '../../types/financeTypes';
 import { UIFont, NumFont } from '../../theme/typography';
 
@@ -166,15 +168,30 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
     setRefreshing(false);
   }
 
-  // Split accounts by type
-  const paymentAccounts = accounts.filter(a => a.account_type !== 'credit_card');
-  const creditCards     = accounts.filter(a => a.account_type === 'credit_card');
+  // What each account actually holds now: where it started, plus every paid entry filed against it. The stored
+  // figure is only the opening one — reading it directly left every account at whatever it was created with.
+  const live = useMemo(() => liveBalances(accounts, transactions), [accounts, transactions]);
+  const pos = useMemo(() => positionFrom(accounts, transactions), [accounts, transactions]);
+  const balanceOf = (a: DbFinanceAccount) => live.balances.get(a.id) ?? a.balance;
+  const base = pos.base;
+  const inBase = (list: DbFinanceAccount[]) => list.reduce((sum, a) => sum + (toBase(balanceOf(a), a.currency, base) ?? 0), 0);
 
-  // Net position
-  // Held = sum of positive balances of payment/asset/wallet accounts (in EGP, USD ignored for simplicity)
-  const heldEGP = paymentAccounts.filter(a => a.currency === 'EGP' && a.balance > 0).reduce((s, a) => s + a.balance, 0);
-  const owedEGP = creditCards.filter(a => a.currency === 'EGP').reduce((s, a) => s + Math.abs(a.balance), 0);
-  const netEGP  = heldEGP - owedEGP;
+  // Split the way the web does: spendable accounts, cards, other assets, and money borrowed.
+  const paymentAccounts = accounts.filter(a => groupOf(a) === 'payment');
+  const creditCards     = accounts.filter(a => groupOf(a) === 'cards');
+  const otherAssets     = accounts.filter(a => groupOf(a) === 'assets');
+  const openLoans       = accounts.filter(a => groupOf(a) === 'loans' && !isSettled(balanceOf(a)));
+  const settledLoans    = accounts.filter(a => groupOf(a) === 'loans').length - openLoans.length;
+
+  /** A line under an account: what is unpaid and due, or what could not be counted. */
+  const noteFor = (a: DbFinanceAccount): string | null => {
+    const due = live.pending.get(a.id) ?? 0;
+    const missing = [...(live.unconverted.get(a.id) ?? [])];
+    const parts: string[] = [];
+    if (Math.abs(due) >= 0.5) parts.push(`${fmt(due, a.currency)} unpaid and due`);
+    if (missing.length) parts.push(`${missing.join(', ')} not counted — no rate set`);
+    return parts.length ? parts.join(' · ') : null;
+  };
 
   // This month's transactions
   const thisMonth = isoYYYYMM(new Date());
@@ -191,71 +208,90 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         padding: 20, gap: 12,
         ...Shadows.pop,
       }}>
-        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.6 }}>
+        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.62)', letterSpacing: 1.6 }}>
           NET POSITION
         </Text>
         <Text style={{
           fontFamily: NumFont.bold, fontSize: 32, letterSpacing: -0.8,
-          color: netEGP >= 0 ? '#4ADE80' : '#F87171',
+          color: pos.net >= 0 ? '#4ADE80' : '#F87171',
         }}>
-          {netEGP < 0 ? `(EGP ${Math.abs(netEGP).toLocaleString('en-US', { maximumFractionDigits: 0 })})` : `EGP ${netEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}`}
+          {fmt(pos.net, base)}
         </Text>
 
         {/* Held / Owed bar */}
         <View style={{ gap: 6 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.2 }}>HELD</Text>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.2 }}>OWED</Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.62)', letterSpacing: 1.2 }}>HELD</Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.62)', letterSpacing: 1.2 }}>OWED</Text>
           </View>
           <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 3, overflow: 'hidden' }}>
-            {owedEGP + heldEGP > 0 ? (
+            {pos.owed + pos.held > 0 ? (
               <View style={{
                 position: 'absolute', left: 0, top: 0, bottom: 0,
-                width: `${Math.min(100, (heldEGP / (heldEGP + owedEGP)) * 100)}%`,
+                width: `${Math.min(100, (pos.held / (pos.held + pos.owed)) * 100)}%`,
                 backgroundColor: '#4ADE80', borderRadius: 3,
               }} />
             ) : null}
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: '#4ADE80' }}>
-              EGP {heldEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-            </Text>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: '#F87171' }}>
-              EGP {owedEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-            </Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: '#4ADE80' }}>{fmt(pos.held, base)}</Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: '#F87171' }}>{fmt(pos.owed, base)}</Text>
           </View>
         </View>
 
         <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <View>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.4 }}>SAFE TO SPEND</Text>
-            <Text style={{ fontFamily: NumFont.bold, fontSize: 22, color: '#fff', marginTop: 2 }}>
-              EGP {heldEGP.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-            </Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(255,255,255,0.62)', letterSpacing: 1.4 }}>SAFE TO SPEND</Text>
+            <Text style={{ fontFamily: NumFont.bold, fontSize: 22, color: '#fff', marginTop: 2 }}>{fmt(pos.spendable, base)}</Text>
           </View>
-          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>After unpaid bills</Text>
+          <Text style={{ flex: 1, textAlign: 'right', fontFamily: UIFont.regular, fontSize: 12, lineHeight: 16, color: 'rgba(255,255,255,0.62)' }}>
+            {pos.committed > 0
+              ? `Cash, less ${fmt(pos.committed, base)} dated ahead and unpaid`
+              : pos.assets > 0 ? 'Cash only; assets are not counted' : 'Cash, after unpaid bills'}
+          </Text>
         </View>
+        {pos.unrated.length > 0 ? (
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 12, lineHeight: 17, color: '#F5D14E' }}>
+            {pos.unrated.join(' and ')} not in these totals — no exchange rate is set (set it on the web, under Settings → Finance).
+          </Text>
+        ) : null}
       </View>
 
-      {/* Payment Accounts */}
+      {/* Payment accounts */}
       {paymentAccounts.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <SectionLabel title="PAYMENT ACCOUNTS" total={fmt(paymentAccounts.filter(a=>a.currency==='EGP').reduce((s,a)=>s+a.balance,0))} P={P} />
-          {paymentAccounts.map(a => <AccountRow key={a.id} account={a} P={P} />)}
+          <SectionLabel title="PAYMENT ACCOUNTS" total={fmt(inBase(paymentAccounts), base)} P={P} />
+          {paymentAccounts.map(a => <AccountRow key={a.id} account={a} balance={balanceOf(a)} note={noteFor(a)} P={P} />)}
         </View>
       ) : null}
 
-      {/* Cards Owed */}
+      {/* Cards owed */}
       {creditCards.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <SectionLabel
-            title="CARDS OWED"
-            total={fmt(-creditCards.filter(a=>a.currency==='EGP').reduce((s,a)=>s+Math.abs(a.balance),0))}
-            totalColor={C.red}
-            P={P}
-          />
-          {creditCards.map(a => <CardRow key={a.id} account={a} P={P} />)}
+          <SectionLabel title="CARDS OWED" total={fmt(inBase(creditCards), base)} totalColor={C.red} P={P} />
+          {creditCards.map(a => <CardRow key={a.id} account={a} balance={balanceOf(a)} note={noteFor(a)} P={P} />)}
+        </View>
+      ) : null}
+
+      {/* Other assets */}
+      {otherAssets.length > 0 ? (
+        <View style={{ gap: 8 }}>
+          <SectionLabel title="OTHER ASSETS" total={fmt(inBase(otherAssets), base)} P={P} />
+          {otherAssets.map(a => <AccountRow key={a.id} account={a} balance={balanceOf(a)} note={noteFor(a)} P={P} />)}
+        </View>
+      ) : null}
+
+      {/* Money borrowed: cash in, debt out — and neither is income. */}
+      {openLoans.length > 0 || settledLoans > 0 ? (
+        <View style={{ gap: 8 }}>
+          <SectionLabel title="BORROWED & LOANS OWED" total={openLoans.length ? fmt(inBase(openLoans), base) : undefined} totalColor={C.red} P={P} />
+          {openLoans.map(a => <CardRow key={a.id} account={a} balance={balanceOf(a)} note={noteFor(a)} isLoan P={P} />)}
+          {settledLoans > 0 ? (
+            <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, paddingHorizontal: 2 }}>
+              {settledLoans} settled loan{settledLoans === 1 ? '' : 's'} not shown
+            </Text>
+          ) : null}
         </View>
       ) : null}
 
@@ -292,7 +328,8 @@ function accountEmoji(a: DbFinanceAccount): string {
 }
 
 function accountColor(a: DbFinanceAccount): string {
-  if (a.color) return a.color;
+  // The web stores a CSS variable (`var(--sb-ink-4)`) for some accounts, which a phone cannot draw.
+  if (a.color && !a.color.startsWith('var(')) return a.color;
   switch (a.account_type) {
     case 'credit_card': return '#EF4444';
     case 'asset':       return '#8B5CF6';
@@ -301,8 +338,8 @@ function accountColor(a: DbFinanceAccount): string {
   }
 }
 
-function AccountRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<typeof useScreenPalette> }) {
-  const isNeg = a.balance < 0;
+function AccountRow({ account: a, balance, note, P }: { account: DbFinanceAccount; balance: number; note: string | null; P: ReturnType<typeof useScreenPalette> }) {
+  const isNeg = balance < 0;
   const emoji = accountEmoji(a);
   const color = accountColor(a);
   return (
@@ -322,19 +359,21 @@ function AccountRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnTyp
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{a.name}</Text>
         <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 1 }}>{a.bank}</Text>
+        {note ? <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: C.red, marginTop: 2 }}>{note}</Text> : null}
       </View>
       <Text style={{
         fontFamily: NumFont.medium, fontSize: 15,
         color: isNeg ? C.red : P.ink,
       }}>
-        {fmt(a.balance, a.currency)}
+        {fmt(balance, a.currency)}
       </Text>
     </View>
   );
 }
 
-function CardRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<typeof useScreenPalette> }) {
-  const owed = Math.abs(a.balance);
+function CardRow({ account: a, balance, note, isLoan = false, P }: { account: DbFinanceAccount; balance: number; note: string | null; isLoan?: boolean; P: ReturnType<typeof useScreenPalette> }) {
+  // A card in credit is not a debt: only a balance below zero is owed.
+  const owed = Math.max(0, -balance);
   const limit = a.credit_limit ?? 0;
   const used = limit > 0 ? Math.min(1, owed / limit) : 0;
   const emoji = accountEmoji(a);
@@ -358,18 +397,21 @@ function CardRow({ account: a, P }: { account: DbFinanceAccount; P: ReturnType<t
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{a.name}</Text>
           <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 1 }}>{a.bank}</Text>
+          {note ? <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: C.red, marginTop: 2 }}>{note}</Text> : null}
         </View>
-        <Text style={{ fontFamily: NumFont.medium, fontSize: 15, color: C.red }}>
-          {fmt(-owed, a.currency)}
+        <Text style={{ fontFamily: NumFont.medium, fontSize: 15, color: owed > 0 ? C.red : P.ink }}>
+          {owed > 0 ? fmt(-owed, a.currency) : fmt(balance, a.currency)}
         </Text>
       </View>
-      {limit > 0 ? (
+      {!isLoan && limit > 0 ? (
         <View style={{ gap: 4 }}>
           <View style={{ height: 4, backgroundColor: P.hairline, borderRadius: 2, overflow: 'hidden' }}>
             <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${used * 100}%`, backgroundColor: used > 0.8 ? C.red : C.orange, borderRadius: 2 }} />
           </View>
-          <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
-            {Math.round(used * 100)}% of {fmt(limit, a.currency)} limit used
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: owed > limit ? C.red : P.ink3 }}>
+            {owed > limit
+              ? `${fmt(owed - limit, a.currency)} over the ${fmt(limit, a.currency)} limit`
+              : `${Math.round(used * 100)}% of ${fmt(limit, a.currency)} limit used`}
           </Text>
         </View>
       ) : null}

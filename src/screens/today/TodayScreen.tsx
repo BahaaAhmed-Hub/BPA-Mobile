@@ -15,6 +15,8 @@ import { UIFont, NumFont } from '../../theme/typography';
 import { useScreenPalette } from '../../theme/palette';
 import { useIsTablet } from '../../lib/layout';
 import { isActionable } from '../../lib/tasks';
+import { positionFrom, isUnpaid } from '../../lib/finance/balances';
+import { txIn } from '../../lib/finance/txRates';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -147,13 +149,12 @@ export function TodayScreen() {
 
   // Finance quick stats
   const { safeToSpend, spentToday } = useMemo(() => {
-    const paymentAccounts = accounts.filter(a =>
-      a.account_type !== 'credit_card' && a.currency === 'EGP' && a.balance > 0,
-    );
-    const safe = paymentAccounts.reduce((s, a) => s + a.balance, 0);
+    // The same figures as the Balance tab: cash from live balances (not the stored opening figure), in the base
+    // currency, less what is dated ahead and unpaid. Spent today counts only money that has actually left.
+    const safe = positionFrom(accounts, transactions).spendable;
     const spent = transactions
-      .filter(t => t.date === today && t.tx_type === 'expense' && t.currency === 'EGP')
-      .reduce((s, t) => s + t.amount, 0);
+      .filter(t => t.date === today && t.tx_type === 'expense' && !isUnpaid(t))
+      .reduce((sum, t) => sum + (txIn(t) ?? 0), 0);
     return { safeToSpend: safe, spentToday: spent };
   }, [accounts, transactions, today]);
 

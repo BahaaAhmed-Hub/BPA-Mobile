@@ -1,6 +1,7 @@
 export type TxType = 'expense' | 'income' | 'transfer' | 'asset_purchase' | 'asset_sale' | 'liability_acq' | 'liability_dis';
 export type Currency = 'EGP' | 'USD' | 'AED';
-export type AccountType = 'payment' | 'credit_card' | 'asset' | 'wallet';
+/** `loan` is money owed to a person or a lender: below zero while it is owed, never somewhere you spend from. */
+export type AccountType = 'payment' | 'credit_card' | 'asset' | 'wallet' | 'loan';
 
 export interface DbFinanceAccount {
   id: string;
