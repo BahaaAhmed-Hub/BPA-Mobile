@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { setFinancePrefs, parseRates, parseBase, withRate, currentRates } from '../lib/finance/fx';
 import { writeSharedPref } from '../lib/sharedPrefs';
 import { notify } from './feedbackStore';
-import { setPaidAtSupported } from '../lib/finance/balances';
+import { setPaidAtSupported, paidAtSupported, todayISO } from '../lib/finance/balances';
 import { parseTargets, setTransferTargets, withLocalTargets } from '../lib/finance/transferTargets';
 import { parseBasis, setBasis } from '../lib/finance/flows';
 import { parseRules, withAmountFrom, type BudgetRule } from '../lib/finance/budget';
@@ -73,7 +73,7 @@ interface FinanceState {
     payee: string;
     date: string;
     note?: string | null;
-  }) => Promise<void>;
+  }) => Promise<boolean>;
   /** Set one exchange rate (what one unit is worth in the base currency). Resolves true once the server holds it. */
   saveRate: (currency: string, rate: number) => Promise<boolean>;
   /** Change a category's budget amount from a month onward. Resolves true once the server holds it. */
@@ -123,13 +123,17 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   },
 
   async addTransaction(tx) {
+    // An entry with no payment date is money still owed, and is kept out of every balance. One made today or
+    // earlier from the phone has been paid, so it is stamped; one dated ahead is left unpaid, as on the web.
+    const paid = paidAtSupported() && tx.date <= todayISO() ? { paid_at: tx.date } : {};
     const { data, error } = await supabase
       .from('finance_transactions')
-      .insert({ ...tx, to_account_id: tx.to_account_id ?? null, note: tx.note ?? null, tags: [], attachments: [], is_cleared: false, is_recurring: false })
+      .insert({ ...tx, ...paid, to_account_id: tx.to_account_id ?? null, note: tx.note ?? null, tags: [], attachments: [], is_cleared: false, is_recurring: false })
       .select()
       .single();
-    if (error || !data) return;
+    if (error || !data) { notify('error', "Couldn't save that entry. Nothing was changed."); return false; }
     set({ transactions: [data as DbFinanceTransaction, ...get().transactions] });
+    return true;
   },
 
   async saveRate(currency, rate) {

@@ -10,9 +10,11 @@ import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Glyph } from '../../components/atoms/Glyph';
-import { liveBalances, positionFrom, groupOf, isSettled } from '../../lib/finance/balances';
+import { liveBalances, positionFrom, groupOf, isSettled, todayISO } from '../../lib/finance/balances';
 import { toBase, baseCurrency, rateFor } from '../../lib/finance/fx';
 import { ValueSheet } from '../../components/atoms/ValueSheet';
+import { repayment, payFromOptions } from '../../lib/finance/loans';
+import { notify } from '../../store/feedbackStore';
 import { totalsFor, byDay, byCategory as categoryTotals } from '../../lib/finance/flows';
 import { buildEnvelopes, sumEnvelopes, canEditAmount, type Envelope } from '../../lib/finance/budget';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceBudget, DbFinanceBill, DbFinanceGoal, TxType } from '../../types/financeTypes';
@@ -133,6 +135,9 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
   const base = pos.base;
   const saveRate = useFinanceStore(st => st.saveRate);
   const [rateFor_, setRateFor] = useState<string | null>(null);
+  const addTx = useFinanceStore(st => st.addTransaction);
+  const [repaying, setRepaying] = useState<DbFinanceAccount | null>(null);
+  const [payFrom, setPayFrom] = useState<string | null>(null);
   const foreign = useMemo(() => [...new Set(accounts.map(a => (a.currency || base).toUpperCase()))].filter(c => c !== base.toUpperCase()).sort(), [accounts, base]);
   const inBase = (list: DbFinanceAccount[]) => list.reduce((sum, a) => sum + (toBase(balanceOf(a), a.currency, base) ?? 0), 0);
 
@@ -248,6 +253,50 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         onSave={v => saveRate(rateFor_!, v)}
       />
 
+      {/* Pay back: a transfer from cash you hold into the lender, never an expense. */}
+      {repaying ? (() => {
+        const owed = Math.max(0, -balanceOf(repaying));
+        const options = payFromOptions(accounts, repaying);
+        const chosen = options.find(o => o.id === payFrom) ?? (options.length === 1 ? options[0] : undefined);
+        return (
+          <ValueSheet
+            visible
+            title={`Pay back ${repaying.name}`}
+            hint={`${fmt(owed, repaying.currency)} is owed. Paid from an account in ${repaying.currency}; the loan and that account both go down.`}
+            label={`Amount in ${repaying.currency}`}
+            suffix={repaying.currency}
+            initial={Math.round(owed * 100) / 100}
+            onClose={() => setRepaying(null)}
+            onSave={async v => {
+              const check = repayment(chosen, repaying, owed, v, todayISO());
+              if (!check.ok) { notify('error', check.reason); return false; }
+              return addTx(check.tx);
+            }}
+          >
+            {options.length === 0 ? (
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: P.accentDeep }}>
+                You have no {repaying.currency} account to pay from. Repaying across currencies is done on the web.
+              </Text>
+            ) : (
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>PAY FROM</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {options.map(o => {
+                    const on = chosen?.id === o.id;
+                    return (
+                      <Pressable key={o.id} accessibilityLabel={`Pay from ${o.name}`} onPress={() => setPayFrom(o.id)}
+                        style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radii.pill, backgroundColor: on ? P.accent : P.bg, borderWidth: 1, borderColor: on ? P.accent : P.hairline }}>
+                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink }}>{o.name}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+          </ValueSheet>
+        );
+      })() : null}
+
       {/* Payment accounts */}
       {paymentAccounts.length > 0 ? (
         <View style={{ gap: 8 }}>
@@ -276,7 +325,7 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
       {openLoans.length > 0 || settledLoans > 0 ? (
         <View style={{ gap: 8 }}>
           <SectionLabel title="BORROWED & LOANS OWED" total={openLoans.length ? fmt(inBase(openLoans), base) : undefined} totalColor={C.red} P={P} />
-          {openLoans.map(a => <CardRow key={a.id} account={a} balance={balanceOf(a)} note={noteFor(a)} isLoan P={P} />)}
+          {openLoans.map(a => <CardRow key={a.id} account={a} balance={balanceOf(a)} note={noteFor(a)} isLoan onPayBack={() => { setPayFrom(null); setRepaying(a); }} P={P} />)}
           {settledLoans > 0 ? (
             <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, paddingHorizontal: 2 }}>
               {settledLoans} settled loan{settledLoans === 1 ? '' : 's'} not shown
@@ -366,7 +415,7 @@ function AccountRow({ account: a, balance, note, P }: { account: DbFinanceAccoun
   );
 }
 
-function CardRow({ account: a, balance, note, isLoan = false, P }: { account: DbFinanceAccount; balance: number; note: string | null; isLoan?: boolean; P: ReturnType<typeof useScreenPalette> }) {
+function CardRow({ account: a, balance, note, isLoan = false, onPayBack, P }: { account: DbFinanceAccount; balance: number; note: string | null; isLoan?: boolean; onPayBack?: () => void; P: ReturnType<typeof useScreenPalette> }) {
   // A card in credit is not a debt: only a balance below zero is owed.
   const owed = Math.max(0, -balance);
   const limit = a.credit_limit ?? 0;
@@ -398,6 +447,12 @@ function CardRow({ account: a, balance, note, isLoan = false, P }: { account: Db
           {owed > 0 ? fmt(-owed, a.currency) : fmt(balance, a.currency)}
         </Text>
       </View>
+      {isLoan && onPayBack && owed > 0 ? (
+        <Pressable accessibilityLabel={`Pay back ${a.name}`} onPress={onPayBack}
+          style={{ alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: Radii.pill, backgroundColor: P.accent }}>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 13, color: P.ink }}>Pay back</Text>
+        </Pressable>
+      ) : null}
       {!isLoan && limit > 0 ? (
         <View style={{ gap: 4 }}>
           <View style={{ height: 4, backgroundColor: P.hairline, borderRadius: 2, overflow: 'hidden' }}>
