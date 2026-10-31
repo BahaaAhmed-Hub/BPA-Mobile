@@ -24,6 +24,9 @@ import { HabitEditScreen } from '../screens/habits/HabitEditScreen';
 import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
 import { SettingsPlaceholderScreen } from '../screens/settings/SettingsPlaceholderScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
+import { ProjectsScreen } from '../screens/projects/ProjectsScreen';
+import { ProjectDetailScreen } from '../screens/projects/ProjectDetailScreen';
+import { useProjectStore } from '../store/projectStore';
 
 export type RootStackParamList = {
   App: undefined;
@@ -41,6 +44,8 @@ export type RootStackParamList = {
   SettingsAppearance: undefined;
   SettingsDetail: { title: string };
   Search: undefined;
+  Projects: undefined;
+  ProjectDetail: { projectId: string };
 };
 import { refreshIfStale } from '../lib/refresh';
 import { useTaskStore } from '../store/taskStore';
@@ -73,7 +78,7 @@ export function RootNavigator() {
       if (session) {
         void import('../lib/pushNotifications').then(m => m.registerForPushNotifications());
       }
-      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); }
+      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); useProjectStore.getState().clearAll(); }
     });
 
     // Deep-link OAuth callback (when the in-app browser hands the URL back)
@@ -165,6 +170,16 @@ export function RootNavigator() {
             <Stack.Screen
               name="HabitEdit"
               component={HabitEditScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Projects"
+              component={ProjectsScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="ProjectDetail"
+              component={ProjectDetailScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
             <Stack.Screen

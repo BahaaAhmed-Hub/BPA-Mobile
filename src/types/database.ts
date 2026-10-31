@@ -146,3 +146,35 @@ export interface DbWeeklyReview {
   professor_insight: string | null;
   created_at: string;
 }
+
+// ── Projects (web migration 20260042) ───────────────────────────────────────
+// A goal with an end that gathers tasks and other items. A task carries its
+// project on its own row (`tasks.project_id`); a milestone is a dated phase.
+
+export type DbProjectStatus = 'idea' | 'active' | 'paused' | 'done';
+
+export interface DbProject {
+  id: string;
+  user_id: string;
+  name: string;
+  kind: 'work' | 'personal';
+  color: string | null;
+  status: DbProjectStatus;
+  company_id: string | null;
+  start_date: string | null;
+  target_date: string | null;
+  notes: string | null;
+  archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbMilestone {
+  id: string;
+  project_id: string;
+  user_id: string;
+  title: string;
+  due_date: string | null;
+  done: boolean;
+  sort_order: number;
+}

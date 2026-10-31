@@ -35,6 +35,7 @@ const SECTIONS: Array<{
   {
     eyebrow: 'WORKSPACE',
     rows: [
+      { label: 'Projects', hint: 'Goals with an end · milestones and their tasks', route: 'Projects' },
       { label: 'Accounts & companies', hint: 'Connected Google accounts and companies', route: 'SettingsDetail', routeParams: { title: 'Accounts' } },
       { label: 'Schedule rules', hint: 'Focus hours, buffers, protections', route: 'SettingsDetail', routeParams: { title: 'Schedule' } },
       { label: 'Integrations', hint: 'Notion, Asana and more', route: 'SettingsDetail', routeParams: { title: 'Integrations' } },
@@ -148,6 +149,8 @@ export function ProfileScreen() {
                   if (!row.route) return;
                   if (row.route === 'SettingsDetail' && row.routeParams) {
                     navigation.navigate('SettingsDetail', row.routeParams as { title: string });
+                  } else if (row.route === 'Projects') {
+                    navigation.navigate('Projects');
                   } else if (row.route === 'SettingsAppearance') {
                     navigation.navigate('SettingsAppearance');
                   } else if (row.route === 'BehavioralMode') {
