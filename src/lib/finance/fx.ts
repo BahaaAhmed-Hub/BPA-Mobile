@@ -68,3 +68,12 @@ export function currenciesNeedingRates(rows: { currency?: string }[], b = base):
   }
   return [...missing];
 }
+
+/** The rates with one currency's rate set. Null when it is the base (always 1) or not a positive number. */
+export function withRate(current: Record<string, number>, cur: string, value: number, b = base): Record<string, number> | null {
+  const c = cur.trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(c) || c === b.toUpperCase() || !isFinite(value) || value <= 0) return null;
+  return { ...current, [c]: value };
+}
+
+export function currentRates(): Record<string, number> { return { ...rates }; }
