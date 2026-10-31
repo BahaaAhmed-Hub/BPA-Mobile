@@ -178,3 +178,37 @@ export interface DbMilestone {
   done: boolean;
   sort_order: number;
 }
+
+// ── Shopping (web migrations 20260017, 20260019) ────────────────────────────
+export type DbShoppingStatus = 'wanted' | 'planned' | 'purchased';
+
+export interface DbShoppingGroup {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  icon: string;
+  scheduled_date: string | null;
+  status: 'active' | 'archived' | 'suspended';
+  sort_order: number;
+}
+
+export interface DbShoppingItem {
+  id: string;
+  user_id: string;
+  group_id: string | null;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string | null;
+  priority: number;
+  status: DbShoppingStatus;
+  target_price_max: number | null;
+  currency: string;
+  notes: string | null;
+  purchased_at: string | null;
+  final_price: number | null;
+  store_used_id: string | null;
+  sort_order: number;
+  created_at: string;
+}

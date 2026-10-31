@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
-import * as LocalAuthentication from 'expo-local-authentication';
+import { useBiometricLock } from '../../lib/useBiometricLock';
+import { LockedView } from '../../components/atoms/LockedView';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFinanceStore } from '../../store/financeStore';
 import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
@@ -44,62 +45,13 @@ export function FinanceScreen() {
   const P = useScreenPalette();
   const [activeTab, setActiveTab] = useState<SubTab>('Balance')
   const [addOpen, setAddOpen] = useState(false);
-  const [authState, setAuthState] = useState<'pending' | 'unlocked' | 'failed'>('pending');
-
   const loadAll   = useFinanceStore(s => s.loadAll);
   const loading   = useFinanceStore(s => s.loading);
 
-  const authenticate = useCallback(async () => {
-    setAuthState('pending');
-    try {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      if (!hasHardware) { setAuthState('unlocked'); return; }
-      const enrolled = await LocalAuthentication.isEnrolledAsync();
-      if (!enrolled) { setAuthState('unlocked'); return; }
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Unlock Finance',
-        fallbackLabel: 'Use PIN',
-        cancelLabel: 'Cancel',
-      });
-      setAuthState(result.success ? 'unlocked' : 'failed');
-    } catch {
-      setAuthState('failed'); // hardware exception → require explicit retry, don't silently grant access
-    }
-  }, []);
-
-  useEffect(() => { void authenticate(); }, [authenticate]);
+  const { state: authState, authenticate } = useBiometricLock('Unlock Finance');
   useEffect(() => { if (authState === 'unlocked') void loadAll(); }, [authState, loadAll]);
 
-  if (authState !== 'unlocked') {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, paddingHorizontal: 40 }}>
-          <Text style={{ fontSize: 48 }}>🔒</Text>
-          <Text style={{ fontFamily: UIFont.bold, fontSize: 20, color: P.ink, textAlign: 'center' }}>
-            Finance is locked
-          </Text>
-          <Text style={{ fontFamily: UIFont.regular, fontSize: 14, color: P.ink3, textAlign: 'center', lineHeight: 20 }}>
-            {authState === 'pending'
-              ? 'Authenticating…'
-              : 'Authentication cancelled. Tap to try again.'}
-          </Text>
-          {authState === 'failed' && (
-            <Pressable
-              onPress={() => void authenticate()}
-              style={{
-                backgroundColor: P.accent, paddingHorizontal: 28, paddingVertical: 13,
-                borderRadius: 999, borderWidth: 1, borderColor: P.accentBorder,
-              }}
-            >
-              <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: P.accentInk }}>
-                Unlock Finance
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      </SafeAreaView>
-    );
-  }
+  if (authState !== 'unlocked') return <LockedView name="Finance" state={authState} onRetry={() => void authenticate()} />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>

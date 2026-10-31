@@ -35,6 +35,7 @@ const SECTIONS: Array<{
   {
     eyebrow: 'WORKSPACE',
     rows: [
+      { label: 'Shopping', hint: 'Lists and what to buy · locked like Finance', route: 'Shopping' },
       { label: 'Projects', hint: 'Goals with an end · milestones and their tasks', route: 'Projects' },
       { label: 'Accounts & companies', hint: 'Connected Google accounts and companies', route: 'SettingsDetail', routeParams: { title: 'Accounts' } },
       { label: 'Schedule rules', hint: 'Focus hours, buffers, protections', route: 'SettingsDetail', routeParams: { title: 'Schedule' } },
@@ -149,6 +150,8 @@ export function ProfileScreen() {
                   if (!row.route) return;
                   if (row.route === 'SettingsDetail' && row.routeParams) {
                     navigation.navigate('SettingsDetail', row.routeParams as { title: string });
+                  } else if (row.route === 'Shopping') {
+                    navigation.navigate('Shopping');
                   } else if (row.route === 'Projects') {
                     navigation.navigate('Projects');
                   } else if (row.route === 'SettingsAppearance') {
