@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useProjectStore } from '../../store/projectStore';
+import { projectOfEvent, drawableColor } from '../../lib/projects';
 import { View, Text, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, Switch, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -58,6 +60,12 @@ export function CalendarScreen() {
   const weekStart = useMemo(() => startOfWeek(selected), [selected]);
   const weekEnd   = useMemo(() => addDays(weekStart, 6), [weekStart]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Which project an event belongs to is read once, so a card can carry the project's colour.
+  const projects = useProjectStore(s => s.projects);
+  const links = useProjectStore(s => s.links);
+  const loadProjects = useProjectStore(s => s.loadFromDB);
+  useEffect(() => { void loadProjects(); }, [loadProjects]);
 
   useEffect(() => {
     void sync(isoDate(weekStart), isoDate(weekEnd))
@@ -205,7 +213,7 @@ export function CalendarScreen() {
               <View key={e.id}>
                 {showNowAfter ? <NowDivider P={P} /> : null}
                 <Pressable onPress={() => navigation.navigate('EventDetail', { eventId: e.id })}>
-                  <EventCard event={e} highlighted={isLive} dimmed={isPast && !isLive} P={P} />
+                  <EventCard event={e} highlighted={isLive} dimmed={isPast && !isLive} P={P} projectColor={projectOfEvent(e.google_event_id, links, projects) ? drawableColor(projectOfEvent(e.google_event_id, links, projects)!.color, C.indigo) : null} />
                 </Pressable>
                 {showNowBetween ? <NowDivider P={P} /> : null}
               </View>
@@ -509,7 +517,7 @@ function NowDivider({ P }: { P: ScreenPalette }) {
   );
 }
 
-function EventCard({ event, highlighted, dimmed, P }: { event: DbCalendarEvent; highlighted: boolean; dimmed: boolean; P: ScreenPalette }) {
+function EventCard({ event, highlighted, dimmed, P, projectColor }: { event: DbCalendarEvent; highlighted: boolean; dimmed: boolean; P: ScreenPalette; projectColor: string | null }) {
   // Card body uses fixed blue/indigo so events are always recognizably "events"
   // regardless of theme. Only the time gutter (which lives ON the bg) flips
   // with the palette, and never dims — past events fade their card, not their time.
@@ -547,11 +555,14 @@ function EventCard({ event, highlighted, dimmed, P }: { event: DbCalendarEvent; 
         opacity: dimmed ? 0.55 : 1,
         minHeight: Math.max(52, (durMin(event.start_time, event.end_time) || 0) * 0.9),
       }}>
-        <Text style={{
-          fontFamily: UIFont.bold, fontSize: 13,
-          color: highlighted ? '#fff' : C.ink,
-          letterSpacing: -0.2,
-        }} numberOfLines={2}>{event.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+          {projectColor ? <View accessibilityLabel="Belongs to a project" style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: projectColor, marginTop: 4, borderWidth: highlighted ? 1 : 0, borderColor: '#fff' }} /> : null}
+          <Text style={{
+            flex: 1, fontFamily: UIFont.bold, fontSize: 13,
+            color: highlighted ? '#fff' : C.ink,
+            letterSpacing: -0.2,
+          }} numberOfLines={2}>{event.title}</Text>
+        </View>
         {event.location ? (
           <Text style={{
             fontFamily: UIFont.medium, fontSize: 11, marginTop: 3,

@@ -9,6 +9,13 @@ import { C, Radii } from '../../theme/tokens';
 import { ListRow, ListSection } from '../../components/atoms/ListRow';
 import type { DbCalendarEvent } from '../../types/database';
 import { UIFont, NumFont } from '../../theme/typography';
+import { useProjectStore } from '../../store/projectStore';
+import { useTaskStore } from '../../store/taskStore';
+import { notify } from '../../store/feedbackStore';
+import { projectOfEvent, drawableColor } from '../../lib/projects';
+import { placementForNew } from '../../lib/tasks';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 type DetailRoute = RouteProp<{ EventDetail: { eventId: string } }, 'EventDetail'>;
 
@@ -21,7 +28,7 @@ function isAllDay(startIso: string, endIso: string): boolean {
 }
 
 export function EventDetailScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route      = useRoute<DetailRoute>();
   const eventId    = route.params.eventId;
 
@@ -36,6 +43,11 @@ export function EventDetailScreen() {
   const [locationDraft, setLocationDraft] = useState(event?.location ?? '');
   const [notesDraft, setNotesDraft]       = useState(event?.prep_notes ?? '');
   const titleRef = useRef<TextInput>(null);
+  const projects = useProjectStore(s => s.projects);
+  const links    = useProjectStore(s => s.links);
+  const addTask  = useTaskStore(s => s.addTask);
+  const [followOpen, setFollowOpen] = useState(false);
+  const [followTitle, setFollowTitle] = useState('');
 
   if (!event) {
     return (
@@ -49,7 +61,23 @@ export function EventDetailScreen() {
   }
 
   const isGoogleSourced = event.id.startsWith('google:');
+  const project = projectOfEvent(event.google_event_id, links, projects);
   const allDay = isAllDay(event.start_time, event.end_time);
+
+  /** A task that came out of this meeting. Its description says where from, the way the web's follow-ups do. */
+  async function makeFollowUp() {
+    const title = followTitle.trim();
+    if (!title) return;
+    const s = new Date(event!.start_time); const e = new Date(event!.end_time);
+    const day = s.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const t = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace(':00', '');
+    const created = await addTask({
+      title,
+      description: `From "${event!.title}" · ${day}${allDay ? '' : ` · ${t(s)} – ${t(e)}`}`,
+      quadrant: placementForNew(null),
+    });
+    if (created) { notify('success', `Added "${title}" to Do`); setFollowOpen(false); setFollowTitle(''); }
+  }
 
   async function save(patch: Partial<DbCalendarEvent>) {
     await update(event!.id, patch);
@@ -230,6 +258,44 @@ export function EventDetailScreen() {
                   {isGoogleSourced ? 'Google Calendar' : 'Local'}
                 </Text>
               }
+            />
+          </ListSection>
+
+          {/* Project — read-only; linking is done on the web */}
+          {project ? (
+            <ListSection>
+              <ListRow
+                label="Project"
+                accent={drawableColor(project.color, C.indigo)}
+                last
+                onPress={() => navigation.navigate('ProjectDetail', { projectId: project.id })}
+                right={<Text numberOfLines={1} style={{ fontFamily: UIFont.medium, fontSize: 14, color: C.ink2 }}>{project.name} ›</Text>}
+              />
+            </ListSection>
+          ) : null}
+
+          {/* What came out of it */}
+          <ListSection>
+            <ListRow
+              label="Make a follow-up task"
+              last
+              active={followOpen}
+              onPress={() => { setFollowOpen(o => !o); if (!followTitle) setFollowTitle(`Follow up: ${event.title}`); }}
+              right={<Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: C.ink3 }}>{followOpen ? '▴' : '▾'}</Text>}
+              expanded={followOpen ? (
+                <View style={{ paddingHorizontal: 6, paddingTop: 8, gap: 10 }}>
+                  <TextInput
+                    value={followTitle} onChangeText={setFollowTitle} autoFocus
+                    placeholder="What needs to happen?" placeholderTextColor={C.ink3} accessibilityLabel="Follow-up task"
+                    returnKeyType="done" onSubmitEditing={() => void makeFollowUp()}
+                    style={{ fontFamily: UIFont.medium, fontSize: 15, color: C.ink, minHeight: 44, paddingHorizontal: 10, borderRadius: Radii.sm, backgroundColor: C.field, borderWidth: 1, borderColor: C.hairline }}
+                  />
+                  <Pressable onPress={() => void makeFollowUp()} accessibilityLabel="Add follow-up task" disabled={!followTitle.trim()}
+                    style={{ minHeight: 46, borderRadius: Radii.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: followTitle.trim() ? C.indigo : C.hairline }}>
+                    <Text style={{ fontFamily: UIFont.bold, fontSize: 14, color: followTitle.trim() ? '#fff' : C.ink3 }}>Add task</Text>
+                  </Pressable>
+                </View>
+              ) : undefined}
             />
           </ListSection>
 

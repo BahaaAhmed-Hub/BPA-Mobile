@@ -1,4 +1,4 @@
-import type { DbMilestone, DbProject, DbProjectStatus, DbTask } from '../types/database';
+import type { DbMilestone, DbProject, DbProjectLink, DbProjectStatus, DbTask } from '../types/database';
 import { isOpenTask, hasTitle } from './tasks';
 
 export const STATUS_LABEL: Record<DbProjectStatus, string> = { idea: 'Idea', active: 'Active', paused: 'Paused', done: 'Done' };
@@ -47,4 +47,12 @@ export function progressOf(project: DbProject, tasks: DbTask[], milestones: DbMi
     taskRatio: total > 0 ? done / total : null,
     daysLeft: days,
   };
+}
+
+/** The project an event belongs to, if any. One project per event; the link is the Google event id. A link to a
+ *  project that is gone (or archived) reads as no project. */
+export function projectOfEvent(googleEventId: string | null | undefined, links: DbProjectLink[], projects: DbProject[]): DbProject | null {
+  if (!googleEventId) return null;
+  const link = links.find(l => l.kind === 'event' && l.ref_id === googleEventId);
+  return link ? projects.find(p => p.id === link.project_id) ?? null : null;
 }

@@ -200,3 +200,12 @@ export interface DbShoppingItem {
   sort_order: number;
   created_at: string;
 }
+
+/** Everything that is not a task but belongs to a project: an event, a mail thread, a finance entry, a habit, a book
+ *  or a list. `ref_id` is the other module's own id (for an event, the Google event id). */
+export interface DbProjectLink {
+  id: string;
+  project_id: string;
+  kind: 'event' | 'thread' | 'entry' | 'habit' | 'book' | 'list';
+  ref_id: string;
+}
