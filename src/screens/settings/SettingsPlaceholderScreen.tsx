@@ -11,9 +11,10 @@ import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { useCompanyStore } from '../../store/companyStore';
+import { CompanyMark } from '../../components/atoms/CompanyMark';
 import { scheduleView, yesNo, minutes } from '../../lib/settingsView';
 
-interface Row { label: string; hint?: string; value?: string | null }
+interface Row { label: string; hint?: string; value?: string | null; mark?: { logo?: string | null; color?: string | null } }
 interface Section { title?: string; rows: Row[] }
 
 interface Account { email: string; name: string | null; is_primary: boolean }
@@ -64,7 +65,7 @@ export function SettingsPlaceholderScreen() {
       sections.push({ title: 'CONNECTED GOOGLE ACCOUNTS', rows: data.accounts.map(a => ({
         label: a.email, hint: [a.is_primary ? 'Primary' : null, a.name].filter(Boolean).join(' · ') || undefined,
       })) });
-      sections.push({ title: 'COMPANIES', rows: companies.map(c => ({ label: c.name })) });
+      sections.push({ title: 'COMPANIES', rows: companies.map(c => ({ label: c.name, mark: { logo: c.logo_url, color: c.color_tag } })) });
     } else if (title === 'Schedule') {
       sections.push({ title: 'FOCUS & HOURS', rows: [
         { label: 'Focus hours', value: s.focus },
@@ -118,6 +119,7 @@ export function SettingsPlaceholderScreen() {
                   flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12,
                   borderBottomWidth: ri < section.rows.length - 1 ? 1 : 0, borderColor: P.hairline,
                 }}>
+                  {row.mark ? <CompanyMark name={row.label} logo={row.mark.logo} color={row.mark.color} size={32} /> : null}
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{row.label}</Text>
                     {row.hint ? <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3, marginTop: 2 }}>{row.hint}</Text> : null}

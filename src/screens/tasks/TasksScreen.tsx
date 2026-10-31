@@ -12,6 +12,7 @@ import { UIFont, NumFont } from '../../theme/typography';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
+import { CompanyMark } from '../../components/atoms/CompanyMark';
 import { PlanView } from './PlanView';
 import { useIsTablet } from '../../lib/layout';
 import { isActionable, taskCompanyId } from '../../lib/tasks';
@@ -958,9 +959,12 @@ function CompanyFilterRow({
               backgroundColor: active ? activeColor : 'transparent',
               borderColor: active ? activeColor : P.hairline,
             }}>
-              <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: active ? '#fff' : P.ink2 }}>
-                {company.name}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <CompanyMark name={company.name} logo={company.logo_url} color={company.color_tag} size={18} />
+                <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: active ? '#fff' : P.ink2 }}>
+                  {company.name}
+                </Text>
+              </View>
             </View>
           </Pressable>
         );
