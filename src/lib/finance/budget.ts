@@ -195,3 +195,26 @@ export function sumEnvelopes(rows: Pick<Envelope, 'actualBase' | 'plannedBase'>[
     aside: rows.filter(r => r.actualBase === null).length,
   };
 }
+
+/** Whether this budget's amount can be changed from a phone: a plain amount per period. One-off and custom
+ *  instalment budgets carry dated lines, which are edited on the web. */
+export const canEditAmount = (rule: BudgetRule | undefined): boolean => !rule || scheduleOf(rule) === 'repeat';
+
+/** The rules with a category's monthly amount changed from `monthKey` onward. History is kept the way the web keeps it:
+ *  a step from that month, so a raise in November does not rewrite July. A category with no budget gets a monthly
+ *  one starting that month. Returns null when the amount is not a positive number or the budget is not editable here. */
+export function withAmountFrom(
+  rules: Record<string, BudgetRule>, categoryId: string, monthKey: string, amount: number,
+): Record<string, BudgetRule> | null {
+  if (!isFinite(amount) || amount <= 0) return null;
+  const rule = rules[categoryId];
+  if (!canEditAmount(rule)) return null;
+  if (!rule) return { ...rules, [categoryId]: { amount, frequency: 'monthly', starts: monthKey } };
+  // The rule's amount is per its own period (a yearly 12,000), but the person is asked for a month: convert back.
+  const freq = (ruleAt(rule, monthKey) as BudgetRule).frequency;
+  const perPeriod = Math.round((amount / (PER[freq] ?? 1)) * 100) / 100;
+  const steps = (rule.steps ?? []).filter(st => st.from !== monthKey);
+  steps.push({ from: monthKey, amount: perPeriod });
+  steps.sort((a, b) => a.from.localeCompare(b.from));
+  return { ...rules, [categoryId]: { ...rule, steps } };
+}

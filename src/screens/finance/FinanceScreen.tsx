@@ -11,9 +11,10 @@ import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Glyph } from '../../components/atoms/Glyph';
 import { liveBalances, positionFrom, groupOf, isSettled } from '../../lib/finance/balances';
-import { toBase, baseCurrency } from '../../lib/finance/fx';
+import { toBase, baseCurrency, rateFor } from '../../lib/finance/fx';
+import { ValueSheet } from '../../components/atoms/ValueSheet';
 import { totalsFor, byDay, byCategory as categoryTotals } from '../../lib/finance/flows';
-import { buildEnvelopes, sumEnvelopes, type Envelope } from '../../lib/finance/budget';
+import { buildEnvelopes, sumEnvelopes, canEditAmount, type Envelope } from '../../lib/finance/budget';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceBudget, DbFinanceBill, DbFinanceGoal, TxType } from '../../types/financeTypes';
 import { UIFont, NumFont } from '../../theme/typography';
 
@@ -130,6 +131,9 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
   const pos = useMemo(() => positionFrom(accounts, transactions), [accounts, transactions]);
   const balanceOf = (a: DbFinanceAccount) => live.balances.get(a.id) ?? a.balance;
   const base = pos.base;
+  const saveRate = useFinanceStore(st => st.saveRate);
+  const [rateFor_, setRateFor] = useState<string | null>(null);
+  const foreign = useMemo(() => [...new Set(accounts.map(a => (a.currency || base).toUpperCase()))].filter(c => c !== base.toUpperCase()).sort(), [accounts, base]);
   const inBase = (list: DbFinanceAccount[]) => list.reduce((sum, a) => sum + (toBase(balanceOf(a), a.currency, base) ?? 0), 0);
 
   // Split the way the web does: spendable accounts, cards, other assets, and money borrowed.
@@ -209,10 +213,40 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         </View>
         {pos.unrated.length > 0 ? (
           <Text style={{ fontFamily: UIFont.medium, fontSize: 12, lineHeight: 17, color: '#F5D14E' }}>
-            {pos.unrated.join(' and ')} not in these totals — no exchange rate is set (set it on the web, under Settings → Finance).
+            {pos.unrated.join(' and ')} not in these totals — no exchange rate is set. Tap it below to set one.
           </Text>
         ) : null}
       </View>
+
+      {/* Exchange rates: one chip per foreign currency in use. The web keeps the same rates, so a change here shows there. */}
+      {foreign.length > 0 ? (
+        <View style={{ gap: 8 }}>
+          <SectionLabel title="EXCHANGE RATES" total={`1 unit in ${base}`} P={P} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {foreign.map(cur => {
+              const r = rateFor(cur);
+              return (
+                <Pressable key={cur} accessibilityLabel={r === null ? `Set the ${cur} exchange rate` : `Change the ${cur} exchange rate, now ${r}`} onPress={() => setRateFor(cur)}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radii.pill, backgroundColor: P.surface, borderWidth: 1, borderColor: r === null ? P.accentDeep : P.hairline }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: r === null ? P.accentDeep : P.ink }}>
+                    {cur} {r === null ? 'set rate' : r.toLocaleString('en-US', { maximumFractionDigits: 4 })}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+      <ValueSheet
+        visible={rateFor_ !== null}
+        title={`${rateFor_ ?? ''} exchange rate`}
+        hint={`How much ${base} one ${rateFor_ ?? ''} is worth. This is the same rate the web uses.`}
+        label={`1 ${rateFor_ ?? ''} in ${base}`}
+        suffix={base}
+        initial={rateFor_ ? rateFor(rateFor_) : null}
+        onClose={() => setRateFor(null)}
+        onSave={v => saveRate(rateFor_!, v)}
+      />
 
       {/* Payment accounts */}
       {paymentAccounts.length > 0 ? (
@@ -791,6 +825,8 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
   const earn  = useMemo(() => sumEnvelopes(env.earning), [env]);
   const base = baseCurrency();
   const noBudgetsAnywhere = Object.keys(rules).length === 0;
+  const saveBudgetAmount = useFinanceStore(st => st.saveBudgetAmount);
+  const [editing, setEditing] = useState<Envelope | null>(null);
 
   return (
     <ScrollView
@@ -838,18 +874,28 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
           {env.spending.length > 0 ? (
             <View style={{ gap: 10 }}>
               <SectionLabel title="SPENDING" total={`${env.spending.filter(e => e.planned > 0).length} of ${env.spending.length} budgeted`} P={P} />
-              {env.spending.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="spending" P={P} />)}
+              {env.spending.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="spending" P={P} onEdit={canEditAmount(rules[e.cat.id]) ? () => setEditing(e) : undefined} />)}
             </View>
           ) : null}
 
           {env.earning.length > 0 ? (
             <View style={{ gap: 10 }}>
               <SectionLabel title="INCOME" P={P} />
-              {env.earning.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="income" P={P} />)}
+              {env.earning.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="income" P={P} onEdit={canEditAmount(rules[e.cat.id]) ? () => setEditing(e) : undefined} />)}
             </View>
           ) : null}
         </>
       )}
+      <ValueSheet
+        visible={editing !== null}
+        title={editing ? `${editing.cat.name} budget` : 'Budget'}
+        hint={`The monthly amount from ${new Date(`${monthKey}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} on. Earlier months keep what they were.`}
+        label="Amount per month"
+        suffix={editing?.cur}
+        initial={editing && editing.plannedFrom === 'own' ? editing.planned : null}
+        onClose={() => setEditing(null)}
+        onSave={v => saveBudgetAmount(editing!.cat.id, monthKey, v)}
+      />
     </ScrollView>
   );
 }
@@ -869,14 +915,15 @@ function SummaryLine({ label, actual, planned, base, color, strong = false, P }:
 }
 
 /** One envelope: what has been paid out of a category this month against what it is allowed, in its own currency. */
-function EnvelopeRow({ e, kind, P }: { e: Envelope; kind: 'spending' | 'income'; P: ReturnType<typeof useScreenPalette> }) {
+function EnvelopeRow({ e, kind, P, onEdit }: { e: Envelope; kind: 'spending' | 'income'; P: ReturnType<typeof useScreenPalette>; onEdit?: () => void }) {
   const budgeted = e.planned > 0;
   const ratio = budgeted ? e.actual / e.planned : 0;
   const over = kind === 'spending' && budgeted && e.actual > e.planned;
   const bar = kind === 'income' ? C.green : over ? C.red : ratio >= 0.8 ? C.orange : C.green;
   const shown = e.children.filter(c => c.budgeted || c.actual > 0);
   return (
-    <View style={{ backgroundColor: P.surface, borderRadius: Radii.md, padding: 14, gap: 8, borderWidth: 1, borderColor: P.hairline, ...Shadows.card }}>
+    <Pressable disabled={!onEdit} onPress={onEdit} accessibilityLabel={onEdit ? `Change the budget for ${e.cat.name}` : undefined}
+      style={{ backgroundColor: P.surface, borderRadius: Radii.md, padding: 14, gap: 8, borderWidth: 1, borderColor: P.hairline, ...Shadows.card }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${e.cat.color}20`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Glyph icon={e.cat.icon || '📁'} fallback="📁" size={16} box={36} color={e.cat.color || P.ink} />
@@ -914,7 +961,7 @@ function EnvelopeRow({ e, kind, P }: { e: Envelope; kind: 'spending' | 'income';
           ))}
         </View>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
