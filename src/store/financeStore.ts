@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { setFinancePrefs, parseRates, parseBase } from '../lib/finance/fx';
 import { setPaidAtSupported } from '../lib/finance/balances';
+import { parseTargets, setTransferTargets, withLocalTargets } from '../lib/finance/transferTargets';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceGoal, DbFinanceBudget, DbFinanceBill, TxType } from '../types/financeTypes';
 
 /** One calendar year of entries, which is the window the web works from: an account's stored balance is its position
@@ -33,11 +34,14 @@ async function loadFinancePrefs(): Promise<void> {
   if (!session) return;
   const { data } = await supabase
     .from('users')
-    .select('rates:schedule_rules->shared_prefs->>finance-fx-rates, cur:schedule_rules->shared_prefs->>finance-currency')
+    .select('rates:schedule_rules->shared_prefs->>finance-fx-rates, cur:schedule_rules->shared_prefs->>finance-currency, targets:schedule_rules->shared_prefs->>finance-transfer-targets')
     .eq('id', session.user.id)
     .maybeSingle();
-  const row = data as unknown as { rates?: string | null; cur?: string | null } | null;
-  if (row) setFinancePrefs({ base: parseBase(row.cur), rates: parseRates(row.rates) });
+  const row = data as unknown as { rates?: string | null; cur?: string | null; targets?: string | null } | null;
+  if (row) {
+    setFinancePrefs({ base: parseBase(row.cur), rates: parseRates(row.rates) });
+    setTransferTargets(parseTargets(row.targets));
+  }
 }
 
 interface FinanceState {
@@ -92,7 +96,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     set({
       accounts:     (accts.data   ?? []) as DbFinanceAccount[],
       categories:   (cats.data    ?? []) as DbFinanceCategory[],
-      transactions: entries.rows,
+      transactions: withLocalTargets(entries.rows),
       goals:        (goals.data   ?? []) as DbFinanceGoal[],
       budgets:      (budgets.data ?? []) as DbFinanceBudget[],
       bills:        (bills.data   ?? []) as DbFinanceBill[],
