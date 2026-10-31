@@ -4,7 +4,7 @@ import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Bell, ChevronRight, Sparkles, Zap } from 'lucide-react-native';
+import { Bell, ChevronRight, ClipboardList, Mail, MapPin, Search, Sparkles, Zap } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useHabitStore } from '../../store/habitStore';
@@ -209,7 +209,7 @@ export function TodayScreen() {
               backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
               alignItems: 'center', justifyContent: 'center',
             }}>
-              <Text style={{ fontSize: 15 }}>🔍</Text>
+              <Search size={16} color={P.ink2} strokeWidth={1.75} />
             </View>
           </Pressable>
           <Pressable accessibilityLabel="Notifications" onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
@@ -358,7 +358,7 @@ export function TodayScreen() {
                 width: 36, height: 36, borderRadius: Radii.nav,
                 backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center',
               }}>
-                <Text style={{ fontSize: 16 }}>✉️</Text>
+                <Mail size={17} color={P.ink} strokeWidth={1.75} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
@@ -407,9 +407,10 @@ export function TodayScreen() {
                           {e.title}
                         </Text>
                         {e.location ? (
-                          <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3, marginTop: 1 }} numberOfLines={1}>
-                            📍 {e.location}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                            <MapPin size={12} color={P.ink3} strokeWidth={1.75} />
+                            <Text style={{ flex: 1, fontFamily: UIFont.regular, fontSize: 12, color: P.ink3 }} numberOfLines={1}>{e.location}</Text>
+                          </View>
                         ) : null}
                       </View>
                       <View style={{
@@ -617,7 +618,7 @@ export function TodayScreen() {
               borderWidth: 1, borderColor: P.hairline,
               padding: 14, alignItems: 'center', gap: 6,
             }, Shadows.card]}>
-              <Text style={{ fontSize: 20 }}>📋</Text>
+              <ClipboardList size={20} color={P.ink} strokeWidth={1.75} />
               <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: P.ink }}>Weekly Review</Text>
             </View>
           </Pressable>

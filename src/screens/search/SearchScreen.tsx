@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { Banknote, CalendarDays, Flame, Mail, Search, SquareCheck, type LucideIcon } from 'lucide-react-native';
 import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,12 +27,12 @@ interface SearchResult {
   accentColor?: string;
 }
 
-const KIND_META: Record<ResultKind, { label: string; color: string; emoji: string }> = {
-  task:        { label: 'TASK',        color: C.indigo,  emoji: '✅' },
-  habit:       { label: 'HABIT',       color: C.green,   emoji: '🔥' },
-  event:       { label: 'EVENT',       color: C.blue,    emoji: '📅' },
-  transaction: { label: 'TRANSACTION', color: C.orange,  emoji: '💸' },
-  email:       { label: 'MAIL',        color: C.red,     emoji: '✉️' },
+const KIND_META: Record<ResultKind, { label: string; color: string; Icon: LucideIcon }> = {
+  task:        { label: 'TASK',        color: C.indigo,  Icon: SquareCheck },
+  habit:       { label: 'HABIT',       color: C.green,   Icon: Flame },
+  event:       { label: 'EVENT',       color: C.blue,    Icon: CalendarDays },
+  transaction: { label: 'TRANSACTION', color: C.orange,  Icon: Banknote },
+  email:       { label: 'MAIL',        color: C.red,     Icon: Mail },
 };
 
 function highlight(text: string, query: string): string {
@@ -165,7 +166,7 @@ export function SearchScreen() {
             borderWidth: 1, borderColor: P.hairline,
             paddingHorizontal: 12, paddingVertical: 10,
           }}>
-            <Text style={{ fontSize: 16, color: P.ink3 }}>🔍</Text>
+            <Search size={17} color={P.ink3} strokeWidth={1.75} />
             <TextInput
               ref={inputRef}
               autoFocus
@@ -199,7 +200,7 @@ export function SearchScreen() {
           {query.trim().length < 2 ? (
             /* Empty state — recent items hint */
             <View style={{ alignItems: 'center', paddingTop: 40, gap: 12 }}>
-              <Text style={{ fontSize: 36 }}>🔎</Text>
+              <Search size={36} color={P.ink3} strokeWidth={1.5} />
               <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
                 Search everything
               </Text>
@@ -214,7 +215,7 @@ export function SearchScreen() {
                     backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
                     flexDirection: 'row', alignItems: 'center', gap: 6,
                   }}>
-                    <Text style={{ fontSize: 13 }}>{KIND_META[k].emoji}</Text>
+                    {(() => { const I = KIND_META[k].Icon; return <I size={14} color={KIND_META[k].color} strokeWidth={1.75} />; })()}
                     <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: P.ink2 }}>
                       {KIND_META[k].label}
                     </Text>
@@ -265,7 +266,7 @@ export function SearchScreen() {
                             backgroundColor: `${meta.color}18`,
                             alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                           }}>
-                            <Text style={{ fontSize: 16 }}>{meta.emoji}</Text>
+                            <meta.Icon size={18} color={meta.color} strokeWidth={1.75} />
                           </View>
                           <View style={{ flex: 1, minWidth: 0 }}>
                             <Text

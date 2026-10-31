@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { MapPin } from 'lucide-react-native';
 import { createCalendarEvent } from '../../lib/calendarCreate';
 import { LinkPreviews } from '../../components/atoms/LinkPreviews';
 import { View, Text, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
@@ -184,7 +185,7 @@ export function EventDetailScreen() {
             </Pressable>
             <View style={{ height: 1, backgroundColor: C.hairline, marginLeft: 14 }} />
             <View style={{ paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-              <Text style={{ fontSize: 16, marginTop: 2 }}>📍</Text>
+              <View style={{ marginTop: 2 }}><MapPin size={17} color={C.ink3} strokeWidth={1.75} /></View>
               <TextInput
                 value={locationDraft}
                 onChangeText={setLocationDraft}
