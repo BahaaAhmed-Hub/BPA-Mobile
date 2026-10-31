@@ -7,6 +7,8 @@ import { useAuthStore } from '../../store/authStore';
 import { signOut } from '../../lib/google';
 import { useBehavioralStore, MODES } from '../../store/behavioralStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
+import { useModuleStore } from '../../store/moduleStore';
+import { moduleIsOff } from '../../lib/entitlements';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
@@ -35,6 +37,7 @@ const SECTIONS: Array<{
   {
     eyebrow: 'WORKSPACE',
     rows: [
+      { label: 'Library', hint: 'Books, quotes and reading', route: 'Library' },
       { label: 'Shopping', hint: 'Lists and what to buy · locked like Finance', route: 'Shopping' },
       { label: 'Projects', hint: 'Goals with an end · milestones and their tasks', route: 'Projects' },
       { label: 'Accounts & companies', hint: 'Connected Google accounts and companies', route: 'SettingsDetail', routeParams: { title: 'Accounts' } },
@@ -91,6 +94,13 @@ export function ProfileScreen() {
   const displayName = user?.name ?? 'Operator';
   const company = displayName.includes('@') ? displayName.split('@')[1]?.split('.')[0] : 'DX Technologies';
 
+  // A module the server has switched off for this account has no row: the plan decides what is drawn.
+  const modules = useModuleStore(st => st.modules);
+  const OFF_BY_ROUTE: Partial<Record<keyof RootStackParamList, string>> = { Library: 'library', Projects: 'projects', Shopping: 'shopping' };
+  const visibleSections = SECTIONS
+    .map(sec => ({ ...sec, rows: sec.rows.filter(r => !(r.route && OFF_BY_ROUTE[r.route] && moduleIsOff(modules, OFF_BY_ROUTE[r.route]!))) }))
+    .filter(sec => sec.rows.length > 0);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
       <TopBar title="Settings" />
@@ -131,7 +141,7 @@ export function ProfileScreen() {
         </View>
 
         {/* Settings sections */}
-        {SECTIONS.map(section => (
+        {visibleSections.map(section => (
           <View key={section.eyebrow}>
             <Text style={{
               fontFamily: UIFont.semiBold, fontSize: 11,
@@ -150,6 +160,8 @@ export function ProfileScreen() {
                   if (!row.route) return;
                   if (row.route === 'SettingsDetail' && row.routeParams) {
                     navigation.navigate('SettingsDetail', row.routeParams as { title: string });
+                  } else if (row.route === 'Library') {
+                    navigation.navigate('Library');
                   } else if (row.route === 'Shopping') {
                     navigation.navigate('Shopping');
                   } else if (row.route === 'Projects') {

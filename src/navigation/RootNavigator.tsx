@@ -29,6 +29,9 @@ import { ProjectDetailScreen } from '../screens/projects/ProjectDetailScreen';
 import { useProjectStore } from '../store/projectStore';
 import { ShoppingScreen } from '../screens/shopping/ShoppingScreen';
 import { useShoppingStore } from '../store/shoppingStore';
+import { LibraryScreen, LibraryBookScreen } from '../screens/library/LibraryScreen';
+import { useLibraryStore } from '../store/libraryStore';
+import { useModuleStore } from '../store/moduleStore';
 
 export type RootStackParamList = {
   App: undefined;
@@ -48,6 +51,8 @@ export type RootStackParamList = {
   Search: undefined;
   Projects: undefined;
   Shopping: undefined;
+  Library: undefined;
+  LibraryBook: { bookId: string };
   ProjectDetail: { projectId: string };
 };
 import { refreshIfStale } from '../lib/refresh';
@@ -81,7 +86,7 @@ export function RootNavigator() {
       if (session) {
         void import('../lib/pushNotifications').then(m => m.registerForPushNotifications());
       }
-      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); useProjectStore.getState().clearAll(); useShoppingStore.getState().clearAll(); }
+      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); useProjectStore.getState().clearAll(); useShoppingStore.getState().clearAll(); useLibraryStore.getState().clearAll(); useModuleStore.getState().clearAll(); }
     });
 
     // Deep-link OAuth callback (when the in-app browser hands the URL back)
@@ -173,6 +178,16 @@ export function RootNavigator() {
             <Stack.Screen
               name="HabitEdit"
               component={HabitEditScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Library"
+              component={LibraryScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="LibraryBook"
+              component={LibraryBookScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
             <Stack.Screen

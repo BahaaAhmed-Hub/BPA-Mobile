@@ -372,7 +372,7 @@ function BoardView({ tasks, onPress }: { tasks: DbTask[]; onPress: (id: string) 
   const P = useScreenPalette();
 
   return (
-    <ScrollView style={{ flexGrow: 0 }}
+    <ScrollView style={{ flexGrow: 0, flexShrink: 0 }}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, gap: 12 }}
@@ -857,7 +857,7 @@ export function TasksScreen() {
               <ScrollView
                 horizontal showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 4, gap: 8 }}
-                style={{ flexGrow: 0, marginBottom: 8, marginHorizontal: -20, paddingHorizontal: 0 }}
+                style={{ flexGrow: 0, flexShrink: 0, marginBottom: 8, marginHorizontal: -20, paddingHorizontal: 0 }}
               >
                 <View style={{ width: 20 }} />
                 {QUADRANT_ORDER.map(q => {

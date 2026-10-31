@@ -17,6 +17,7 @@ import { useScreenPalette } from '../../theme/palette';
 import { useIsTablet } from '../../lib/layout';
 import { isActionable } from '../../lib/tasks';
 import { positionFrom, isUnpaid } from '../../lib/finance/balances';
+import { DailyQuoteCard } from '../../components/atoms/DailyQuoteCard';
 import { txIn } from '../../lib/finance/txRates';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -342,6 +343,9 @@ export function TodayScreen() {
             </View>
           </View>
         </View>
+
+        {/* ── Quote of the day (draws nothing unless there is one to show) ── */}
+        <DailyQuoteCard />
 
         {/* ── Inbox alert ── */}
         {pendingEmails > 0 && (

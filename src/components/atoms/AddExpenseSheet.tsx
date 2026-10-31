@@ -102,7 +102,7 @@ export function AddExpenseSheet({ visible, onClose }: { visible: boolean; onClos
 
               {expenseCategories.length > 0 && (
                 <Field label="CATEGORY">
-                  <ScrollView style={{ flexGrow: 0 }} horizontal showsHorizontalScrollIndicator={false}>
+                  <ScrollView style={{ flexGrow: 0, flexShrink: 0 }} horizontal showsHorizontalScrollIndicator={false}>
                     <View style={{ flexDirection: 'row', gap: 6 }}>
                       {expenseCategories.slice(0, 12).map(cat => {
                         const active = categoryId === cat.id;

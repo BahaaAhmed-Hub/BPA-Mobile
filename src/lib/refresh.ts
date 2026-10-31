@@ -5,6 +5,7 @@ import { useHabitStore, habitWritesInFlight } from '../store/habitStore';
 import { useCompanyStore } from '../store/companyStore';
 import { useFinanceStore } from '../store/financeStore';
 import { useProjectStore } from '../store/projectStore';
+import { useModuleStore } from '../store/moduleStore';
 
 // Each screen loads its data once, when it opens, so an edit made on the web
 // never arrived until the app was restarted. Coming back to the app refreshes
@@ -35,6 +36,7 @@ export async function refreshIfStale(opts: { force?: boolean; now?: number } = {
       useCompanyStore.getState().loadFromDB(),
       useFinanceStore.getState().loadAll(),
       useProjectStore.getState().loadFromDB(),
+      useModuleStore.getState().load(),
     ]);
     return 'refreshed';
   } finally {

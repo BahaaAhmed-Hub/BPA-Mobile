@@ -162,7 +162,7 @@ export function ShoppingScreen() {
                     style={{ width: 90, minHeight: 44, borderRadius: Radii.sm + 3, backgroundColor: P.field, borderWidth: 1, borderColor: P.hairline, paddingHorizontal: 12, fontFamily: NumFont.medium, fontSize: 15, color: P.ink }} />
                 </View>
                 {liveGroups.length > 0 ? (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ gap: 6 }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0 }} contentContainerStyle={{ gap: 6 }}>
                     {[{ id: null as string | null, name: 'No list' }, ...liveGroups].map(g => {
                       const active = groupId === g.id;
                       return (

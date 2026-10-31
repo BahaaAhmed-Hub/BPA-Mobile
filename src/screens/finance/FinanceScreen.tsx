@@ -1280,7 +1280,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
           />
 
           {/* Category scroll */}
-          <ScrollView style={{ flexGrow: 0 }} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 2 }}>
+          <ScrollView style={{ flexGrow: 0, flexShrink: 0 }} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 2 }}>
             {filteredCats.slice(0, 15).map(c => {
               const active = categoryId === c.id;
               return (
@@ -1301,7 +1301,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
           </ScrollView>
 
           {/* Account picker */}
-          <ScrollView style={{ flexGrow: 0 }} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 2 }}>
+          <ScrollView style={{ flexGrow: 0, flexShrink: 0 }} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 2 }}>
             {accounts.filter(a => a.account_type !== 'credit_card').map(a => {
               const active = accountId === a.id;
               return (
