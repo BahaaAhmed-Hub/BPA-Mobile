@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { goalPace } from '../../lib/finance/goalPace';
 import { View, Text, ScrollView, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { useBiometricLock } from '../../lib/useBiometricLock';
@@ -919,6 +920,22 @@ function EnvelopeRow({ e, kind, P }: { e: Envelope; kind: 'spending' | 'income';
 
 // ─── GOALS TAB ────────────────────────────────────────────────────────────────
 
+/** One line on how a goal is going, from its own saved / target / deadline / monthly amount. */
+function paceLine(g: DbFinanceGoal, cur: string): { text: string; warn: boolean } | null {
+  const pace = goalPace(g);
+  const n = (v: number) => `${v.toLocaleString('en-US', { maximumFractionDigits: 0 })} ${cur}`;
+  const month = (key: string) => new Date(`${key}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  switch (pace.state) {
+    case 'reached': return { text: 'Reached', warn: false };
+    case 'overdue': return { text: `Deadline passed · ${n(pace.remaining)} to go`, warn: true };
+    case 'needs': return { text: `${n(pace.perMonth)} a month to arrive on time`, warn: false };
+    case 'projected':
+      if (pace.onTrack === false) return { text: `Arrives ${month(pace.arrives)}, after the deadline${pace.perMonthNeeded ? ` · ${n(pace.perMonthNeeded)} a month would make it` : ''}`, warn: true };
+      return { text: `On track · arrives ${month(pace.arrives)}`, warn: false };
+    default: return null;
+  }
+}
+
 function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => Promise<void> }) {
   const P = useScreenPalette();
   const goals = useFinanceStore(s => s.goals);
@@ -956,6 +973,7 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
             const pct = goal.target_amount > 0
               ? Math.min(1, goal.current_amount / goal.target_amount)
               : 0;
+            const pace = paceLine(goal, cur);
             return (
               <View key={goal.id} style={{
                 flex: 1,
@@ -1014,6 +1032,11 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
                 {goal.deadline ? (
                   <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
                     by {new Date(`${goal.deadline}T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </Text>
+                ) : null}
+                {pace ? (
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: pace.warn ? P.negative : P.ink2 }}>
+                    {pace.text}
                   </Text>
                 ) : null}
               </View>
