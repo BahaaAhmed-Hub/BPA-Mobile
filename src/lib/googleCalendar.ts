@@ -108,8 +108,10 @@ export interface NewGoogleEvent {
   summary: string;
   description?: string;
   location?: string;
-  start: { dateTime: string; timeZone?: string };
-  end: { dateTime: string; timeZone?: string };
+  /** A timed event carries `dateTime`; an all-day one carries `date` (and its end is the day after). */
+  start: { dateTime?: string; date?: string; timeZone?: string };
+  end: { dateTime?: string; date?: string; timeZone?: string };
+  recurrence?: string[];
 }
 
 export async function createGoogleEvent(
@@ -129,4 +131,16 @@ export async function deleteGoogleEvent(
 ): Promise<{ ok: boolean; error?: string }> {
   const r = await callWrite({ action: 'delete_event', event_id: googleEventId, calendar_id: calendarId, ...accountFields(account) });
   return { ok: r.ok, error: r.error };
+}
+
+let mainCal: { calendarId: string; account: GoogleAccountRef; name: string } | null = null;
+
+/** The calendar a new event goes on when the person has not chosen one: their primary, else the first they can write to. */
+export async function mainCalendar(): Promise<{ calendarId: string; account: GoogleAccountRef; name: string }> {
+  if (mainCal) return mainCal;
+  const cals = await listGoogleCalendars();
+  const c = cals.find(x => x.primary) ?? cals.find(x => x.accessRole === 'owner' || x.accessRole === 'writer');
+  if (!c) throw new Error('No Google calendar is connected. Connect one in the web app first.');
+  mainCal = { calendarId: c.id, account: { email: c.accountEmail }, name: c.summary };
+  return mainCal;
 }
