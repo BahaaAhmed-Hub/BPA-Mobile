@@ -123,7 +123,7 @@ export function FinanceScreen() {
       {/* Sub-tab pills */}
       <ScrollView
         horizontal showsHorizontalScrollIndicator={false}
-        style={{ flexShrink: 0 }}
+        style={{ flexGrow: 0, flexShrink: 0 }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 8, gap: 8 }}
       >
         {SUB_TABS.map(t => {
@@ -328,6 +328,11 @@ function accountEmoji(a: DbFinanceAccount): string {
     case 'wallet':      return '👛';
     default:            return '🏦';
   }
+}
+
+/** The web stores some colours as CSS variables (`var(--sb-ink-4)`), which a phone cannot draw. */
+function drawable(color: string | null | undefined, fallback: string): string {
+  return color && !color.startsWith('var(') ? color : fallback;
 }
 
 function accountColor(a: DbFinanceAccount): string {
@@ -993,7 +998,9 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
     >
       {rows.map((row, ri) => (
         <View key={ri} style={{ flexDirection: 'row', gap: 12 }}>
-          {row.map(goal => {
+          {row.map(rawGoal => {
+            const goal = { ...rawGoal, color: drawable(rawGoal.color, P.accentDeep) };
+            const cur = (goal.currency || baseCurrency()).toUpperCase();
             const pct = goal.target_amount > 0
               ? Math.min(1, goal.current_amount / goal.target_amount)
               : 0;
@@ -1049,9 +1056,14 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
                     {goal.current_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                   </Text>
                   <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: P.ink3 }}>
-                    / {goal.target_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    / {goal.target_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })} {cur}
                   </Text>
                 </View>
+                {goal.deadline ? (
+                  <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
+                    by {new Date(`${goal.deadline}T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </Text>
+                ) : null}
               </View>
             );
           })}
@@ -1316,7 +1328,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
           />
 
           {/* Category scroll */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 2 }}>
+          <ScrollView style={{ flexGrow: 0 }} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 2 }}>
             {filteredCats.slice(0, 15).map(c => {
               const active = categoryId === c.id;
               return (
@@ -1337,7 +1349,7 @@ function AddTransactionModal({ visible, onClose }: { visible: boolean; onClose: 
           </ScrollView>
 
           {/* Account picker */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 2 }}>
+          <ScrollView style={{ flexGrow: 0 }} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 2 }}>
             {accounts.filter(a => a.account_type !== 'credit_card').map(a => {
               const active = accountId === a.id;
               return (

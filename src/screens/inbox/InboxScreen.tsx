@@ -454,7 +454,7 @@ export function InboxScreen() {
       </View>
 
       {/* Bucket filters */}
-      <ScrollView
+      <ScrollView style={{ flexGrow: 0 }}
         horizontal showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 6 }}
       >

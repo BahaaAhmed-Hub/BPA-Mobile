@@ -63,6 +63,11 @@ export interface DbFinanceGoal {
   color: string;
   sub_label: string | null;
   is_active: boolean;
+  // Planning columns the web adds to a goal; absent on a database that has not run them.
+  rank?: number | null;
+  deadline?: string | null;
+  currency?: string | null;
+  monthly_commit?: number | null;
   created_at: string;
 }
 

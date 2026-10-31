@@ -104,7 +104,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       accounts:     (accts.data   ?? []) as DbFinanceAccount[],
       categories:   (cats.data    ?? []) as DbFinanceCategory[],
       transactions: withLocalTargets(entries.rows),
-      goals:        (goals.data   ?? []) as DbFinanceGoal[],
+      goals:        [...((goals.data ?? []) as DbFinanceGoal[])].sort((a, b) => (a.rank ?? 1e9) - (b.rank ?? 1e9)),
       budgets:      (budgets.data ?? []) as DbFinanceBudget[],
       budgetRules,
       bills:        (bills.data   ?? []) as DbFinanceBill[],

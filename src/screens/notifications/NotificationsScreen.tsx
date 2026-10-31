@@ -149,7 +149,7 @@ export function NotificationsScreen() {
       />
 
       {/* Filters */}
-      <ScrollView
+      <ScrollView style={{ flexGrow: 0 }}
         horizontal showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 6 }}
       >
