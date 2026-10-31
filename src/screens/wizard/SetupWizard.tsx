@@ -76,7 +76,12 @@ export function SetupWizard({ onDone }: { onDone: () => void }) {
         const prev = (existing?.schedule_rules ?? {}) as Record<string, unknown>;
         const { error } = await supabase
           .from('users')
-          .update({ schedule_rules: { ...prev, mobile_wizard: prefs } })
+          .update({ schedule_rules: {
+            ...prev,
+            mobile_wizard: prefs,
+            // The web's own done flag, merged into its bag, so no other device opens the guide.
+            shared_prefs: { ...((prev.shared_prefs ?? {}) as Record<string, string>), 'professor-wizard-done': '1' },
+          } })
           .eq('id', user.id);
         if (error) notify('error', "Couldn't save your setup answers. You can change them later.");
       }

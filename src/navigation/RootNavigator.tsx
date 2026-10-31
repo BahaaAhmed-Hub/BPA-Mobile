@@ -12,6 +12,7 @@ import { LoadingScreen } from '../screens/LoadingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TaskDetailScreen } from '../screens/tasks/TaskDetailScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
+import { gateAnswer, type GateAnswer } from '../lib/wizardGate';
 import { SetupWizard, WIZARD_DONE_KEY } from '../screens/wizard/SetupWizard';
 import { BehavioralModeScreen } from '../screens/behavioral/BehavioralModeScreen';
 import { InboxScreen } from '../screens/inbox/InboxScreen';
@@ -115,10 +116,35 @@ export function RootNavigator() {
 
   useEffect(() => {
     if (!user) { setWizardChecked(false); setShowWizard(false); return; }
-    void AsyncStorage.getItem(WIZARD_DONE_KEY).then(v => {
-      setShowWizard(v !== '1');
+    let live = true;
+    (async () => {
+      const localDone = (await AsyncStorage.getItem(WIZARD_DONE_KEY)) === '1';
+      let answer: GateAnswer = localDone ? 'done' : 'open';
+      if (!localDone) {
+        try {
+          const [{ data: auth }, shared, cos, habits] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('users').select('d:schedule_rules->shared_prefs->>professor-wizard-done').eq('id', user.id).maybeSingle(),
+            supabase.from('companies').select('id', { count: 'exact', head: true }),
+            supabase.from('habits').select('id', { count: 'exact', head: true }),
+          ]);
+          // A read that failed says nothing: asking an established person to set up again is worse than skipping a new one.
+          if (shared.error || cos.error || habits.error || !auth.user) answer = 'established';
+          else answer = gateAnswer({
+            createdAt: auth.user.created_at,
+            localDone: false,
+            sharedDone: !!(shared.data as { d?: string | null } | null)?.d,
+            hasCompanies: (cos.count ?? 0) > 0,
+            hasHabits: (habits.count ?? 0) > 0,
+          });
+        } catch { answer = 'established'; }
+        if (answer !== 'open') await AsyncStorage.setItem(WIZARD_DONE_KEY, '1');
+      }
+      if (!live) return;
+      setShowWizard(answer === 'open');
       setWizardChecked(true);
-    });
+    })();
+    return () => { live = false; };
   }, [user]);
 
   if (loading) return <LoadingScreen />;
