@@ -192,8 +192,16 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   },
 
   async removeHabit(id) {
-    set({ habits: get().habits.filter(h => h.id !== id) });
-    await supabase.from('habits').update({ is_active: false }).eq('id', id);
+    const before = get().habits;
+    set({ habits: before.filter(h => h.id !== id) });
+    // A delete that did not reach the server comes back on the next reload with no explanation: put it back and say so.
+    writesInFlight++;
+    const { error } = await supabase.from('habits').update({ is_active: false }).eq('id', id);
+    writesInFlight--;
+    if (error) {
+      if (!get().habits.some(h => h.id === id)) set({ habits: before });
+      notify('error', "Couldn't delete that habit, so it was kept.");
+    }
   },
 
   clearAll() { set({ habits: [], logsByHabit: {}, countToday: {}, error: null }); },

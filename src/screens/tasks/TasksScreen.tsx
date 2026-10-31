@@ -196,7 +196,7 @@ function NewTaskSheet({ visible, onClose, onSave }: {
                     }}
                   />
                   <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3, marginTop: 6 }}>
-                    e.g. "Email Nawaf the revised scope tomorrow 9am for Teradix"
+                    e.g. "Email the revised scope tomorrow 9am"
                   </Text>
                 </View>
 
