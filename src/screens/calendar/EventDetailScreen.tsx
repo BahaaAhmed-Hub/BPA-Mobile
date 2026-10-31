@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { LinkPreviews } from '../../components/atoms/LinkPreviews';
 import { View, Text, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -315,6 +316,7 @@ export function EventDetailScreen() {
                   padding: 0, minHeight: 72,
                 }}
               />
+              <LinkPreviews text={notesDraft} />
             </View>
           </ListSection>
 
