@@ -1,4 +1,4 @@
-import type { DbTask } from '../types/database';
+import type { DbQuadrant, DbTask } from '../types/database';
 
 /** Open means not finished and not dropped. The web app's `isOpenTask` counts a
  *  task as finished when either `completed` or `status === 'done'` says so, and
@@ -34,4 +34,25 @@ export function taskCompanyId(
     if (tag && tag === c.name.trim().toLowerCase()) return c.id;
   }
   return null;
+}
+
+// ── Where a task goes ───────────────────────────────────────────────────────
+// The web's two rules: a task made on purpose is not a capture, so it is placed
+// — no date means Do, a date means Schedule — and the first date a task is ever
+// given moves it from the brain dump or from Do to Schedule. Anything already in
+// Delegate or Eliminate stays put, and so does a second date change or clearing it.
+
+/** Where a new task with no quadrant of its own goes. */
+export function placementForNew(dueDate: string | null | undefined): DbQuadrant {
+  return dueDate ? 'important_not_urgent' : 'urgent_important';
+}
+
+/** The quadrant an edit moves a task to, or null when it should stay where it is. */
+export function quadrantAfterEdit(
+  before: Pick<DbTask, 'due_date' | 'quadrant'>,
+  patch: Partial<Pick<DbTask, 'due_date' | 'quadrant'>>,
+): DbQuadrant | null {
+  if (patch.quadrant !== undefined) return null; // the person chose one
+  if (!patch.due_date || before.due_date) return null; // only the FIRST date
+  return before.quadrant === null || before.quadrant === 'urgent_important' ? 'important_not_urgent' : null;
 }

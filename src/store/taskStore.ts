@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import type { DbTask, DbQuadrant, DbTaskStatus } from '../types/database';
 import { notify } from './feedbackStore';
+import { placementForNew, quadrantAfterEdit } from '../lib/tasks';
 
 interface TaskState {
   tasks: DbTask[];
@@ -57,7 +58,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         user_id: user.id,
         title: input.title,
         description: input.description ?? null,
-        quadrant: input.quadrant ?? null,
+        // A task made on purpose is placed, not left in the brain dump: no date means Do, a date means Schedule.
+        quadrant: input.quadrant ?? placementForNew(input.due_date),
         effort_minutes: input.effort_minutes ?? null,
         due_date: input.due_date ?? null,
         status: input.status ?? 'todo',
@@ -77,11 +79,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   async updateTask(id, patch) {
     // The web app keeps a `completed` boolean beside `status`, and reads it
     // first — a status change that leaves it false shows as open over there.
-    const full: Partial<DbTask> = patch.status !== undefined
-      ? { ...patch, completed: patch.status === 'done' }
-      : patch;
     const before = get().tasks.find(t => t.id === id);
     if (!before) return;
+    // The first date a task is given moves it out of the brain dump or Do into Schedule.
+    const moved = quadrantAfterEdit(before, patch);
+    const base: Partial<DbTask> = moved ? { ...patch, quadrant: moved } : patch;
+    const full: Partial<DbTask> = base.status !== undefined
+      ? { ...base, completed: base.status === 'done' }
+      : base;
     set({ tasks: get().tasks.map(t => t.id === id ? { ...t, ...full } : t) });
     begin(id);
     const { error } = await supabase.from('tasks').update(full).eq('id', id);
