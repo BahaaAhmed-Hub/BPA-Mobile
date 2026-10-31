@@ -30,8 +30,7 @@ const SECTIONS: Array<{
   {
     eyebrow: 'YOU',
     rows: [
-      { label: 'Profile', hint: 'Name, timezone, work week & framework', route: 'SettingsDetail', routeParams: { title: 'Profile' } },
-      { label: 'Billing', hint: 'Plan, payment method and invoices', route: 'SettingsDetail', routeParams: { title: 'Billing' } },
+      { label: 'Profile', hint: 'Name, timezone and work week', route: 'SettingsDetail', routeParams: { title: 'Profile' } },
     ],
   },
   {
@@ -42,11 +41,6 @@ const SECTIONS: Array<{
       { label: 'Projects', hint: 'Goals with an end · milestones and their tasks', route: 'Projects' },
       { label: 'Accounts & companies', hint: 'Connected Google accounts and companies', route: 'SettingsDetail', routeParams: { title: 'Accounts' } },
       { label: 'Schedule rules', hint: 'Focus hours, buffers, protections', route: 'SettingsDetail', routeParams: { title: 'Schedule' } },
-      { label: 'Integrations', hint: 'Notion, Asana and more', route: 'SettingsDetail', routeParams: { title: 'Integrations' } },
-      { label: 'Tasks', hint: 'Board statuses and task types', route: 'SettingsDetail', routeParams: { title: 'TasksConfig' } },
-      { label: 'Habits', hint: 'Configure daily habits', route: 'SettingsDetail', routeParams: { title: 'HabitsConfig' } },
-      { label: 'Automation', hint: 'Rules that run without asking you', route: 'SettingsDetail', routeParams: { title: 'Automation' } },
-      { label: 'Notifications', hint: 'What reaches you, where, and when', route: 'SettingsDetail', routeParams: { title: 'NotificationsConfig' } },
     ],
   },
   {
@@ -64,13 +58,6 @@ const SECTIONS: Array<{
       { label: 'Energy Log', hint: 'Daily morning & afternoon energy', route: 'EnergyLog' },
       { label: 'Assistant', hint: 'Ask anything · manages your tasks, habits and calendar', route: 'PlanningAssistant' },
       { label: 'Notifications', hint: 'Activity signals', route: 'Notifications' },
-    ],
-  },
-  {
-    eyebrow: 'DATA',
-    rows: [
-      { label: 'Data & privacy', hint: 'Where your data sits and how long', route: 'SettingsDetail', routeParams: { title: 'DataPrivacy' } },
-      { label: 'Finance settings', hint: 'Envelope style, figures, dates & alerts', route: 'SettingsDetail', routeParams: { title: 'FinanceSettings' } },
     ],
   },
 ];
@@ -92,7 +79,7 @@ export function ProfileScreen() {
 
   const initials = (user?.name ?? user?.email ?? '?').charAt(0).toUpperCase();
   const displayName = user?.name ?? 'Operator';
-  const company = displayName.includes('@') ? displayName.split('@')[1]?.split('.')[0] : 'DX Technologies';
+  
 
   // A module the server has switched off for this account has no row: the plan decides what is drawn.
   const modules = useModuleStore(st => st.modules);
@@ -125,7 +112,7 @@ export function ProfileScreen() {
               {displayName}
             </Text>
             <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: 'rgba(253,248,231,0.5)', marginTop: 2 }}>
-              {user?.email ?? ''}{company ? ` · ${company}` : ''}
+              {user?.email ?? ''}
             </Text>
           </View>
           {enabled && (
