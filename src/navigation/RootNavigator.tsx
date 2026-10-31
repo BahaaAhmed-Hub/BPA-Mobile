@@ -32,6 +32,7 @@ import { useShoppingStore } from '../store/shoppingStore';
 import { LibraryScreen, LibraryBookScreen } from '../screens/library/LibraryScreen';
 import { useLibraryStore } from '../store/libraryStore';
 import { useModuleStore } from '../store/moduleStore';
+import { useMailStore } from '../store/mailStore';
 
 export type RootStackParamList = {
   App: undefined;
@@ -86,7 +87,7 @@ export function RootNavigator() {
       if (session) {
         void import('../lib/pushNotifications').then(m => m.registerForPushNotifications());
       }
-      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); useProjectStore.getState().clearAll(); useShoppingStore.getState().clearAll(); useLibraryStore.getState().clearAll(); useModuleStore.getState().clearAll(); }
+      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); useProjectStore.getState().clearAll(); useShoppingStore.getState().clearAll(); useLibraryStore.getState().clearAll(); useModuleStore.getState().clearAll(); useMailStore.getState().clearAll(); }
     });
 
     // Deep-link OAuth callback (when the in-app browser hands the URL back)

@@ -6,6 +6,7 @@ import { useCompanyStore } from '../store/companyStore';
 import { useFinanceStore } from '../store/financeStore';
 import { useProjectStore } from '../store/projectStore';
 import { useModuleStore } from '../store/moduleStore';
+import { useMailStore } from '../store/mailStore';
 
 // Each screen loads its data once, when it opens, so an edit made on the web
 // never arrived until the app was restarted. Coming back to the app refreshes
@@ -37,6 +38,7 @@ export async function refreshIfStale(opts: { force?: boolean; now?: number } = {
       useFinanceStore.getState().loadAll(),
       useProjectStore.getState().loadFromDB(),
       useModuleStore.getState().load(),
+      useMailStore.getState().loadFromDB(),
     ]);
     return 'refreshed';
   } finally {

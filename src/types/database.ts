@@ -123,20 +123,6 @@ export interface DbCalendarEvent {
   is_synced: boolean;
 }
 
-export type DbEmailClassification = 'decision' | 'fyi' | 'waiting' | 'delegate';
-
-export interface DbEmailAction {
-  id: string;
-  user_id: string;
-  gmail_id: string | null;
-  subject: string | null;
-  from_email: string | null;
-  classification: DbEmailClassification | null;
-  suggested_reply: string | null;
-  status: string | null;
-  follow_up_date: string | null;
-}
-
 export interface DbWeeklyReview {
   id: string;
   user_id: string;

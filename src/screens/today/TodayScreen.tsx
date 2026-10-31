@@ -8,7 +8,8 @@ import { Bell, ChevronRight, Sparkles, Zap } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useHabitStore } from '../../store/habitStore';
-import { useEmailActionsStore } from '../../store/emailActionsStore';
+import { useMailStore } from '../../store/mailStore';
+import { countsOf } from '../../lib/mailSmart';
 import { useCalendarStore } from '../../store/calendarStore';
 import { useFinanceStore } from '../../store/financeStore';
 import { C, Quadrants, Radii, Shadows } from '../../theme/tokens';
@@ -75,8 +76,8 @@ export function TodayScreen() {
   const toggleHabit      = useHabitStore(s => s.toggleToday);
   const isCompletedToday = useHabitStore(s => s.isCompletedToday);
 
-  const emailActions     = useEmailActionsStore(s => s.actions);
-  const loadEmails       = useEmailActionsStore(s => s.loadFromDB);
+  const mailThreads      = useMailStore(s => s.threads);
+  const loadEmails       = useMailStore(s => s.loadFromDB);
 
   const events           = useCalendarStore(s => s.events);
   const loadRange        = useCalendarStore(s => s.loadRange);
@@ -110,10 +111,8 @@ export function TodayScreen() {
 
   // ── Derived data ───────────────────────────────────────────────────────────
 
-  const pendingEmails = useMemo(
-    () => emailActions.filter(a => a.status !== 'handled').length,
-    [emailActions],
-  );
+  // The same answer as the Mail page: what the analysis files under "to answer", handled ones excluded.
+  const pendingEmails = useMemo(() => countsOf(mailThreads).action, [mailThreads]);
 
   const { topTasks, doneToday, totalOpen, weeklyScore } = useMemo(() => {
     const open = tasks.filter(isActionable);
@@ -363,10 +362,10 @@ export function TodayScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
-                  {pendingEmails} item{pendingEmails !== 1 ? 's' : ''} need{pendingEmails === 1 ? 's' : ''} you
+                  {pendingEmails} thread{pendingEmails !== 1 ? 's' : ''} to answer
                 </Text>
                 <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3, marginTop: 1 }}>
-                  Inbox · triaged threads waiting for review
+                  Mail · people waiting on a reply or a decision
                 </Text>
               </View>
               <ChevronRight size={16} color={P.accent} strokeWidth={2.5} />
