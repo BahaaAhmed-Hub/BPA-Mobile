@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable } from './Pressable';
 import { C, Radii, Quadrants, QuadrantId } from '../../theme/tokens';
 import { useTaskStore } from '../../store/taskStore';
 import { UIFont, NumFont } from '../../theme/typography';
@@ -9,7 +10,7 @@ const QUADRANT_ORDER: QuadrantId[] = ['urgent_important', 'important_not_urgent'
 export function AddTaskSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const addTask = useTaskStore(s => s.addTask);
   const [title, setTitle] = useState('');
-  const [quadrant, setQuadrant] = useState<QuadrantId>('important_not_urgent');
+  const [quadrant, setQuadrant] = useState<QuadrantId>('urgent_important');
   const [effort, setEffort] = useState('');
 
   async function save() {
@@ -22,7 +23,7 @@ export function AddTaskSheet({ visible, onClose }: { visible: boolean; onClose: 
     });
     setTitle('');
     setEffort('');
-    setQuadrant('important_not_urgent');
+    setQuadrant('urgent_important');
     onClose();
   }
 

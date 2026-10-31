@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { signInWithGoogle } from '../../lib/google';
@@ -34,8 +36,20 @@ export function LoginScreen() {
     if (error) Alert.alert('Sign-in failed', error.message);
   }
 
+  const headline = T.id === 'samurai' ? 'Discipline. Precision. Mastery.'
+    : T.id === 'pharaoh' ? 'Build Your Legacy.'
+    : T.id === 'astral' ? 'Think in Horizons.'
+    : 'Your AI Executive Operating System';
+  // The default theme's tagline is its headline word for word; saying it twice
+  // in a row reads as a bug.
+  const showTagline = !!T.tagline && T.tagline.replace(/\.$/, '') !== headline.replace(/\.$/, '');
+
   return (
     <View style={{ flex: 1, backgroundColor: T.bg }}>
+      {/* The screen is dark in every mode, so the status bar must be light —
+          the app-wide 'auto' follows the phone's setting and turned the clock
+          and battery dark-on-dark. */}
+      <StatusBar style="light" />
       {/* Mode-aware atmospheric glows */}
       <LinearGradient
         colors={[T.glow, 'transparent']}
@@ -59,7 +73,7 @@ export function LoginScreen() {
                 The Professor
               </Text>
               {T.badge ? (
-                <Text style={{ color: T.accentBright, fontFamily: UIFont.bold, fontSize: 10, marginTop: 3, letterSpacing: 2 }}>
+                <Text style={{ color: T.accentBright, fontFamily: UIFont.bold, fontSize: 11, marginTop: 3, letterSpacing: 2 }}>
                   {T.badge}
                 </Text>
               ) : (
@@ -78,9 +92,11 @@ export function LoginScreen() {
             <Text style={{ color: T.accentBright, fontFamily: NumFont.bold, fontSize: 40, letterSpacing: -1.5, lineHeight: 44, marginTop: 4 }}>
               {T.id === 'samurai' ? 'Precision. Mastery.' : T.id === 'pharaoh' ? 'Legacy.' : T.id === 'astral' ? 'Horizons.' : 'Operating System'}
             </Text>
-            <Text style={{ color: T.textDim, fontFamily: UIFont.regular, fontSize: 15, lineHeight: 22, marginTop: 18, maxWidth: 320 }}>
-              {T.tagline}
-            </Text>
+            {showTagline && (
+              <Text style={{ color: T.textDim, fontFamily: UIFont.regular, fontSize: 15, lineHeight: 22, marginTop: 18, maxWidth: 320 }}>
+                {T.tagline}
+              </Text>
+            )}
           </View>
 
           {/* Auth actions */}

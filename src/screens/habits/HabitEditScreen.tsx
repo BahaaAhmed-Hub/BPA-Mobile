@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -34,7 +35,7 @@ export function HabitEditScreen() {
   if (!habit) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
-        <Pressable onPress={() => navigation.goBack()} style={{ padding: 20 }}>
+        <Pressable accessibilityLabel="Back" onPress={() => navigation.goBack()} style={{ padding: 20 }}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink }}>‹</Text>
         </Pressable>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -91,7 +92,7 @@ export function HabitEditScreen() {
     );
   }
 
-  const emoji = habit.name.match(/^\p{Emoji}/u)?.[0] ?? '🎯';
+  const emoji = habit.emoji || habit.name.match(/^\p{Emoji}/u)?.[0] || '🎯';
   const displayName = habit.name.replace(/^\p{Emoji}\s*/u, '');
 
   return (
@@ -101,7 +102,7 @@ export function HabitEditScreen() {
         paddingHorizontal: 14, paddingVertical: 10,
         flexDirection: 'row', alignItems: 'center', gap: 10,
       }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{
+        <Pressable accessibilityLabel="Back" onPress={() => navigation.goBack()} hitSlop={8} style={{
           width: 36, height: 36, borderRadius: 18,
           alignItems: 'center', justifyContent: 'center',
           backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,

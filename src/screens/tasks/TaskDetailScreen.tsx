@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -223,7 +224,7 @@ export function TaskDetailScreen() {
                       {task.due_date ? dateFmt.format(dueDateObj) : '— not set'}
                     </Text>
                     {task.due_date ? (
-                      <Pressable
+                      <Pressable accessibilityLabel="Clear due date"
                         onPress={() => { void saveField({ due_date: null }); setShowDatePicker(false); }}
                         hitSlop={8}
                       >
@@ -283,7 +284,7 @@ function Header({ onBack, title, accent, onDelete, P }: { onBack: () => void; ti
       paddingHorizontal: 14, paddingVertical: 10,
       flexDirection: 'row', alignItems: 'center', gap: 10,
     }}>
-      <Pressable onPress={onBack} hitSlop={8} style={iconBtn(P)}>
+      <Pressable accessibilityLabel="Back" onPress={onBack} hitSlop={8} style={iconBtn(P)}>
         <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink, lineHeight: 22, marginTop: -3 }}>‹</Text>
       </Pressable>
       <View style={{ flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
@@ -291,7 +292,7 @@ function Header({ onBack, title, accent, onDelete, P }: { onBack: () => void; ti
         <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink2 }}>{title}</Text>
       </View>
       {onDelete ? (
-        <Pressable onPress={onDelete} hitSlop={8} style={iconBtn(P)}>
+        <Pressable accessibilityLabel="Delete" onPress={onDelete} hitSlop={8} style={iconBtn(P)}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 16, color: C.red, lineHeight: 16 }}>⌫</Text>
         </Pressable>
       ) : <View style={{ width: 36 }} />}

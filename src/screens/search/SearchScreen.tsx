@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,7 +8,8 @@ import { useTaskStore } from '../../store/taskStore';
 import { useHabitStore } from '../../store/habitStore';
 import { useCalendarStore } from '../../store/calendarStore';
 import { useFinanceStore } from '../../store/financeStore';
-import { useEmailActionsStore } from '../../store/emailActionsStore';
+import { useMailStore } from '../../store/mailStore';
+import { ago, senderOf } from '../../lib/mailSmart';
 import { Radii, Shadows, C } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { UIFont, NumFont } from '../../theme/typography';
@@ -47,7 +49,7 @@ export function SearchScreen() {
   const habits       = useHabitStore(s => s.habits);
   const events       = useCalendarStore(s => s.events);
   const transactions = useFinanceStore(s => s.transactions);
-  const emailActions = useEmailActionsStore(s => s.actions);
+  const mailThreads = useMailStore(s => s.threads);
 
   const results = useMemo<SearchResult[]>(() => {
     const q = query.trim().toLowerCase();
@@ -110,20 +112,15 @@ export function SearchScreen() {
       }
     }
 
-    // Email actions
-    for (const a of emailActions) {
-      if ((a.subject ?? '').toLowerCase().includes(q)) {
-        out.push({
-          id: a.id, kind: 'email',
-          title: a.subject ?? '(no subject)',
-          subtitle: a.classification ?? undefined,
-          meta: a.follow_up_date ?? undefined,
-        });
+    // Mail threads the analysis holds: by subject, sender or what it wants.
+    for (const m of mailThreads) {
+      if (`${m.subject} ${senderOf(m)} ${m.need}`.toLowerCase().includes(q)) {
+        out.push({ id: `${m.accountEmail}|${m.threadId}`, kind: 'email', title: m.subject, subtitle: senderOf(m), meta: ago(m.lastAt) });
       }
     }
 
     return out.slice(0, 40);
-  }, [query, tasks, habits, events, transactions, emailActions]);
+  }, [query, tasks, habits, events, transactions, mailThreads]);
 
   // Group by kind
   const byKind = useMemo(() => {
@@ -184,7 +181,7 @@ export function SearchScreen() {
               }}
             />
             {query.length > 0 && (
-              <Pressable onPress={() => setQuery('')} hitSlop={8}>
+              <Pressable accessibilityLabel="Close" onPress={() => setQuery('')} hitSlop={8}>
                 <Text style={{ fontSize: 18, color: P.ink3, lineHeight: 20 }}>×</Text>
               </Pressable>
             )}

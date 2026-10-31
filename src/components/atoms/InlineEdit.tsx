@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
+import { View, Text, TextInput } from 'react-native';
+import { Pressable } from './Pressable';
 import { C, Radii } from '../../theme/tokens';
 import { UIFont, NumFont } from '../../theme/typography';
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,13 +8,18 @@ import { Bell, ChevronRight, Sparkles, Zap } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useHabitStore } from '../../store/habitStore';
-import { useEmailActionsStore } from '../../store/emailActionsStore';
+import { useMailStore } from '../../store/mailStore';
+import { countsOf } from '../../lib/mailSmart';
 import { useCalendarStore } from '../../store/calendarStore';
 import { useFinanceStore } from '../../store/financeStore';
 import { C, Quadrants, Radii, Shadows } from '../../theme/tokens';
 import { UIFont, NumFont } from '../../theme/typography';
 import { useScreenPalette } from '../../theme/palette';
 import { useIsTablet } from '../../lib/layout';
+import { isActionable } from '../../lib/tasks';
+import { positionFrom, isUnpaid } from '../../lib/finance/balances';
+import { DailyQuoteCard } from '../../components/atoms/DailyQuoteCard';
+import { txIn } from '../../lib/finance/txRates';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -70,8 +76,8 @@ export function TodayScreen() {
   const toggleHabit      = useHabitStore(s => s.toggleToday);
   const isCompletedToday = useHabitStore(s => s.isCompletedToday);
 
-  const emailActions     = useEmailActionsStore(s => s.actions);
-  const loadEmails       = useEmailActionsStore(s => s.loadFromDB);
+  const mailThreads      = useMailStore(s => s.threads);
+  const loadEmails       = useMailStore(s => s.loadFromDB);
 
   const events           = useCalendarStore(s => s.events);
   const loadRange        = useCalendarStore(s => s.loadRange);
@@ -105,13 +111,11 @@ export function TodayScreen() {
 
   // ── Derived data ───────────────────────────────────────────────────────────
 
-  const pendingEmails = useMemo(
-    () => emailActions.filter(a => a.status !== 'handled').length,
-    [emailActions],
-  );
+  // The same answer as the Mail page: what the analysis files under "to answer", handled ones excluded.
+  const pendingEmails = useMemo(() => countsOf(mailThreads).action, [mailThreads]);
 
   const { topTasks, doneToday, totalOpen, weeklyScore } = useMemo(() => {
-    const open = tasks.filter(t => t.status !== 'done');
+    const open = tasks.filter(isActionable);
     const ranked = [...open].sort((a, b) => {
       const ord: Record<string, number> = { urgent_important: 0, important_not_urgent: 1, urgent_not_important: 2, neither: 3 };
       return (ord[a.quadrant ?? 'neither'] ?? 4) - (ord[b.quadrant ?? 'neither'] ?? 4);
@@ -146,13 +150,12 @@ export function TodayScreen() {
 
   // Finance quick stats
   const { safeToSpend, spentToday } = useMemo(() => {
-    const paymentAccounts = accounts.filter(a =>
-      a.account_type !== 'credit_card' && a.currency === 'EGP' && a.balance > 0,
-    );
-    const safe = paymentAccounts.reduce((s, a) => s + a.balance, 0);
+    // The same figures as the Balance tab: cash from live balances (not the stored opening figure), in the base
+    // currency, less what is dated ahead and unpaid. Spent today counts only money that has actually left.
+    const safe = positionFrom(accounts, transactions).spendable;
     const spent = transactions
-      .filter(t => t.date === today && t.tx_type === 'expense' && t.currency === 'EGP')
-      .reduce((s, t) => s + t.amount, 0);
+      .filter(t => t.date === today && t.tx_type === 'expense' && !isUnpaid(t))
+      .reduce((sum, t) => sum + (txIn(t) ?? 0), 0);
     return { safeToSpend: safe, spentToday: spent };
   }, [accounts, transactions, today]);
 
@@ -200,7 +203,7 @@ export function TodayScreen() {
       }}>
         <View />
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Pressable onPress={() => navigation.navigate('Search')} hitSlop={8}>
+          <Pressable accessibilityLabel="Search" onPress={() => navigation.navigate('Search')} hitSlop={8}>
             <View style={{
               width: 36, height: 36, borderRadius: 18,
               backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -209,7 +212,7 @@ export function TodayScreen() {
               <Text style={{ fontSize: 15 }}>🔍</Text>
             </View>
           </Pressable>
-          <Pressable onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
+          <Pressable accessibilityLabel="Notifications" onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
             <View style={{
               width: 36, height: 36, borderRadius: 18,
               backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -246,7 +249,7 @@ export function TodayScreen() {
             <Text style={{ fontFamily: NumFont.bold, fontSize: 26, color: P.ink, letterSpacing: -1 }}>
               {weeklyScore.total}
             </Text>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 9, color: P.ink4, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.2, textTransform: 'uppercase' }}>
               Score
             </Text>
           </View>
@@ -255,8 +258,8 @@ export function TodayScreen() {
         {/* Day elapsed bar */}
         <View style={{ marginTop: 12, gap: 4 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: UIFont.regular, fontSize: 10, color: P.ink4 }}>Day elapsed</Text>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink3 }}>{dayPct}%</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 11, color: P.ink4 }}>Day elapsed</Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink3 }}>{dayPct}%</Text>
           </View>
           <View style={{ height: 3, backgroundColor: P.hairline, borderRadius: 2, overflow: 'hidden' }}>
             <View style={{ height: 3, width: `${dayPct}%`, backgroundColor: P.accent, borderRadius: 2 }} />
@@ -287,14 +290,14 @@ export function TodayScreen() {
           <View style={{ padding: 18, gap: 12 }}>
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.accent, letterSpacing: 1.8 }}>
+              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.accent, letterSpacing: 1.8 }}>
                 ✦ THE BRIEF
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 {tasksLoading && (
                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: P.accent, opacity: 0.6 }} />
                 )}
-                <Text style={{ fontFamily: UIFont.regular, fontSize: 10, color: 'rgba(253,248,231,0.35)' }}>
+                <Text style={{ fontFamily: UIFont.regular, fontSize: 11, color: 'rgba(253,248,231,0.35)' }}>
                   {new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
@@ -324,11 +327,11 @@ export function TodayScreen() {
               ].map(m => (
                 <View key={m.label} style={{ flex: 1, gap: 4 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 9, color: 'rgba(253,248,231,0.45)', letterSpacing: 1.2 }}>
+                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: 'rgba(253,248,231,0.62)', letterSpacing: 1 }}>
                       {m.label}
                     </Text>
-                    <Text style={{ fontFamily: NumFont.semiBold, fontSize: 10, color: 'rgba(253,248,231,0.70)' }}>
-                      {m.value}
+                    <Text style={{ fontFamily: NumFont.semiBold, fontSize: 11, color: 'rgba(253,248,231,0.85)' }}>
+                      {m.value}%
                     </Text>
                   </View>
                   <View style={{ height: 3, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 2, overflow: 'hidden' }}>
@@ -339,6 +342,9 @@ export function TodayScreen() {
             </View>
           </View>
         </View>
+
+        {/* ── Quote of the day (draws nothing unless there is one to show) ── */}
+        <DailyQuoteCard />
 
         {/* ── Inbox alert ── */}
         {pendingEmails > 0 && (
@@ -356,10 +362,10 @@ export function TodayScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
-                  {pendingEmails} item{pendingEmails !== 1 ? 's' : ''} need{pendingEmails === 1 ? 's' : ''} you
+                  {pendingEmails} thread{pendingEmails !== 1 ? 's' : ''} to answer
                 </Text>
                 <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3, marginTop: 1 }}>
-                  Inbox · triaged threads waiting for review
+                  Mail · people waiting on a reply or a decision
                 </Text>
               </View>
               <ChevronRight size={16} color={P.accent} strokeWidth={2.5} />
@@ -410,7 +416,7 @@ export function TodayScreen() {
                         paddingHorizontal: 6, paddingVertical: 3, borderRadius: Radii.chip,
                         backgroundColor: `${C.indigo}14`, borderWidth: 1, borderColor: `${C.indigo}30`,
                       }}>
-                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: C.indigo }}>
+                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: C.indigo }}>
                           #{idx + 1}
                         </Text>
                       </View>
@@ -486,7 +492,7 @@ export function TodayScreen() {
                       </View>
                     </View>
                     {/* Complete circle */}
-                    <Pressable
+                    <Pressable accessibilityLabel="Mark done"
                       onPress={() => void setStatus(t.id, 'done')}
                       hitSlop={8}
                       style={{
@@ -523,7 +529,7 @@ export function TodayScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {habits.map(h => {
                 const done = isCompletedToday(h.id);
-                const emoji = h.name.match(/^\p{Emoji}/u)?.[0] ?? '🎯';
+                const emoji = h.emoji || h.name.match(/^\p{Emoji}/u)?.[0] || '🎯';
                 const label = h.name.replace(/^\p{Emoji}\s*/u, '');
                 return (
                   <Pressable key={h.id} onPress={() => void toggleHabit(h.id)}>
@@ -565,7 +571,7 @@ export function TodayScreen() {
                   borderWidth: 1, borderColor: P.hairline,
                   padding: 14,
                 }, Shadows.card]}>
-                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink4, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4, textTransform: 'uppercase' }}>
                     Safe to spend
                   </Text>
                   <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: C.green, marginTop: 4, letterSpacing: -0.5 }}>
@@ -580,7 +586,7 @@ export function TodayScreen() {
                   borderWidth: 1, borderColor: P.hairline,
                   padding: 14,
                 }, Shadows.card]}>
-                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink4, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4, textTransform: 'uppercase' }}>
                     Spent today
                   </Text>
                   <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: spentToday > 0 ? C.red : P.ink3, marginTop: 4, letterSpacing: -0.5 }}>

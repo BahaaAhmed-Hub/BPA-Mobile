@@ -1,6 +1,7 @@
 export type TxType = 'expense' | 'income' | 'transfer' | 'asset_purchase' | 'asset_sale' | 'liability_acq' | 'liability_dis';
 export type Currency = 'EGP' | 'USD' | 'AED';
-export type AccountType = 'payment' | 'credit_card' | 'asset' | 'wallet';
+/** `loan` is money owed to a person or a lender: below zero while it is owed, never somewhere you spend from. */
+export type AccountType = 'payment' | 'credit_card' | 'asset' | 'wallet' | 'loan';
 
 export interface DbFinanceAccount {
   id: string;
@@ -62,6 +63,11 @@ export interface DbFinanceGoal {
   color: string;
   sub_label: string | null;
   is_active: boolean;
+  // Planning columns the web adds to a goal; absent on a database that has not run them.
+  rank?: number | null;
+  deadline?: string | null;
+  currency?: string | null;
+  monthly_commit?: number | null;
   created_at: string;
 }
 

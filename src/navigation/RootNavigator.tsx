@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
@@ -11,19 +12,28 @@ import { LoadingScreen } from '../screens/LoadingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TaskDetailScreen } from '../screens/tasks/TaskDetailScreen';
 import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
+import { gateAnswer, type GateAnswer } from '../lib/wizardGate';
 import { SetupWizard, WIZARD_DONE_KEY } from '../screens/wizard/SetupWizard';
 import { BehavioralModeScreen } from '../screens/behavioral/BehavioralModeScreen';
 import { InboxScreen } from '../screens/inbox/InboxScreen';
 import { EventDetailScreen } from '../screens/calendar/EventDetailScreen';
 import { WeeklyReviewScreen } from '../screens/review/WeeklyReviewScreen';
 import { EnergyLogScreen } from '../screens/energy/EnergyLogScreen';
-import { PlanningAssistantScreen } from '../screens/assistant/PlanningAssistantScreen';
+import { AssistantScreen } from '../screens/assistant/AssistantScreen';
 import { HabitDetailScreen } from '../screens/habits/HabitDetailScreen';
 import { HabitEditScreen } from '../screens/habits/HabitEditScreen';
 import { AppearanceScreen } from '../screens/settings/AppearanceScreen';
-import { AISettingsScreen } from '../screens/settings/AISettingsScreen';
 import { SettingsPlaceholderScreen } from '../screens/settings/SettingsPlaceholderScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
+import { ProjectsScreen } from '../screens/projects/ProjectsScreen';
+import { ProjectDetailScreen } from '../screens/projects/ProjectDetailScreen';
+import { useProjectStore } from '../store/projectStore';
+import { ShoppingScreen } from '../screens/shopping/ShoppingScreen';
+import { useShoppingStore } from '../store/shoppingStore';
+import { LibraryScreen, LibraryBookScreen } from '../screens/library/LibraryScreen';
+import { useLibraryStore } from '../store/libraryStore';
+import { useModuleStore } from '../store/moduleStore';
+import { useMailStore } from '../store/mailStore';
 
 export type RootStackParamList = {
   App: undefined;
@@ -39,10 +49,15 @@ export type RootStackParamList = {
   HabitDetail: { habitId: string };
   HabitEdit: { habitId: string };
   SettingsAppearance: undefined;
-  SettingsAI: undefined;
   SettingsDetail: { title: string };
   Search: undefined;
+  Projects: undefined;
+  Shopping: undefined;
+  Library: undefined;
+  LibraryBook: { bookId: string };
+  ProjectDetail: { projectId: string };
 };
+import { refreshIfStale } from '../lib/refresh';
 import { useTaskStore } from '../store/taskStore';
 import { useHabitStore } from '../store/habitStore';
 import { useCompanyStore } from '../store/companyStore';
@@ -73,7 +88,7 @@ export function RootNavigator() {
       if (session) {
         void import('../lib/pushNotifications').then(m => m.registerForPushNotifications());
       }
-      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); }
+      if (!session) { clearTasks(); clearHabits(); useCompanyStore.getState().clearAll(); useProjectStore.getState().clearAll(); useShoppingStore.getState().clearAll(); useLibraryStore.getState().clearAll(); useModuleStore.getState().clearAll(); useMailStore.getState().clearAll(); }
     });
 
     // Deep-link OAuth callback (when the in-app browser hands the URL back)
@@ -86,15 +101,50 @@ export function RootNavigator() {
     };
   }, [setUser, setLoading, clearTasks, clearHabits]);
 
+  // Coming back to the app pulls fresh data, at most once a minute and never
+  // while the server is failing — see lib/refresh.ts.
+  useEffect(() => {
+    if (!user) return;
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') void refreshIfStale();
+    });
+    return () => sub.remove();
+  }, [user]);
+
   const [wizardChecked, setWizardChecked] = useState(false);
   const [showWizard, setShowWizard]       = useState(false);
 
   useEffect(() => {
     if (!user) { setWizardChecked(false); setShowWizard(false); return; }
-    void AsyncStorage.getItem(WIZARD_DONE_KEY).then(v => {
-      setShowWizard(v !== '1');
+    let live = true;
+    (async () => {
+      const localDone = (await AsyncStorage.getItem(WIZARD_DONE_KEY)) === '1';
+      let answer: GateAnswer = localDone ? 'done' : 'open';
+      if (!localDone) {
+        try {
+          const [{ data: auth }, shared, cos, habits] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('users').select('d:schedule_rules->shared_prefs->>professor-wizard-done').eq('id', user.id).maybeSingle(),
+            supabase.from('companies').select('id', { count: 'exact', head: true }),
+            supabase.from('habits').select('id', { count: 'exact', head: true }),
+          ]);
+          // A read that failed says nothing: asking an established person to set up again is worse than skipping a new one.
+          if (shared.error || cos.error || habits.error || !auth.user) answer = 'established';
+          else answer = gateAnswer({
+            createdAt: auth.user.created_at,
+            localDone: false,
+            sharedDone: !!(shared.data as { d?: string | null } | null)?.d,
+            hasCompanies: (cos.count ?? 0) > 0,
+            hasHabits: (habits.count ?? 0) > 0,
+          });
+        } catch { answer = 'established'; }
+        if (answer !== 'open') await AsyncStorage.setItem(WIZARD_DONE_KEY, '1');
+      }
+      if (!live) return;
+      setShowWizard(answer === 'open');
       setWizardChecked(true);
-    });
+    })();
+    return () => { live = false; };
   }, [user]);
 
   if (loading) return <LoadingScreen />;
@@ -144,7 +194,7 @@ export function RootNavigator() {
             />
             <Stack.Screen
               name="PlanningAssistant"
-              component={PlanningAssistantScreen}
+              component={AssistantScreen}
               options={{ presentation: 'card', animation: 'slide_from_bottom' }}
             />
             <Stack.Screen
@@ -158,6 +208,31 @@ export function RootNavigator() {
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
             <Stack.Screen
+              name="Library"
+              component={LibraryScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="LibraryBook"
+              component={LibraryBookScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Shopping"
+              component={ShoppingScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="Projects"
+              component={ProjectsScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="ProjectDetail"
+              component={ProjectDetailScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
               name="Search"
               component={SearchScreen}
               options={{ presentation: 'fullScreenModal', animation: 'fade' }}
@@ -165,11 +240,6 @@ export function RootNavigator() {
             <Stack.Screen
               name="SettingsAppearance"
               component={AppearanceScreen}
-              options={{ presentation: 'card', animation: 'slide_from_right' }}
-            />
-            <Stack.Screen
-              name="SettingsAI"
-              component={AISettingsScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
             <Stack.Screen

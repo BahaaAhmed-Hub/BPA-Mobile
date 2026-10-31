@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View, Text, ScrollView, Pressable, RefreshControl,
-  Modal, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback,
-} from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Modal, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +13,7 @@ import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
 import { useIsTablet } from '../../lib/layout';
+import { isActionable, taskCompanyId } from '../../lib/tasks';
 import type { DbTask, DbTaskStatus } from '../../types/database';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -168,7 +167,7 @@ function NewTaskSheet({ visible, onClose, onSave }: {
                   <Text style={{ fontFamily: NumFont.bold, fontSize: 18, color: P.ink, letterSpacing: -0.3 }}>
                     New task
                   </Text>
-                  <Pressable onPress={onClose} hitSlop={8}>
+                  <Pressable accessibilityLabel="Close" onPress={onClose} hitSlop={8}>
                     <View style={{
                       width: 28, height: 28, borderRadius: 14,
                       backgroundColor: P.field, alignItems: 'center', justifyContent: 'center',
@@ -307,7 +306,7 @@ function NewTaskSheet({ visible, onClose, onSave }: {
 function BoardCard({ task, onPress }: { task: DbTask; onPress: () => void }) {
   const P = useScreenPalette();
   const companies = useCompanyStore(s => s.companies);
-  const company = companies.find(c => c.id === task.company_id);
+  const company = companies.find(c => c.id === taskCompanyId(task, companies));
   const priority = priorityLabel(task);
 
   return (
@@ -342,7 +341,7 @@ function BoardCard({ task, onPress }: { task: DbTask; onPress: () => void }) {
               backgroundColor: P.field, borderWidth: 1, borderColor: P.hairline,
               flexDirection: 'row', gap: 3, alignItems: 'center',
             }}>
-              <Text style={{ fontSize: 9 }}>📅</Text>
+              <Text style={{ fontSize: 11 }}>📅</Text>
               <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
                 {task.due_date.slice(5)}
               </Text>
@@ -355,7 +354,7 @@ function BoardCard({ task, onPress }: { task: DbTask; onPress: () => void }) {
               borderWidth: 1, borderColor: `${priorityColor(priority)}40`,
             }}>
               <Text style={{
-                fontFamily: UIFont.bold, fontSize: 10,
+                fontFamily: UIFont.bold, fontSize: 11,
                 color: priorityColor(priority),
               }}>
                 {priority}
@@ -373,7 +372,7 @@ function BoardView({ tasks, onPress }: { tasks: DbTask[]; onPress: (id: string) 
   const P = useScreenPalette();
 
   return (
-    <ScrollView
+    <ScrollView style={{ flexGrow: 0, flexShrink: 0 }}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, gap: 12 }}
@@ -500,7 +499,7 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
           <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: '#fff', flex: 1 }}>
             Tap a row to move here
           </Text>
-          <Pressable onPress={cancelDrag} hitSlop={10}>
+          <Pressable accessibilityLabel="Cancel move" onPress={cancelDrag} hitSlop={10}>
             <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: '#fff' }}>✕</Text>
           </Pressable>
         </View>
@@ -516,7 +515,7 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
 
         if (inDragMode && !isDragging) {
           return (
-            <Pressable key={t.id} onPress={() => moveToPosition(t.id)}>
+            <Pressable accessibilityLabel="Reorder" key={t.id} onPress={() => moveToPosition(t.id)}>
               <View style={{
                 backgroundColor: P.surface, borderRadius: Radii.md,
                 borderWidth: 2, borderColor: 'transparent',
@@ -562,14 +561,14 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
               onAction: () => void useTaskStore.getState().removeTask(t.id),
             }}
           >
-            <Pressable onPress={() => onPress(t.id)}>
+            <Pressable accessibilityLabel="Reorder" onPress={() => onPress(t.id)}>
               <View style={{
                 backgroundColor: P.surface, borderRadius: Radii.md,
                 borderWidth: rowBorderWidth, borderColor: rowBorderColor, borderStyle: rowBorderStyle,
                 padding: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 12,
                 ...Shadows.card,
               }}>
-                <Pressable
+                <Pressable accessibilityLabel="Reorder"
                   onLongPress={() => enterDrag(t.id)}
                   delayLongPress={300}
                   hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
@@ -638,17 +637,17 @@ export function TasksScreen() {
       urgent_important: [], important_not_urgent: [], urgent_not_important: [], neither: [],
     };
     for (const t of tasks) {
-      if (t.status === 'done' || t.status === 'deferred') continue;
-      if (companyFilter && t.company_id !== companyFilter) continue;
+      if (!isActionable(t)) continue;
+      if (companyFilter && taskCompanyId(t, companies) !== companyFilter) continue;
       const q = (t.quadrant ?? 'neither') as QuadrantId;
       groups[q].push(t);
     }
     return groups;
-  }, [tasks, companyFilter]);
+  }, [tasks, companyFilter, companies]);
 
   const activeTasks = useMemo(() =>
-    tasks.filter(t => t.status !== 'done' && (!companyFilter || t.company_id === companyFilter)),
-    [tasks, companyFilter],
+    tasks.filter(t => isActionable(t) && (!companyFilter || taskCompanyId(t, companies) === companyFilter)),
+    [tasks, companyFilter, companies],
   );
 
   const [localOrders, setLocalOrders] = useState<Record<string, string[]>>({});
@@ -667,9 +666,13 @@ export function TasksScreen() {
   function getOrderedTasks(quadrant: QuadrantId): DbTask[] {
     const qTasks = byQuadrant[quadrant];
     const order  = localOrders[quadrant];
-    if (!order) return qTasks;
+    if (!order || order.length === 0) return qTasks;
     const map = Object.fromEntries(qTasks.map(t => [t.id, t]));
-    return order.map(id => map[id]).filter(Boolean) as DbTask[];
+    const ordered = order.map(id => map[id]).filter(Boolean) as DbTask[];
+    // The saved order was taken before the tasks had loaded, or before a new one
+    // arrived. A task it has never heard of still belongs in the list.
+    const known = new Set(order);
+    return [...ordered, ...qTasks.filter(t => !known.has(t.id))];
   }
 
   function setQuadrantOrder(quadrant: QuadrantId, ids: string[]) {
@@ -758,7 +761,7 @@ export function TasksScreen() {
         title="Tasks"
         subtitle={`${activeTasks.length} active`}
         right={
-          <Pressable
+          <Pressable accessibilityLabel="Add task"
             onPress={() => setShowNewTask(true)}
             hitSlop={8}
           >
@@ -809,7 +812,7 @@ export function TasksScreen() {
       {/* Board view (horizontal scroll outside of main scroll) */}
       {viewMode === 'board' ? (
         <BoardView
-          tasks={companyFilter ? tasks.filter(t => t.company_id === companyFilter) : tasks}
+          tasks={companyFilter ? tasks.filter(t => taskCompanyId(t, companies) === companyFilter) : tasks}
           onPress={id => navigation.navigate('TaskDetail', { taskId: id })}
         />
       ) : (
@@ -854,7 +857,7 @@ export function TasksScreen() {
               <ScrollView
                 horizontal showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 4, gap: 8 }}
-                style={{ marginBottom: 8, marginHorizontal: -20, paddingHorizontal: 0 }}
+                style={{ flexGrow: 0, flexShrink: 0, marginBottom: 8, marginHorizontal: -20, paddingHorizontal: 0 }}
               >
                 <View style={{ width: 20 }} />
                 {QUADRANT_ORDER.map(q => {
@@ -922,7 +925,9 @@ function CompanyFilterRow({
   return (
     <ScrollView
       horizontal showsHorizontalScrollIndicator={false}
-      style={{ flexShrink: 0 }}
+      // A ScrollView grows by default, which split the screen's height with the
+      // list below and left a gap under the chips.
+      style={{ flexGrow: 0, flexShrink: 0 }}
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, gap: 8 }}
     >
       <Pressable onPress={() => setCompanyFilter(null)}>
@@ -989,7 +994,7 @@ function TaskRow({ task, onOpen, onComplete }: { task: DbTask; onOpen: () => voi
         flexDirection: 'row', alignItems: 'flex-start', gap: 12,
         ...Shadows.card,
       }}>
-        <Pressable onPress={onComplete} hitSlop={8}>
+        <Pressable accessibilityLabel="Mark done" onPress={onComplete} hitSlop={8}>
           <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: q.color }} />
         </Pressable>
         <View style={{ flex: 1 }}>

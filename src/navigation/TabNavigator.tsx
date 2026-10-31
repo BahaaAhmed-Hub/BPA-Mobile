@@ -1,7 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CalendarDays, CheckSquare, Flame, Home, User, Wallet } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, View, Text } from 'react-native';
+import { View, Text } from 'react-native';
+import { Pressable } from '../components/atoms/Pressable';
 import { TodayScreen } from '../screens/today/TodayScreen';
 import { TasksScreen } from '../screens/tasks/TasksScreen';
 import { HabitsScreen } from '../screens/habits/HabitsScreen';
@@ -133,7 +134,7 @@ export function TabNavigator() {
           )}
 
           {/* Main FAB */}
-          <Pressable onPress={() => setDialOpen(o => !o)} hitSlop={8}>
+          <Pressable accessibilityLabel="Add new" accessibilityState={{ expanded: dialOpen }} onPress={() => setDialOpen(o => !o)} hitSlop={8}>
             <LinearGradient
               colors={dialOpen ? ['#B23A36', '#2A3FD9'] : ['#2A3FD9', '#B23A36']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -160,7 +161,7 @@ export function TabNavigator() {
       {/* Tablet FAB (bottom-right) */}
       {tablet && (
         <View style={{ position: 'absolute', bottom: 32, right: 32 }}>
-          <Pressable onPress={() => setDialOpen(o => !o)} hitSlop={8}>
+          <Pressable accessibilityLabel="Add new" accessibilityState={{ expanded: dialOpen }} onPress={() => setDialOpen(o => !o)} hitSlop={8}>
             <LinearGradient
               colors={['#2A3FD9', '#B23A36']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}

@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import {
-  View, Text, ScrollView, Pressable, RefreshControl,
-  Modal, TextInput, Alert, TouchableWithoutFeedback,
-} from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Modal, TextInput, Alert, TouchableWithoutFeedback } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { targetOf, unitOf, countText } from '../../lib/habits';
 import { useHabitStore } from '../../store/habitStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
@@ -31,14 +30,10 @@ const FREQ_OPTIONS: { id: DbHabitFrequency; label: string }[] = [
 
 function todayStr(): string { return new Date().toISOString().slice(0, 10); }
 
-function parseHabitTarget(name: string): number | null {
-  const m = name.match(/\((\d+)\)/);
-  if (m) { const n = parseInt(m[1], 10); return n > 1 ? n : null; }
-  return null;
-}
-
-function habitEmoji(name: string): string {
-  return name.match(/^\p{Emoji}/u)?.[0] ?? '🎯';
+function habitEmoji(h: { name: string; emoji?: string | null }): string {
+  // The web keeps a habit's emoji in its own column; a name that starts with one
+  // is how this app used to store it.
+  return h.emoji || h.name.match(/^\p{Emoji}/u)?.[0] || '🎯';
 }
 
 function habitLabel(name: string): string {
@@ -100,7 +95,7 @@ function NewHabitWizard({ visible, onClose, onSave }: {
                     {step === 1 ? 'What it is' : 'What counts'}
                   </Text>
                 </View>
-                <Pressable onPress={handleClose} hitSlop={8}>
+                <Pressable accessibilityLabel="Close" onPress={handleClose} hitSlop={8}>
                   <View style={{
                     width: 28, height: 28, borderRadius: 14,
                     backgroundColor: P.field, alignItems: 'center', justifyContent: 'center',
@@ -274,7 +269,7 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
   interactive: boolean;
 }) {
   const P = useScreenPalette();
-  const emoji = habitEmoji(habit.name);
+  const emoji = habitEmoji(habit);
   const label = habitLabel(habit.name);
   const isCount = target !== null && target > 1;
 
@@ -297,7 +292,7 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
               borderRadius: Radii.pill, paddingHorizontal: 8, paddingVertical: 3,
               borderWidth: 1, borderColor: done ? P.accentBorder : P.hairline,
             }}>
-              <Text style={{ fontSize: 10 }}>🔥</Text>
+              <Text style={{ fontSize: 11 }}>🔥</Text>
               <Text style={{ fontFamily: NumFont.bold, fontSize: 12, color: done ? P.ink : P.ink2 }}>
                 {habit.current_streak}d
               </Text>
@@ -312,7 +307,7 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
 
         {/* Frequency */}
         <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
-          {habit.frequency}{isCount ? ` · ${target}×/day` : ''}
+          {habit.frequency}{isCount ? ` · goal ${target}${unitOf(habit) ? ` ${unitOf(habit)}` : ''}` : ''}
         </Text>
 
         {/* Counter or toggle */}
@@ -323,7 +318,7 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
             borderColor: done ? P.positive : P.hairline,
             overflow: 'hidden',
           }}>
-            <Pressable
+            <Pressable accessibilityLabel="Decrease"
               onPress={onDecrement}
               style={{ flex: 1, alignItems: 'center', paddingVertical: 10, backgroundColor: P.field }}
             >
@@ -331,10 +326,10 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
             </Pressable>
             <View style={{ flex: 1.4, alignItems: 'center', paddingVertical: 10, backgroundColor: done ? P.positiveTint : P.bg }}>
               <Text style={{ fontFamily: NumFont.bold, fontSize: 14, color: done ? P.positive : P.ink }}>
-                {count}/{target}
+                {countText(habit, count)}
               </Text>
             </View>
-            <Pressable
+            <Pressable accessibilityLabel="Increase"
               onPress={onIncrement}
               style={{ flex: 1, alignItems: 'center', paddingVertical: 10, backgroundColor: done ? `${P.positive}18` : P.field }}
             >
@@ -427,7 +422,7 @@ export function HabitsScreen() {
         title="Habits"
         subtitle={`${doneCount} / ${habits.length || 0} · ${dateLabel}`}
         right={
-          <Pressable onPress={() => setAdding(true)} hitSlop={8}>
+          <Pressable accessibilityLabel="Add habit" onPress={() => setAdding(true)} hitSlop={8}>
             <View style={{
               width: 36, height: 36, borderRadius: 18,
               backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center',
@@ -441,7 +436,7 @@ export function HabitsScreen() {
 
       {/* Day navigation */}
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 6, gap: 8 }}>
-        <Pressable onPress={prevDay} hitSlop={8}>
+        <Pressable accessibilityLabel="Previous day" onPress={prevDay} hitSlop={8}>
           <View style={{
             width: 32, height: 32, borderRadius: 16,
             backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -455,7 +450,7 @@ export function HabitsScreen() {
             {dateLabel}
           </Text>
         </Pressable>
-        <Pressable onPress={nextDay} hitSlop={8} disabled={isToday}>
+        <Pressable accessibilityLabel="Next day" onPress={nextDay} hitSlop={8} disabled={isToday}>
           <View style={{
             width: 32, height: 32, borderRadius: 16,
             backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -505,10 +500,10 @@ export function HabitsScreen() {
                 habit={pair[0]}
                 done={isCompletedOn(pair[0].id, selectedDate)}
                 count={countToday[pair[0].id] ?? 0}
-                target={parseHabitTarget(pair[0].name)}
+                target={targetOf(pair[0])}
                 onToggle={() => void toggleOn(pair[0].id, selectedDate)}
-                onIncrement={() => { const t = parseHabitTarget(pair[0].name) ?? 1; void incrementCount(pair[0].id, t); }}
-                onDecrement={() => { const t = parseHabitTarget(pair[0].name) ?? 1; void decrementCount(pair[0].id, t); }}
+                onIncrement={() => { const t = targetOf(pair[0]) ?? 1; void incrementCount(pair[0].id, t); }}
+                onDecrement={() => { const t = targetOf(pair[0]) ?? 1; void decrementCount(pair[0].id, t); }}
                 onPress={() => navigation.navigate('HabitDetail', { habitId: pair[0].id })}
                 interactive={isToday}
               />
@@ -517,10 +512,10 @@ export function HabitsScreen() {
                   habit={pair[1]}
                   done={isCompletedOn(pair[1].id, selectedDate)}
                   count={countToday[pair[1].id] ?? 0}
-                  target={parseHabitTarget(pair[1].name)}
+                  target={targetOf(pair[1])}
                   onToggle={() => void toggleOn(pair[1]!.id, selectedDate)}
-                  onIncrement={() => { const t = parseHabitTarget(pair[1]!.name) ?? 1; void incrementCount(pair[1]!.id, t); }}
-                  onDecrement={() => { const t = parseHabitTarget(pair[1]!.name) ?? 1; void decrementCount(pair[1]!.id, t); }}
+                  onIncrement={() => { const t = targetOf(pair[1]!) ?? 1; void incrementCount(pair[1]!.id, t); }}
+                  onDecrement={() => { const t = targetOf(pair[1]!) ?? 1; void decrementCount(pair[1]!.id, t); }}
                   onPress={() => navigation.navigate('HabitDetail', { habitId: pair[1]!.id })}
                   interactive={isToday}
                 />
@@ -530,9 +525,9 @@ export function HabitsScreen() {
         ) : (
           habits.map(h => {
             const done = isCompletedOn(h.id, selectedDate);
-            const target = parseHabitTarget(h.name);
+            const target = targetOf(h);
             const count = countToday[h.id] ?? 0;
-            const emoji = habitEmoji(h.name);
+            const emoji = habitEmoji(h);
             const label = habitLabel(h.name);
             const isCount = target !== null && target > 1;
             return (
@@ -566,18 +561,18 @@ export function HabitsScreen() {
                         borderColor: done ? P.positive : P.hairline,
                         overflow: 'hidden',
                       }}>
-                        <Pressable
+                        <Pressable accessibilityLabel="Decrease"
                           onPress={() => void decrementCount(h.id, target)}
                           style={{ paddingHorizontal: 8, paddingVertical: 6, backgroundColor: P.field }}
                         >
                           <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: P.ink2 }}>−</Text>
                         </Pressable>
-                        <View style={{ paddingHorizontal: 6, paddingVertical: 6, backgroundColor: done ? P.positiveTint : P.bg, minWidth: 40, alignItems: 'center' }}>
+                        <View style={{ paddingHorizontal: 6, paddingVertical: 6, backgroundColor: done ? P.positiveTint : P.bg, minWidth: 64, alignItems: 'center' }}>
                           <Text style={{ fontFamily: NumFont.bold, fontSize: 13, color: done ? P.positive : P.ink }}>
-                            {count}/{target}
+                            {countText(h, count)}
                           </Text>
                         </View>
-                        <Pressable
+                        <Pressable accessibilityLabel="Increase"
                           onPress={() => void incrementCount(h.id, target)}
                           style={{ paddingHorizontal: 8, paddingVertical: 6, backgroundColor: P.field }}
                         >
@@ -585,7 +580,7 @@ export function HabitsScreen() {
                         </Pressable>
                       </View>
                     ) : (
-                      <Pressable onPress={() => isToday ? void toggleOn(h.id, selectedDate) : undefined} hitSlop={8}>
+                      <Pressable accessibilityLabel="Mark done" onPress={() => isToday ? void toggleOn(h.id, selectedDate) : undefined} hitSlop={8}>
                         <View style={{
                           width: 28, height: 28, borderRadius: 8,
                           borderWidth: 2, borderColor: done ? P.positive : P.hairline,
@@ -601,9 +596,9 @@ export function HabitsScreen() {
                     <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Text style={{ fontSize: 22 }}>{emoji}</Text>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }} numberOfLines={1}>{label}</Text>
-                        <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 2 }}>
-                          {h.frequency}{isCount ? ` · ${target}×/day` : ''}
+                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }} numberOfLines={2}>{label}</Text>
+                        <Text numberOfLines={1} style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 2 }}>
+                          {h.frequency}{isCount ? ` · goal ${target}` : ''}
                         </Text>
                       </View>
                     </View>
@@ -613,7 +608,7 @@ export function HabitsScreen() {
                       <Text style={{ fontFamily: NumFont.bold, fontSize: 17, color: h.current_streak > 0 ? P.positive : P.ink3 }}>
                         {h.current_streak}
                       </Text>
-                      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink4, letterSpacing: 1 }}>STREAK</Text>
+                      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1 }}>STREAK</Text>
                     </View>
                     <Text style={{ color: P.ink3, fontSize: 22, lineHeight: 22 }}>›</Text>
                   </View>

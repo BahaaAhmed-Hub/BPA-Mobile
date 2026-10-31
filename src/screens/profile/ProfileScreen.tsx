@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
+import { View, Text, Alert, ScrollView } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -6,6 +7,8 @@ import { useAuthStore } from '../../store/authStore';
 import { signOut } from '../../lib/google';
 import { useBehavioralStore, MODES } from '../../store/behavioralStore';
 import { C, Radii, Shadows } from '../../theme/tokens';
+import { useModuleStore } from '../../store/moduleStore';
+import { moduleIsOff } from '../../lib/entitlements';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
@@ -27,21 +30,17 @@ const SECTIONS: Array<{
   {
     eyebrow: 'YOU',
     rows: [
-      { label: 'Profile', hint: 'Name, timezone, work week & framework', route: 'SettingsDetail', routeParams: { title: 'Profile' } },
-      { label: 'Billing', hint: 'Plan, payment method and invoices', route: 'SettingsDetail', routeParams: { title: 'Billing' } },
+      { label: 'Profile', hint: 'Name, timezone and work week', route: 'SettingsDetail', routeParams: { title: 'Profile' } },
     ],
   },
   {
     eyebrow: 'WORKSPACE',
     rows: [
+      { label: 'Library', hint: 'Books, quotes and reading', route: 'Library' },
+      { label: 'Shopping', hint: 'Lists and what to buy · locked like Finance', route: 'Shopping' },
+      { label: 'Projects', hint: 'Goals with an end · milestones and their tasks', route: 'Projects' },
       { label: 'Accounts & companies', hint: 'Connected Google accounts and companies', route: 'SettingsDetail', routeParams: { title: 'Accounts' } },
-      { label: 'AI', hint: 'Model, autonomy and tone', route: 'SettingsAI' },
       { label: 'Schedule rules', hint: 'Focus hours, buffers, protections', route: 'SettingsDetail', routeParams: { title: 'Schedule' } },
-      { label: 'Integrations', hint: 'Notion, Asana and more', route: 'SettingsDetail', routeParams: { title: 'Integrations' } },
-      { label: 'Tasks', hint: 'Board statuses and task types', route: 'SettingsDetail', routeParams: { title: 'TasksConfig' } },
-      { label: 'Habits', hint: 'Configure daily habits', route: 'SettingsDetail', routeParams: { title: 'HabitsConfig' } },
-      { label: 'Automation', hint: 'Rules that run without asking you', route: 'SettingsDetail', routeParams: { title: 'Automation' } },
-      { label: 'Notifications', hint: 'What reaches you, where, and when', route: 'SettingsDetail', routeParams: { title: 'NotificationsConfig' } },
     ],
   },
   {
@@ -57,15 +56,8 @@ const SECTIONS: Array<{
       { label: 'Inbox', hint: 'Triaged email actions', route: 'Inbox' },
       { label: 'Weekly Review', hint: 'Shipped, slipped, focus & meeting hours', route: 'WeeklyReview' },
       { label: 'Energy Log', hint: 'Daily morning & afternoon energy', route: 'EnergyLog' },
-      { label: 'Planning Assistant', hint: 'AI executive coaching · ask anything', route: 'PlanningAssistant' },
+      { label: 'Assistant', hint: 'Ask anything · manages your tasks, habits and calendar', route: 'PlanningAssistant' },
       { label: 'Notifications', hint: 'Activity signals', route: 'Notifications' },
-    ],
-  },
-  {
-    eyebrow: 'DATA',
-    rows: [
-      { label: 'Data & privacy', hint: 'Where your data sits and how long', route: 'SettingsDetail', routeParams: { title: 'DataPrivacy' } },
-      { label: 'Finance settings', hint: 'Envelope style, figures, dates & alerts', route: 'SettingsDetail', routeParams: { title: 'FinanceSettings' } },
     ],
   },
 ];
@@ -87,7 +79,14 @@ export function ProfileScreen() {
 
   const initials = (user?.name ?? user?.email ?? '?').charAt(0).toUpperCase();
   const displayName = user?.name ?? 'Operator';
-  const company = displayName.includes('@') ? displayName.split('@')[1]?.split('.')[0] : 'DX Technologies';
+  
+
+  // A module the server has switched off for this account has no row: the plan decides what is drawn.
+  const modules = useModuleStore(st => st.modules);
+  const OFF_BY_ROUTE: Partial<Record<keyof RootStackParamList, string>> = { Library: 'library', Projects: 'projects', Shopping: 'shopping' };
+  const visibleSections = SECTIONS
+    .map(sec => ({ ...sec, rows: sec.rows.filter(r => !(r.route && OFF_BY_ROUTE[r.route] && moduleIsOff(modules, OFF_BY_ROUTE[r.route]!))) }))
+    .filter(sec => sec.rows.length > 0);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
@@ -113,7 +112,7 @@ export function ProfileScreen() {
               {displayName}
             </Text>
             <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: 'rgba(253,248,231,0.5)', marginTop: 2 }}>
-              {user?.email ?? ''}{company ? ` · ${company}` : ''}
+              {user?.email ?? ''}
             </Text>
           </View>
           {enabled && (
@@ -121,7 +120,7 @@ export function ProfileScreen() {
               paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radii.pill,
               backgroundColor: `${modeMeta.accentBright}22`, borderWidth: 1, borderColor: `${modeMeta.accentBright}40`,
             }}>
-              <Text style={{ fontFamily: UIFont.bold, fontSize: 10, color: modeMeta.accentBright, letterSpacing: 1.2 }}>
+              <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: modeMeta.accentBright, letterSpacing: 1.2 }}>
                 {modeMeta.emoji} {modeMeta.name.toUpperCase()}
               </Text>
             </View>
@@ -129,7 +128,7 @@ export function ProfileScreen() {
         </View>
 
         {/* Settings sections */}
-        {SECTIONS.map(section => (
+        {visibleSections.map(section => (
           <View key={section.eyebrow}>
             <Text style={{
               fontFamily: UIFont.semiBold, fontSize: 11,
@@ -148,8 +147,12 @@ export function ProfileScreen() {
                   if (!row.route) return;
                   if (row.route === 'SettingsDetail' && row.routeParams) {
                     navigation.navigate('SettingsDetail', row.routeParams as { title: string });
-                  } else if (row.route === 'SettingsAI') {
-                    navigation.navigate('SettingsAI');
+                  } else if (row.route === 'Library') {
+                    navigation.navigate('Library');
+                  } else if (row.route === 'Shopping') {
+                    navigation.navigate('Shopping');
+                  } else if (row.route === 'Projects') {
+                    navigation.navigate('Projects');
                   } else if (row.route === 'SettingsAppearance') {
                     navigation.navigate('SettingsAppearance');
                   } else if (row.route === 'BehavioralMode') {

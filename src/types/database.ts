@@ -43,6 +43,27 @@ export interface DbTask {
   done_looks_like: string | null;
   created_at: string;
   completed_at: string | null;
+  /** Added by web migration 20240002; the web app reads this before `status`. */
+  completed?: boolean;
+  // Columns the web app has added since the initial schema (migrations
+  // 20240002, 20260003, 20260042). Optional because a database that has not
+  // run them returns none of these; the mobile app only reads them for now.
+  planned_time?: string | null;
+  owner_id?: string | null;
+  company_tag?: string | null;
+  task_type?: string | null;
+  priority?: string | null;
+  board_status?: string | null;
+  calendar_id?: string | null;
+  gcal_event_id?: string | null;
+  parent_task_id?: string | null;
+  captured_via?: 'voice' | 'mail' | 'manual' | null;
+  urgent?: boolean;
+  checklist?: { id: string; text: string; done: boolean }[];
+  attachments?: { id: string; name: string; size: number; source?: string; addedAt: string }[];
+  links?: string[];
+  project_id?: string | null;
+  milestone_id?: string | null;
 }
 
 export type DbHabitFrequency = 'daily' | 'weekdays' | 'weekly';
@@ -55,6 +76,13 @@ export interface DbHabit {
   current_streak: number;
   longest_streak: number;
   is_active: boolean;
+  // Columns the web app adds to a habit; absent on a database that has not run them.
+  emoji?: string | null;
+  color?: string | null;
+  type?: string | null;
+  goal?: number | null;
+  unit?: string | null;
+  image?: string | null;
 }
 
 export interface DbHabitLog {
@@ -63,6 +91,8 @@ export interface DbHabitLog {
   user_id: string;
   date: string;
   completed: boolean;
+  /** How much of a counted habit was done that day (the web's `quantity`). */
+  quantity?: number | null;
 }
 
 export interface DbEnergyLog {
@@ -78,6 +108,11 @@ export interface DbCalendarEvent {
   id: string;
   user_id: string;
   company_id: string | null;
+  /** Which Google calendar the event lives on, kept so an edit can be written back to it. */
+  calendar_id?: string | null;
+  /** The Google account the event belongs to; the write function needs one. */
+  account_email?: string | null;
+  account_id?: string | null;
   google_event_id: string | null;
   title: string;
   start_time: string;
@@ -86,20 +121,6 @@ export interface DbCalendarEvent {
   meeting_type: string | null;
   prep_notes: string | null;
   is_synced: boolean;
-}
-
-export type DbEmailClassification = 'decision' | 'fyi' | 'waiting' | 'delegate';
-
-export interface DbEmailAction {
-  id: string;
-  user_id: string;
-  gmail_id: string | null;
-  subject: string | null;
-  from_email: string | null;
-  classification: DbEmailClassification | null;
-  suggested_reply: string | null;
-  status: string | null;
-  follow_up_date: string | null;
 }
 
 export interface DbWeeklyReview {
@@ -112,4 +133,79 @@ export interface DbWeeklyReview {
   meeting_hours: number | null;
   professor_insight: string | null;
   created_at: string;
+}
+
+// ── Projects (web migration 20260042) ───────────────────────────────────────
+// A goal with an end that gathers tasks and other items. A task carries its
+// project on its own row (`tasks.project_id`); a milestone is a dated phase.
+
+export type DbProjectStatus = 'idea' | 'active' | 'paused' | 'done';
+
+export interface DbProject {
+  id: string;
+  user_id: string;
+  name: string;
+  kind: 'work' | 'personal';
+  color: string | null;
+  status: DbProjectStatus;
+  company_id: string | null;
+  start_date: string | null;
+  target_date: string | null;
+  notes: string | null;
+  archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbMilestone {
+  id: string;
+  project_id: string;
+  user_id: string;
+  title: string;
+  due_date: string | null;
+  done: boolean;
+  sort_order: number;
+}
+
+// ── Shopping (web migrations 20260017, 20260019) ────────────────────────────
+export type DbShoppingStatus = 'wanted' | 'planned' | 'purchased';
+
+export interface DbShoppingGroup {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  icon: string;
+  scheduled_date: string | null;
+  status: 'active' | 'archived' | 'suspended';
+  sort_order: number;
+}
+
+export interface DbShoppingItem {
+  id: string;
+  user_id: string;
+  group_id: string | null;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string | null;
+  priority: number;
+  status: DbShoppingStatus;
+  target_price_max: number | null;
+  currency: string;
+  notes: string | null;
+  purchased_at: string | null;
+  final_price: number | null;
+  store_used_id: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+/** Everything that is not a task but belongs to a project: an event, a mail thread, a finance entry, a habit, a book
+ *  or a list. `ref_id` is the other module's own id (for an event, the Google event id). */
+export interface DbProjectLink {
+  id: string;
+  project_id: string;
+  kind: 'event' | 'thread' | 'entry' | 'habit' | 'book' | 'list';
+  ref_id: string;
 }

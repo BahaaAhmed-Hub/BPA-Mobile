@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -65,7 +66,7 @@ export function HabitDetailScreen() {
   if (!habit) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
-        <Pressable onPress={() => navigation.goBack()} style={{ padding: 20 }}>
+        <Pressable accessibilityLabel="Back" onPress={() => navigation.goBack()} style={{ padding: 20 }}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink }}>‹</Text>
         </Pressable>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -78,7 +79,7 @@ export function HabitDetailScreen() {
   const grid = last13WeeksGrid(logs);
   const pct  = pct30Day(logs);
   const totalCompleted = logs.filter(l => l.completed).length;
-  const emoji = habit.name.match(/^\p{Emoji}/u)?.[0] ?? '🎯';
+  const emoji = habit.emoji || habit.name.match(/^\p{Emoji}/u)?.[0] || '🎯';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
@@ -87,7 +88,7 @@ export function HabitDetailScreen() {
         paddingHorizontal: 14, paddingVertical: 10,
         flexDirection: 'row', alignItems: 'center', gap: 10,
       }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{
+        <Pressable accessibilityLabel="Back" onPress={() => navigation.goBack()} hitSlop={8} style={{
           width: 36, height: 36, borderRadius: 18,
           alignItems: 'center', justifyContent: 'center',
           backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -97,7 +98,7 @@ export function HabitDetailScreen() {
         <Text style={{ flex: 1, textAlign: 'center', fontFamily: NumFont.bold, fontSize: 15, color: P.ink }}>
           {habit.name.replace(/^\p{Emoji}\s*/u, '')}
         </Text>
-        <Pressable
+        <Pressable accessibilityLabel="Edit"
           onPress={() => navigation.navigate('HabitEdit', { habitId: habit.id })}
           hitSlop={8}
           style={{
@@ -157,7 +158,7 @@ export function HabitDetailScreen() {
               <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
                 {s.value}
               </Text>
-              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink4, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.2, textTransform: 'uppercase' }}>
                 {s.label}
               </Text>
             </View>
@@ -177,7 +178,7 @@ export function HabitDetailScreen() {
           <View style={{ flexDirection: 'row', marginBottom: 4 }}>
             {WEEK_DAYS.map((d, i) => (
               <View key={i} style={{ flex: 1, alignItems: 'center' }}>
-                <Text style={{ fontFamily: UIFont.medium, fontSize: 9, color: P.ink4 }}>{d}</Text>
+                <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink4 }}>{d}</Text>
               </View>
             ))}
           </View>

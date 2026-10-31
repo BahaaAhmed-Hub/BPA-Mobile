@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { Pressable } from './Pressable';
 import { C, Radii } from '../../theme/tokens';
 import { UIFont, NumFont } from '../../theme/typography';
 import { useFinanceStore } from '../../store/financeStore';
@@ -101,7 +102,7 @@ export function AddExpenseSheet({ visible, onClose }: { visible: boolean; onClos
 
               {expenseCategories.length > 0 && (
                 <Field label="CATEGORY">
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <ScrollView style={{ flexGrow: 0, flexShrink: 0 }} horizontal showsHorizontalScrollIndicator={false}>
                     <View style={{ flexDirection: 'row', gap: 6 }}>
                       {expenseCategories.slice(0, 12).map(cat => {
                         const active = categoryId === cat.id;

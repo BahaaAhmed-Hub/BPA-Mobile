@@ -1,4 +1,5 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
+import { Pressable } from './Pressable';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Bell } from 'lucide-react-native';
@@ -63,7 +64,7 @@ export function TopBar({ title, subtitle, right, dark: forceDark }: TopBarProps)
 function NotificationsBell({ dark, P }: { dark: boolean; P: ReturnType<typeof useScreenPalette> }) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   return (
-    <Pressable onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
+    <Pressable accessibilityLabel="Notifications" onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
       <View
         style={{
           width: 36, height: 36, borderRadius: 18,

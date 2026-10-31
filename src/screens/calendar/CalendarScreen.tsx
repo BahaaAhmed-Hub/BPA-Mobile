@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator,
-  Modal, TextInput, Switch, KeyboardAvoidingView, Platform, Alert,
-} from 'react-native';
+import { useProjectStore } from '../../store/projectStore';
+import { projectOfEvent, drawableColor } from '../../lib/projects';
+import { View, Text, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, Switch, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -61,6 +61,12 @@ export function CalendarScreen() {
   const weekEnd   = useMemo(() => addDays(weekStart, 6), [weekStart]);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Which project an event belongs to is read once, so a card can carry the project's colour.
+  const projects = useProjectStore(s => s.projects);
+  const links = useProjectStore(s => s.links);
+  const loadProjects = useProjectStore(s => s.loadFromDB);
+  useEffect(() => { void loadProjects(); }, [loadProjects]);
+
   useEffect(() => {
     void sync(isoDate(weekStart), isoDate(weekEnd))
       .catch(() => void load(isoDate(weekStart), isoDate(weekEnd)));
@@ -83,7 +89,7 @@ export function CalendarScreen() {
         dark={P.isDark}
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable
+            <Pressable accessibilityLabel="Sync calendar"
               onPress={() => void sync(isoDate(weekStart), isoDate(weekEnd))}
               disabled={syncing}
               hitSlop={8}
@@ -97,7 +103,7 @@ export function CalendarScreen() {
                 ? <ActivityIndicator size="small" color={P.accent} />
                 : <Text style={{ color: P.accent, fontFamily: UIFont.bold, fontSize: 14 }}>⟳</Text>}
             </Pressable>
-            <Pressable
+            <Pressable accessibilityLabel="Add event"
               onPress={() => setShowCreateModal(true)}
               hitSlop={8}
               style={{
@@ -150,7 +156,7 @@ export function CalendarScreen() {
                 alignItems: 'center',
               }}>
                 <Text style={{
-                  fontFamily: UIFont.semiBold, fontSize: 10,
+                  fontFamily: UIFont.semiBold, fontSize: 11,
                   color: active ? (P.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)') : P.ink2,
                   letterSpacing: 0.5,
                 }}>{DAY_LABELS[i]}</Text>
@@ -207,7 +213,7 @@ export function CalendarScreen() {
               <View key={e.id}>
                 {showNowAfter ? <NowDivider P={P} /> : null}
                 <Pressable onPress={() => navigation.navigate('EventDetail', { eventId: e.id })}>
-                  <EventCard event={e} highlighted={isLive} dimmed={isPast && !isLive} P={P} />
+                  <EventCard event={e} highlighted={isLive} dimmed={isPast && !isLive} P={P} projectColor={projectOfEvent(e.google_event_id, links, projects) ? drawableColor(projectOfEvent(e.google_event_id, links, projects)!.color, C.indigo) : null} />
                 </Pressable>
                 {showNowBetween ? <NowDivider P={P} /> : null}
               </View>
@@ -332,7 +338,7 @@ function CreateEventModal({
           borderBottomWidth: 1, borderBottomColor: P.hairline,
         }}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 17, color: P.ink }}>New Event</Text>
-          <Pressable onPress={onClose} hitSlop={10}>
+          <Pressable accessibilityLabel="Close" onPress={onClose} hitSlop={10}>
             <Text style={{ fontSize: 22, color: P.ink2, fontFamily: UIFont.medium }}>×</Text>
           </Pressable>
         </View>
@@ -502,7 +508,7 @@ function NowDivider({ P }: { P: ScreenPalette }) {
   return (
     <View style={{ marginVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ backgroundColor: C.red, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 }}>
-        <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 10, letterSpacing: 0.4 }}>
+        <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 11, letterSpacing: 0.4 }}>
           NOW · {fmtTime(now.toISOString())}
         </Text>
       </View>
@@ -511,7 +517,7 @@ function NowDivider({ P }: { P: ScreenPalette }) {
   );
 }
 
-function EventCard({ event, highlighted, dimmed, P }: { event: DbCalendarEvent; highlighted: boolean; dimmed: boolean; P: ScreenPalette }) {
+function EventCard({ event, highlighted, dimmed, P, projectColor }: { event: DbCalendarEvent; highlighted: boolean; dimmed: boolean; P: ScreenPalette; projectColor: string | null }) {
   // Card body uses fixed blue/indigo so events are always recognizably "events"
   // regardless of theme. Only the time gutter (which lives ON the bg) flips
   // with the palette, and never dims — past events fade their card, not their time.
@@ -549,11 +555,14 @@ function EventCard({ event, highlighted, dimmed, P }: { event: DbCalendarEvent; 
         opacity: dimmed ? 0.55 : 1,
         minHeight: Math.max(52, (durMin(event.start_time, event.end_time) || 0) * 0.9),
       }}>
-        <Text style={{
-          fontFamily: UIFont.bold, fontSize: 13,
-          color: highlighted ? '#fff' : C.ink,
-          letterSpacing: -0.2,
-        }} numberOfLines={2}>{event.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+          {projectColor ? <View accessibilityLabel="Belongs to a project" style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: projectColor, marginTop: 4, borderWidth: highlighted ? 1 : 0, borderColor: '#fff' }} /> : null}
+          <Text style={{
+            flex: 1, fontFamily: UIFont.bold, fontSize: 13,
+            color: highlighted ? '#fff' : C.ink,
+            letterSpacing: -0.2,
+          }} numberOfLines={2}>{event.title}</Text>
+        </View>
         {event.location ? (
           <Text style={{
             fontFamily: UIFont.medium, fontSize: 11, marginTop: 3,

@@ -26,6 +26,8 @@ function toDbEvent(g: import('../lib/googleCalendar').GoogleSyncEvent): DbCalend
     company_id: null,
     // Store the Google calendarId so write-back can reference it later.
     calendar_id: g.calendarId,
+    account_email: g.accountEmail,
+    account_id: g.accountId,
     google_event_id: g.id,
     title: g.summary ?? '(no title)',
     start_time: start,
@@ -76,7 +78,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
       e => !e.google_event_id || !googleIds.has(e.google_event_id),
     );
     const merged = [...result.events.map(toDbEvent), ...filtered]
-      .sort((a, b) => a.start_time.localeCompare(b.start_time));
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
     set({
       events: merged,
       syncing: false,
@@ -103,7 +105,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
       if (patch.start_time !== undefined) googlePatch.start       = { dateTime: patch.start_time };
       if (patch.end_time   !== undefined) googlePatch.end         = { dateTime: patch.end_time };
 
-      return writeGoogleEvent(event.google_event_id, calendarId, googlePatch);
+      return writeGoogleEvent(event.google_event_id, calendarId, googlePatch, { email: event.account_email, id: event.account_id });
     }
 
     const { error } = await supabase.from('calendar_events').update(patch).eq('id', id);
