@@ -91,6 +91,8 @@ export interface DbHabitLog {
   user_id: string;
   date: string;
   completed: boolean;
+  /** How much of a counted habit was done that day (the web's `quantity`). */
+  quantity?: number | null;
 }
 
 export interface DbEnergyLog {

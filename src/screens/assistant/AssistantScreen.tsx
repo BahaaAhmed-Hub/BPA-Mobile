@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Text, Text
 import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { AlertCircle, ArrowUp, Check, ChevronLeft, Sparkles, SquarePen } from 'lucide-react-native';
+import { AlertCircle, ArrowUp, Check, ChevronLeft, Sparkles, Square, SquarePen } from 'lucide-react-native';
 import { useScreenPalette } from '../../theme/palette';
 import { UIFont, NumFont } from '../../theme/typography';
 import { Radii } from '../../theme/tokens';
@@ -227,13 +227,23 @@ export function AssistantScreen() {
             accessibilityLabel="Message"
             style={{ flex: 1, minHeight: 44, maxHeight: 120, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, borderRadius: 22, backgroundColor: P.field, borderWidth: 1, borderColor: P.hairline, fontFamily: UIFont.regular, fontSize: 15, color: P.ink }}
           />
-          <Pressable
-            onPress={() => void onSend(input)} disabled={!canSend}
-            accessibilityRole="button" accessibilityLabel="Send" accessibilityState={{ disabled: !canSend }}
-            style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: canSend ? P.accent : P.field, borderWidth: 1, borderColor: canSend ? P.accentBorder : P.hairline }}
-          >
-            <ArrowUp size={20} color={canSend ? P.accentInk : P.ink4} />
-          </Pressable>
+          {a.busy ? (
+            <Pressable
+              onPress={() => void a.stop()}
+              accessibilityRole="button" accessibilityLabel="Stop"
+              style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: P.ink, borderWidth: 1, borderColor: P.ink }}
+            >
+              <Square size={14} color={P.bg} fill={P.bg} />
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => void onSend(input)} disabled={!canSend}
+              accessibilityRole="button" accessibilityLabel="Send" accessibilityState={{ disabled: !canSend }}
+              style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: canSend ? P.accent : P.field, borderWidth: 1, borderColor: canSend ? P.accentBorder : P.hairline }}
+            >
+              <ArrowUp size={20} color={canSend ? P.accentInk : P.ink4} />
+            </Pressable>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

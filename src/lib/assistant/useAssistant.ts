@@ -52,6 +52,7 @@ export function useAssistant() {
   const continueAsked = useRef<{ sig: string; at: number; n: number } | null>(null);
   const interrupted = useRef(new Set<number>());
   const lastRefresh = useRef(0);
+  const stoppedRows = useRef(new Set<number>());
   const approvalRef = useRef<PendingApproval | null>(null);
   approvalRef.current = approval;
 
@@ -183,6 +184,8 @@ export function useAssistant() {
     if (!id) return;
     const sig = awaitingContinue(rows);
     if (!sig) return;
+    // The person pressed Stop: what was running then is not carried on to a next step.
+    if (sig.split(',').some(id => stoppedRows.current.has(Number(id)))) return;
     const prev = continueAsked.current;
     if (prev && prev.sig === sig && (Date.now() - prev.at < 30_000 || prev.n >= 3)) return;
     continueAsked.current = { sig, at: Date.now(), n: prev && prev.sig === sig ? prev.n + 1 : 1 };
@@ -225,6 +228,20 @@ export function useAssistant() {
     } finally { setSending(false); }
   }, [user, attach, applyRows, stepBody]);
 
+  /** Stop what is in flight: decline a waiting approval, mark an answer that is being written as interrupted, give up
+   *  tool calls that have not run, and do not carry on to a next step. Whatever was already done stays done. */
+  const stop = useCallback(async () => {
+    approvalRef.current?.resolve(false);
+    awaitingAfter.current = null;
+    setSending(false);
+    const now = rowsRef.current;
+    for (const r of now) if (r.role === 'tool') stoppedRows.current.add(r.id);
+    for (const r of now.filter(x => x.status === 'streaming')) await markInterrupted(r.id);
+    for (const r of now.filter(x => x.role === 'tool' && x.tool_state === 'running' && !executing.current.has(x.id))) await finishTool(r.id, 'failed', 'Stopped by the user');
+    await refresh(true);
+    setTick(t => t + 1);
+  }, [refresh]);
+
   const newChat = useCallback(async () => {
     const id = convRef.current;
     convRef.current = null; setConvId(null); applyRows([]); awaitingAfter.current = null; setProblem(null);
@@ -233,5 +250,5 @@ export function useAssistant() {
 
   const bubbles: Bubble[] = useMemo(() => rowsToBubbles(rows, Date.now()), [rows, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { bubbles, busy, loaded, problem, settings, approval, send, newChat, dismissProblem: () => setProblem(null), signedIn: !!user };
+  return { bubbles, busy, loaded, problem, settings, approval, send, stop, newChat, dismissProblem: () => setProblem(null), signedIn: !!user };
 }

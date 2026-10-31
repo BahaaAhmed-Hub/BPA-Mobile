@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import type { DbHabit, DbHabitLog, DbHabitFrequency } from '../types/database';
 import { notify } from './feedbackStore';
+import { targetOf, stepFor, amountOn, parseSteps, isFinished } from '../lib/habits';
 
 // Ticks still being written. A refresh that lands meanwhile would replace the
 // logs with what the server held before the tick and un-tick it on screen.
@@ -47,13 +48,6 @@ function withStreaks(habits: DbHabit[], logsByHabit: Record<string, DbHabitLog[]
   });
 }
 
-function parseTarget(name: string): number | null {
-  const m = name.match(/\((\d+)\)/);
-  if (!m) return null;
-  const n = parseInt(m[1], 10);
-  return n > 1 ? n : null;
-}
-
 /** Columns the web app keeps on a habit beyond its name and frequency. */
 export interface HabitExtra { emoji?: string; type?: 'boolean' | 'quantity'; goal?: number; unit?: string }
 export type HabitPatch = Partial<HabitExtra> & { name?: string; frequency?: DbHabitFrequency; is_active?: boolean };
@@ -62,6 +56,9 @@ interface HabitState {
   habits: DbHabit[];
   logsByHabit: Record<string, DbHabitLog[]>;
   countToday: Record<string, number>;
+  /** What one tap adds to a counted habit, as set on the web (`professor-habit-steps`); absent means a sensible guess. */
+  steps: Record<string, number>;
+  setCount: (habitId: string, count: number) => Promise<void>;
   loading: boolean;
   error: string | null;
 
@@ -83,17 +80,21 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   habits: [],
   logsByHabit: {},
   countToday: {},
+  steps: {},
   loading: false,
   error: null,
 
   async loadFromDB() {
     set({ loading: true, error: null });
-    const [habitsRes, logsRes] = await Promise.all([
+    const [habitsRes, logsRes, stepsRes] = await Promise.all([
       supabase.from('habits').select('*').eq('is_active', true).order('name'),
       supabase
         .from('habit_logs')
         .select('*')
         .gte('date', new Date(Date.now() - 60 * 86400_000).toISOString().slice(0, 10)),
+      supabase.auth.getSession().then(async ({ data: { session } }) => session
+        ? supabase.from('users').select('s:schedule_rules->shared_prefs->>professor-habit-steps').eq('id', session.user.id).maybeSingle()
+        : { data: null }),
     ]);
     if (habitsRes.error) { set({ error: habitsRes.error.message, loading: false }); return; }
     const rawHabits = (habitsRes.data ?? []) as DbHabit[];
@@ -105,18 +106,15 @@ export const useHabitStore = create<HabitState>((set, get) => ({
 
     const habits = withStreaks(rawHabits, logsByHabit);
 
-    // Restore countToday: for count habits completed today, seed count = target
-    // so the stepper shows target/target instead of 0/target after restart.
+    // Today's count for each counted habit comes from what was logged today (the web's `quantity`).
     const today = todayIso();
     const countToday: Record<string, number> = {};
     for (const habit of habits) {
-      const target = parseTarget(habit.name);
-      if (target && (logsByHabit[habit.id] ?? []).some(l => l.date === today && l.completed)) {
-        countToday[habit.id] = target;
-      }
+      if (targetOf(habit) !== null) countToday[habit.id] = amountOn(habit, logsByHabit[habit.id] ?? [], today);
     }
+    const steps = parseSteps((stepsRes.data as unknown as { s?: string | null } | null)?.s);
 
-    set({ habits, logsByHabit, countToday, loading: false });
+    set({ habits, logsByHabit, countToday, steps, loading: false });
   },
 
   async addHabit(name, frequency, extra) {
@@ -183,18 +181,14 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   },
 
   async toggleToday(habitId) {
-    const today = todayIso();
-    await get().toggleOn(habitId, today);
-    // Sync countToday for count habits so TodayScreen/HabitDetailScreen toggles
-    // don't leave the stepper stuck at 0/N when the habit was just marked done.
     const habit = get().habits.find(h => h.id === habitId);
-    if (habit) {
-      const target = parseTarget(habit.name);
-      if (target) {
-        const isDoneNow = get().isCompletedOn(habitId, today);
-        set({ countToday: { ...get().countToday, [habitId]: isDoneNow ? target : 0 } });
-      }
+    const target = habit ? targetOf(habit) : null;
+    if (habit && target !== null) {
+      // A counted habit is finished by reaching its goal, and un-finished by going back to nothing.
+      await get().setCount(habitId, get().isCompletedToday(habitId) ? 0 : target);
+      return;
     }
+    await get().toggleOn(habitId, todayIso());
   },
 
   async removeHabit(id) {
@@ -212,21 +206,54 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     return (get().logsByHabit[habitId] ?? []).some(l => l.date === date && l.completed);
   },
 
-  async incrementCount(habitId, target) {
-    const current = (get().countToday[habitId] ?? 0) + 1;
-    set({ countToday: { ...get().countToday, [habitId]: current } });
-    if (current >= target && !get().isCompletedOn(habitId, todayIso())) {
-      await get().toggleOn(habitId, todayIso());
-    }
+  async incrementCount(habitId, _target) {
+    const habit = get().habits.find(h => h.id === habitId);
+    if (!habit) return;
+    await get().setCount(habitId, (get().countToday[habitId] ?? 0) + stepFor(habit, get().steps));
   },
 
-  async decrementCount(habitId, target) {
+  async decrementCount(habitId, _target) {
+    const habit = get().habits.find(h => h.id === habitId);
     const current = get().countToday[habitId] ?? 0;
-    if (current === 0) return; // already at floor — never un-complete silently
-    const next = current - 1;
-    set({ countToday: { ...get().countToday, [habitId]: next } });
-    if (next < target && get().isCompletedOn(habitId, todayIso())) {
-      await get().toggleOn(habitId, todayIso());
+    if (!habit || current === 0) return; // already at the floor — never un-complete silently
+    await get().setCount(habitId, Math.max(0, current - stepFor(habit, get().steps)));
+  },
+
+  /** Save today's amount for a counted habit: the quantity, and finished once it reaches the goal. The write rolls back
+   *  and says so if it fails, so the screen never shows a count the server does not have. */
+  async setCount(habitId, count) {
+    const habit = get().habits.find(h => h.id === habitId);
+    if (!habit || targetOf(habit) === null) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const today = todayIso();
+    const amount = Math.max(0, count);
+    const finished = isFinished(habit, amount);
+
+    const prevCount = get().countToday[habitId] ?? 0;
+    const prevLogs = get().logsByHabit[habitId] ?? [];
+    const existing = prevLogs.find(l => l.date === today);
+    const log: DbHabitLog = { ...(existing ?? { id: `tmp_${Date.now()}`, habit_id: habitId, user_id: session.user.id, date: today }), completed: finished, quantity: amount };
+    const nextLogs = existing ? prevLogs.map(l => (l.date === today ? log : l)) : [log, ...prevLogs];
+    const apply = (logs: DbHabitLog[], n: number) => {
+      const all = { ...get().logsByHabit, [habitId]: logs };
+      set({ logsByHabit: all, countToday: { ...get().countToday, [habitId]: n }, habits: withStreaks(get().habits, all) });
+    };
+    apply(nextLogs, amount);
+
+    writesInFlight++;
+    const row = { habit_id: habitId, user_id: session.user.id, date: today, completed: finished, quantity: amount };
+    let { data, error } = await supabase.from('habit_logs').upsert(row, { onConflict: 'habit_id,date' }).select().single();
+    // A database that has not run the migration has no quantity column: keep the tick, as the web does.
+    if (error && /quantity/i.test(error.message)) {
+      ({ data, error } = await supabase.from('habit_logs').upsert({ habit_id: habitId, user_id: session.user.id, date: today, completed: finished }, { onConflict: 'habit_id,date' }).select().single());
     }
+    writesInFlight--;
+    if (error || !data) {
+      apply(prevLogs, prevCount);
+      notify('error', "Couldn't save that count, so it was undone.");
+      return;
+    }
+    apply(get().logsByHabit[habitId].map(l => (l.date === today ? { ...(data as DbHabitLog), quantity: amount } : l)), amount);
   },
 }));

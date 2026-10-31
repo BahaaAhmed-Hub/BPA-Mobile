@@ -906,8 +906,8 @@ function EnvelopeRow({ e, kind, P }: { e: Envelope; kind: 'spending' | 'income';
           {shown.map(c => (
             <View key={c.cat.id} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
               <Text numberOfLines={1} style={{ flex: 1, fontFamily: UIFont.medium, fontSize: 12, color: P.ink3 }}>{c.cat.name}</Text>
-              <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink2 }}>
-                {fmt(c.actual, e.cur)}{c.budgeted ? ` of ${fmt(c.planned, c.cur)}` : ''}
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: c.budgeted && c.actual > c.planned ? C.red : P.ink2 }}>
+                {fmt(c.actual, e.cur)}{c.budgeted ? ` of ${fmt(c.planned, c.cur)}` : ''}{c.budgeted && c.actual > c.planned ? ' · over' : ''}
               </Text>
             </View>
           ))}

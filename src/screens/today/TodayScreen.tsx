@@ -530,7 +530,7 @@ export function TodayScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {habits.map(h => {
                 const done = isCompletedToday(h.id);
-                const emoji = h.name.match(/^\p{Emoji}/u)?.[0] ?? '🎯';
+                const emoji = h.emoji || h.name.match(/^\p{Emoji}/u)?.[0] || '🎯';
                 const label = h.name.replace(/^\p{Emoji}\s*/u, '');
                 return (
                   <Pressable key={h.id} onPress={() => void toggleHabit(h.id)}>

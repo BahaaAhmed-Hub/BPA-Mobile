@@ -92,7 +92,7 @@ export function HabitEditScreen() {
     );
   }
 
-  const emoji = habit.name.match(/^\p{Emoji}/u)?.[0] ?? '🎯';
+  const emoji = habit.emoji || habit.name.match(/^\p{Emoji}/u)?.[0] || '🎯';
   const displayName = habit.name.replace(/^\p{Emoji}\s*/u, '');
 
   return (

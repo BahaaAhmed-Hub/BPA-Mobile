@@ -79,7 +79,7 @@ export function HabitDetailScreen() {
   const grid = last13WeeksGrid(logs);
   const pct  = pct30Day(logs);
   const totalCompleted = logs.filter(l => l.completed).length;
-  const emoji = habit.name.match(/^\p{Emoji}/u)?.[0] ?? '🎯';
+  const emoji = habit.emoji || habit.name.match(/^\p{Emoji}/u)?.[0] || '🎯';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
