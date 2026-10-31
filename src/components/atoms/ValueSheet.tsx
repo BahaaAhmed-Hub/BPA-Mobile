@@ -7,8 +7,8 @@ import { Radii } from '../../theme/tokens';
 
 /** A bottom sheet that asks for one number. `onSave` resolves true when it was stored; the sheet stays open until then,
  *  so a failed save never looks like a saved one. */
-export function ValueSheet({ visible, title, hint, label, initial, suffix, onClose, onSave }: {
-  visible: boolean; title: string; hint?: string; label: string; initial?: number | null; suffix?: string;
+export function ValueSheet({ visible, title, hint, label, initial, suffix, children, onClose, onSave }: {
+  visible: boolean; title: string; hint?: string; label: string; initial?: number | null; suffix?: string; children?: React.ReactNode;
   onClose: () => void; onSave: (value: number) => Promise<boolean>;
 }) {
   const P = useScreenPalette();
@@ -35,6 +35,7 @@ export function ValueSheet({ visible, title, hint, label, initial, suffix, onClo
           <Pressable onPress={() => {}} style={{ backgroundColor: P.surface, padding: 20, borderTopLeftRadius: 28, borderTopRightRadius: 28, gap: 12 }}>
             <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: P.ink }}>{title}</Text>
             {hint ? <Text style={{ fontFamily: UIFont.regular, fontSize: 13, lineHeight: 18, color: P.ink3 }}>{hint}</Text> : null}
+            {children}
             <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>{label.toUpperCase()}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: P.bg, borderRadius: Radii.sm, borderWidth: 1, borderColor: P.hairline, paddingHorizontal: 14 }}>
               <TextInput
