@@ -17,6 +17,7 @@ import { txConvert, txIn } from './txRates';
 let paidAtColumn = true;
 export function setPaidAtSupported(yes: boolean): void { paidAtColumn = yes; }
 export const isUnpaid = (tx: Pick<Tx, 'paid_at'>): boolean => paidAtColumn && !tx.paid_at;
+export const paidAtSupported = (): boolean => paidAtColumn;
 
 // ── Loans ───────────────────────────────────────────────────────────────────
 export const isLoan = (a?: { account_type?: string } | null): boolean => a?.account_type === 'loan';

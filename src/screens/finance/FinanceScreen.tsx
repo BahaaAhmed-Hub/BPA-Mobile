@@ -8,7 +8,9 @@ import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Glyph } from '../../components/atoms/Glyph';
 import { liveBalances, positionFrom, groupOf, isSettled } from '../../lib/finance/balances';
-import { toBase } from '../../lib/finance/fx';
+import { toBase, baseCurrency } from '../../lib/finance/fx';
+import { totalsFor, byDay, byCategory as categoryTotals } from '../../lib/finance/flows';
+import { buildEnvelopes, sumEnvelopes, type Envelope } from '../../lib/finance/budget';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceBudget, DbFinanceBill, DbFinanceGoal, TxType } from '../../types/financeTypes';
 import { UIFont, NumFont } from '../../theme/typography';
 
@@ -39,7 +41,7 @@ const SUB_TABS: SubTab[] = ['Balance', 'Today', 'Financials', 'Budget', 'Goals',
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export function FinanceScreen() {
   const P = useScreenPalette();
-  const [activeTab, setActiveTab] = useState<SubTab>('Balance');
+  const [activeTab, setActiveTab] = useState<SubTab>('Balance')
   const [addOpen, setAddOpen] = useState(false);
   const [authState, setAuthState] = useState<'pending' | 'unlocked' | 'failed'>('pending');
 
@@ -195,7 +197,7 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
 
   // This month's transactions
   const thisMonth = isoYYYYMM(new Date());
-  const monthTxs = transactions.filter(t => t.date.slice(0, 7) === thisMonth && t.currency === 'EGP');
+  const monthTxs = transactions.filter(t => t.date.slice(0, 7) === thisMonth);
 
   return (
     <ScrollView
@@ -482,24 +484,11 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
 
   // Transactions for the viewed month
   const monthPrefix = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
-  const monthTxs = useMemo(
-    () => transactions.filter(t => t.date.startsWith(monthPrefix) && t.currency === 'EGP'),
-    [transactions, monthPrefix],
-  );
-
-  const monthIn  = monthTxs.filter(t => t.tx_type === 'income').reduce((s, t) => s + t.amount, 0);
-  const monthOut = monthTxs.filter(t => t.tx_type === 'expense').reduce((s, t) => s + t.amount, 0);
-
-  // Net per day
-  const netByDay = useMemo(() => {
-    const m: Record<string, { income: number; expense: number }> = {};
-    for (const t of monthTxs) {
-      if (!m[t.date]) m[t.date] = { income: 0, expense: 0 };
-      if (t.tx_type === 'income')  m[t.date].income  += t.amount;
-      if (t.tx_type === 'expense') m[t.date].expense += t.amount;
-    }
-    return m;
-  }, [monthTxs]);
+  // Income and spending for the viewed month, in the base currency, filed the way the web files them.
+  const monthFlows = useMemo(() => totalsFor(transactions, monthPrefix), [transactions, monthPrefix]);
+  const monthIn  = monthFlows.income;
+  const monthOut = monthFlows.expense;
+  const netByDay = useMemo(() => byDay(transactions, monthPrefix), [transactions, monthPrefix]);
 
   // Calendar grid
   const firstDay = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
@@ -640,34 +629,18 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
     ? String(year)
     : `${year}-${String(month + 1).padStart(2, '0')}`;
 
-  const yearTxs = useMemo(
-    () => transactions.filter(t => t.date.startsWith(periodPrefix) && t.currency === 'EGP'),
-    [transactions, periodPrefix],
+  // Everything is in the base currency, each entry at the rate it was added at. Only income and spending count:
+  // a transfer, a borrowing or a repayment is neither earned nor spent.
+  const flows = useMemo(() => totalsFor(transactions, periodPrefix), [transactions, periodPrefix]);
+  const byCategory = useMemo(
+    () => categoryTotals(transactions, categories, periodPrefix, section === 'income' ? 'income' : 'expense'),
+    [transactions, categories, periodPrefix, section],
   );
-
-  // Group by root category
-  const byCategory = useMemo(() => {
-    const isExpense = (t: DbFinanceTransaction) => t.tx_type === 'expense' || t.tx_type === 'asset_purchase';
-    const isIncome  = (t: DbFinanceTransaction) => t.tx_type === 'income';
-    const relevantTxs = yearTxs.filter(section === 'income' ? isIncome : isExpense);
-
-    const acc: Record<string, { cat: DbFinanceCategory | null; total: number }> = {};
-    for (const t of relevantTxs) {
-      const cat = categories.find(c => c.id === t.category_id) ?? null;
-      // Use parent if exists, else category itself
-      const rootCat = cat?.parent_id ? (categories.find(c => c.id === cat.parent_id) ?? cat) : cat;
-      const key = rootCat?.id ?? 'uncategorized';
-      if (!acc[key]) acc[key] = { cat: rootCat, total: 0 };
-      acc[key].total += t.amount;
-    }
-    return Object.values(acc).sort((a, b) => b.total - a.total);
-  }, [yearTxs, categories, section]);
-
-  const grandTotal = byCategory.reduce((s, c) => s + c.total, 0);
-
-  const incomeTotal  = useMemo(() => yearTxs.filter(t => t.tx_type === 'income').reduce((s, t) => s + t.amount, 0), [yearTxs]);
-  const expenseTotal = useMemo(() => yearTxs.filter(t => t.tx_type === 'expense').reduce((s, t) => s + t.amount, 0), [yearTxs]);
-  const net = incomeTotal - expenseTotal;
+  const grandTotal = byCategory.reduce((sum, c) => sum + c.total, 0);
+  const incomeTotal = flows.income;
+  const expenseTotal = flows.expense;
+  const net = flows.net;
+  const base = baseCurrency();
 
   return (
     <ScrollView
@@ -718,7 +691,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
           <View>
             <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>INCOME</Text>
             <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: C.green, marginTop: 2 }}>
-              EGP {incomeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              {base} {incomeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
@@ -734,7 +707,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
             {viewMode === 'annual' ? `NET THROUGH ${MONTH_NAMES[new Date().getMonth()]}` : `NET · ${MONTH_NAMES[month]} ${year}`}
           </Text>
           <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: net >= 0 ? C.green : C.red }}>
-            {net < 0 ? `(EGP ${Math.abs(net).toLocaleString('en-US', {maximumFractionDigits:0})})` : `EGP ${net.toLocaleString('en-US',{maximumFractionDigits:0})}`}
+            {net < 0 ? `(${base} ${Math.abs(net).toLocaleString('en-US', {maximumFractionDigits:0})})` : `${base} ${net.toLocaleString('en-US',{maximumFractionDigits:0})}`}
           </Text>
         </View>
       </View>
@@ -817,7 +790,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
           }}>
             <Text style={{ fontFamily: UIFont.bold, fontSize: 14, color: P.ink }}>Total {section}</Text>
             <Text style={{ fontFamily: NumFont.medium, fontSize: 16, color: section === 'income' ? C.green : C.red }}>
-              EGP {grandTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              {base} {grandTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </Text>
           </View>
         </View>
@@ -830,8 +803,7 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
 
 function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => Promise<void> }) {
   const P = useScreenPalette();
-  const budgets      = useFinanceStore(s => s.budgets);
-  const bills        = useFinanceStore(s => s.bills);
+  const rules        = useFinanceStore(s => s.budgetRules);
   const transactions = useFinanceStore(s => s.transactions);
   const categories   = useFinanceStore(s => s.categories);
   const [refreshing, setRefreshing] = useState(false);
@@ -853,30 +825,13 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
 
   const monthKey = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
 
-  const monthBudgets = useMemo(
-    () => budgets.filter(b => {
-      if (!b.month) return true; // null month = applies to all months
-      return b.month.slice(0, 7) === monthKey;
-    }),
-    [budgets, monthKey],
-  );
-
-  // Actual spending per category for the viewed month
-  const spentByCategory = useMemo(() => {
-    const monthTxs = transactions.filter(
-      t => t.date.startsWith(monthKey) && t.tx_type === 'expense' && t.currency === 'EGP',
-    );
-    const acc: Record<string, number> = {};
-    for (const t of monthTxs) {
-      const key = t.category_id ?? 'uncategorized';
-      acc[key] = (acc[key] ?? 0) + t.amount;
-    }
-    return acc;
-  }, [transactions, monthKey]);
-
-  // Today's day number for bills due-soon check
-  const todayDay = now.getDate();
-  const isCurrentMonth = viewMonth === now.getMonth() && viewYear === now.getFullYear();
+  // Budgets are rules the person keeps on the web (one per category). Each envelope is what that category is
+  // allowed this month against what has been paid out of it, in the envelope's own currency.
+  const env = useMemo(() => buildEnvelopes(categories, transactions, rules, monthKey), [categories, transactions, rules, monthKey]);
+  const spend = useMemo(() => sumEnvelopes(env.spending), [env]);
+  const earn  = useMemo(() => sumEnvelopes(env.earning), [env]);
+  const base = baseCurrency();
+  const noBudgetsAnywhere = Object.keys(rules).length === 0;
 
   return (
     <ScrollView
@@ -896,115 +851,111 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
         </Pressable>
       </View>
 
-      {/* Budget rows */}
-      {monthBudgets.length === 0 ? (
-        <View style={{ padding: 40, alignItems: 'center' }}>
-          <Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: P.ink3 }}>
-            No budgets set for this month
+      {noBudgetsAnywhere ? (
+        <View style={{ padding: 40, alignItems: 'center', gap: 6 }}>
+          <Text style={{ fontFamily: UIFont.semiBold, fontSize: 15, color: P.ink }}>No budgets yet</Text>
+          <Text style={{ fontFamily: UIFont.regular, fontSize: 13, lineHeight: 19, color: P.ink3, textAlign: 'center' }}>
+            Budgets are set on the web, under Budget. They appear here once you have set one.
           </Text>
         </View>
       ) : (
-        <View style={{ gap: 10 }}>
-          <SectionLabel title="BUDGETS" P={P} />
-          {monthBudgets.map(budget => {
-            const cat = categories.find(c => c.id === budget.category_id) ?? null;
-            const spent = spentByCategory[budget.category_id ?? 'uncategorized'] ?? 0;
-            const pct = budget.planned_amount > 0 ? Math.min(1, spent / budget.planned_amount) : 0;
-            const over = spent > budget.planned_amount;
-            const barColor = over ? C.red : C.green;
-            return (
-              <View key={budget.id} style={{
-                backgroundColor: P.surface, borderRadius: Radii.md, padding: 14,
-                borderWidth: 1, borderColor: P.hairline,
-                gap: 8,
-                ...Shadows.card,
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    backgroundColor: cat ? `${cat.color}20` : P.hairline,
-                    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    <Glyph icon={cat?.icon ?? '📁'} size={16} box={36} color={cat?.color ?? P.ink} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>
-                      {cat?.name ?? 'Uncategorized'}
-                    </Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontFamily: NumFont.medium, fontSize: 12, color: P.ink3 }}>
-                      planned {budget.currency} {budget.planned_amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                    </Text>
-                    <Text style={{ fontFamily: NumFont.medium, fontSize: 13, color: over ? C.red : P.ink2, marginTop: 1 }}>
-                      spent {spent.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                    </Text>
-                  </View>
-                </View>
-                <View style={{ gap: 4 }}>
-                  <View style={{ height: 5, backgroundColor: P.hairline, borderRadius: 3, overflow: 'hidden' }}>
-                    <View style={{
-                      position: 'absolute', left: 0, top: 0, bottom: 0,
-                      width: `${pct * 100}%`,
-                      backgroundColor: barColor, borderRadius: 3,
-                    }} />
-                  </View>
-                  <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: over ? C.red : P.ink3 }}>
-                    {Math.round(pct * 100)}% used{over ? ' — OVER BUDGET' : ''}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      )}
+        <>
+          {/* The month in three lines */}
+          <View style={{ backgroundColor: P.surface, borderRadius: Radii.md, padding: 16, gap: 12, borderWidth: 1, borderColor: P.hairline, ...Shadows.card }}>
+            <SummaryLine label="Expenses" actual={spend.actual} planned={spend.planned} base={base} color={P.negative} P={P} />
+            <SummaryLine label="Income" actual={earn.actual} planned={earn.planned} base={base} color={P.positive} P={P} />
+            <View style={{ height: 1, backgroundColor: P.hairline }} />
+            <SummaryLine
+              label="Left over" actual={earn.actual - spend.actual} planned={earn.planned - spend.planned} base={base}
+              color={earn.actual - spend.actual < 0 ? P.negative : P.positive} strong P={P}
+            />
+            {spend.aside + earn.aside > 0 ? (
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 12, lineHeight: 17, color: P.accentDeep }}>
+                {spend.aside + earn.aside} envelope{spend.aside + earn.aside === 1 ? '' : 's'} left out — no exchange rate is set for their currency.
+              </Text>
+            ) : null}
+          </View>
 
-      {/* Bills section */}
-      {bills.length > 0 ? (
-        <View style={{ gap: 10 }}>
-          <SectionLabel title="UPCOMING BILLS" P={P} />
-          {bills.map(bill => {
-            const cat = categories.find(c => c.id === bill.category_id) ?? null;
-            const dueSoon = isCurrentMonth && bill.due_day >= todayDay;
-            return (
-              <View key={bill.id} style={{
-                backgroundColor: P.surface, borderRadius: Radii.md, padding: 14,
-                borderWidth: 1, borderColor: P.hairline,
-                flexDirection: 'row', alignItems: 'center', gap: 10,
-                ...Shadows.card,
-              }}>
-                <View style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  backgroundColor: cat ? `${cat.color}20` : P.hairline,
-                  alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <Glyph icon={cat?.icon ?? '🧾'} size={16} box={36} color={cat?.color ?? P.ink} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{bill.name}</Text>
-                  <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, marginTop: 1 }}>
-                    Due day {bill.due_day}
-                  </Text>
-                </View>
-                {dueSoon ? (
-                  <View style={{
-                    backgroundColor: `${C.orange}20`, borderRadius: Radii.pill,
-                    paddingHorizontal: 8, paddingVertical: 3, marginRight: 6,
-                  }}>
-                    <Text style={{ fontFamily: UIFont.bold, fontSize: 10, color: C.orange, letterSpacing: 0.6 }}>
-                      DUE SOON
-                    </Text>
-                  </View>
-                ) : null}
-                <Text style={{ fontFamily: NumFont.medium, fontSize: 14, color: P.ink }}>
-                  {bill.currency} {bill.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                </Text>
-              </View>
-            );
-          })}
+          {env.spending.length > 0 ? (
+            <View style={{ gap: 10 }}>
+              <SectionLabel title="SPENDING" total={`${env.spending.filter(e => e.planned > 0).length} of ${env.spending.length} budgeted`} P={P} />
+              {env.spending.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="spending" P={P} />)}
+            </View>
+          ) : null}
+
+          {env.earning.length > 0 ? (
+            <View style={{ gap: 10 }}>
+              <SectionLabel title="INCOME" P={P} />
+              {env.earning.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="income" P={P} />)}
+            </View>
+          ) : null}
+        </>
+      )}
+    </ScrollView>
+  );
+}
+
+function SummaryLine({ label, actual, planned, base, color, strong = false, P }: {
+  label: string; actual: number; planned: number; base: string; color: string; strong?: boolean; P: ReturnType<typeof useScreenPalette>;
+}) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+      <Text style={{ fontFamily: strong ? UIFont.bold : UIFont.semiBold, fontSize: 13, color: P.ink }}>{label}</Text>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={{ fontFamily: NumFont.bold, fontSize: strong ? 20 : 17, color }}>{fmt(actual, base)}</Text>
+        <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3 }}>of {fmt(planned, base)} planned</Text>
+      </View>
+    </View>
+  );
+}
+
+/** One envelope: what has been paid out of a category this month against what it is allowed, in its own currency. */
+function EnvelopeRow({ e, kind, P }: { e: Envelope; kind: 'spending' | 'income'; P: ReturnType<typeof useScreenPalette> }) {
+  const budgeted = e.planned > 0;
+  const ratio = budgeted ? e.actual / e.planned : 0;
+  const over = kind === 'spending' && budgeted && e.actual > e.planned;
+  const bar = kind === 'income' ? C.green : over ? C.red : ratio >= 0.8 ? C.orange : C.green;
+  const shown = e.children.filter(c => c.budgeted || c.actual > 0);
+  return (
+    <View style={{ backgroundColor: P.surface, borderRadius: Radii.md, padding: 14, gap: 8, borderWidth: 1, borderColor: P.hairline, ...Shadows.card }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${e.cat.color}20`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Glyph icon={e.cat.icon || '📁'} fallback="📁" size={16} box={36} color={e.cat.color || P.ink} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text numberOfLines={1} style={{ fontFamily: UIFont.semiBold, fontSize: 14, color: P.ink }}>{e.cat.name}</Text>
+          <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: over ? C.red : P.ink3, marginTop: 1 }}>
+            {budgeted
+              ? over ? `${fmt(e.actual - e.planned, e.cur)} over` : `${fmt(e.planned - e.actual, e.cur)} left`
+              : 'No budget set'}
+          </Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ fontFamily: NumFont.bold, fontSize: 15, color: over ? C.red : P.ink }}>{fmt(e.actual, e.cur)}</Text>
+          {budgeted ? <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>of {fmt(e.planned, e.cur)}</Text> : null}
+        </View>
+      </View>
+      {budgeted ? (
+        <View style={{ height: 5, backgroundColor: P.hairline, borderRadius: 3, overflow: 'hidden' }}>
+          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(100, ratio * 100)}%`, backgroundColor: bar, borderRadius: 3 }} />
         </View>
       ) : null}
-    </ScrollView>
+      {e.currencies.length > 0 ? (
+        <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.accentDeep }}>{e.currencies.join(', ')} not counted — no rate set</Text>
+      ) : null}
+      {shown.length > 0 ? (
+        <View style={{ gap: 4, paddingTop: 2 }}>
+          {shown.map(c => (
+            <View key={c.cat.id} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+              <Text numberOfLines={1} style={{ flex: 1, fontFamily: UIFont.medium, fontSize: 12, color: P.ink3 }}>{c.cat.name}</Text>
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink2 }}>
+                {fmt(c.actual, e.cur)}{c.budgeted ? ` of ${fmt(c.planned, c.cur)}` : ''}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -1130,40 +1081,24 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
     return { label: MONTH_NAMES[d.getMonth()], iso: isoYYYYMM(d), isCurrent: i === 5 };
   });
 
-  // Section 1: monthly expense totals
+  // Section 1: monthly expense totals, in the base currency
   const monthlyExpenses = useMemo(() => last6Months.map(m => ({
     ...m,
-    total: transactions
-      .filter(tx => tx.tx_type === 'expense' && tx.date.slice(0, 7) === m.iso)
-      .reduce((s, tx) => s + tx.amount, 0),
+    total: totalsFor(transactions, m.iso).expense,
   })), [transactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const maxExpense = Math.max(...monthlyExpenses.map(m => m.total), 1);
 
-  // Section 2: top 5 categories this month
-  const { topCategories, totalExpensesThisMonth } = useMemo(() => {
-    const monthTxs = transactions.filter(
-      tx => tx.tx_type === 'expense' && tx.date.slice(0, 7) === thisMonth,
-    );
-    const byCategory: Record<string, { cat: DbFinanceCategory | null; total: number }> = {};
-    for (const tx of monthTxs) {
-      const cat = categories.find(c => c.id === tx.category_id) ?? null;
-      const key = tx.category_id ?? 'uncat';
-      if (!byCategory[key]) byCategory[key] = { cat, total: 0 };
-      byCategory[key].total += tx.amount;
-    }
-    const sorted = Object.values(byCategory).sort((a, b) => b.total - a.total).slice(0, 5);
-    const total = monthTxs.reduce((s, tx) => s + tx.amount, 0);
-    return { topCategories: sorted, totalExpensesThisMonth: total };
-  }, [transactions, categories, thisMonth]);
+  // Section 2: top 5 categories this month (a sub-category counts towards its parent)
+  const { topCategories, totalExpensesThisMonth } = useMemo(() => ({
+    topCategories: categoryTotals(transactions, categories, thisMonth, 'expense').slice(0, 5),
+    totalExpensesThisMonth: totalsFor(transactions, thisMonth).expense,
+  }), [transactions, categories, thisMonth]);
 
   // Section 3: income vs expenses this month
   const { incomeThisMonth, expensesThisMonth } = useMemo(() => {
-    const monthTxs = transactions.filter(tx => tx.date.slice(0, 7) === thisMonth);
-    return {
-      incomeThisMonth:   monthTxs.filter(tx => tx.tx_type === 'income').reduce((s, tx) => s + tx.amount, 0),
-      expensesThisMonth: monthTxs.filter(tx => tx.tx_type === 'expense').reduce((s, tx) => s + tx.amount, 0),
-    };
+    const f = totalsFor(transactions, thisMonth);
+    return { incomeThisMonth: f.income, expensesThisMonth: f.expense };
   }, [transactions, thisMonth]);
 
   return (
@@ -1270,7 +1205,7 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
           }}>
             <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>INCOME</Text>
             <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: C.green, marginTop: 4 }}>
-              {fmt(incomeThisMonth, 'EGP')}
+              {fmt(incomeThisMonth, baseCurrency())}
             </Text>
           </View>
           <View style={{
@@ -1280,7 +1215,7 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
           }}>
             <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>EXPENSES</Text>
             <Text style={{ fontFamily: NumFont.semiBold, fontSize: 17, color: C.red, marginTop: 4 }}>
-              {fmt(expensesThisMonth, 'EGP')}
+              {fmt(expensesThisMonth, baseCurrency())}
             </Text>
           </View>
         </View>
