@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -200,7 +201,7 @@ export function SettingsPlaceholderScreen() {
         paddingHorizontal: 14, paddingVertical: 10,
         flexDirection: 'row', alignItems: 'center', gap: 10,
       }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{
+        <Pressable accessibilityLabel="Back" onPress={() => navigation.goBack()} hitSlop={8} style={{
           width: 36, height: 36, borderRadius: 18,
           alignItems: 'center', justifyContent: 'center',
           backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,

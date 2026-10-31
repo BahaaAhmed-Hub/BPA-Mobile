@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -202,7 +203,7 @@ export function TodayScreen() {
       }}>
         <View />
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Pressable onPress={() => navigation.navigate('Search')} hitSlop={8}>
+          <Pressable accessibilityLabel="Search" onPress={() => navigation.navigate('Search')} hitSlop={8}>
             <View style={{
               width: 36, height: 36, borderRadius: 18,
               backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -211,7 +212,7 @@ export function TodayScreen() {
               <Text style={{ fontSize: 15 }}>🔍</Text>
             </View>
           </Pressable>
-          <Pressable onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
+          <Pressable accessibilityLabel="Notifications" onPress={() => navigation.navigate('Notifications')} hitSlop={8}>
             <View style={{
               width: 36, height: 36, borderRadius: 18,
               backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -248,7 +249,7 @@ export function TodayScreen() {
             <Text style={{ fontFamily: NumFont.bold, fontSize: 26, color: P.ink, letterSpacing: -1 }}>
               {weeklyScore.total}
             </Text>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 9, color: P.ink4, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.2, textTransform: 'uppercase' }}>
               Score
             </Text>
           </View>
@@ -257,8 +258,8 @@ export function TodayScreen() {
         {/* Day elapsed bar */}
         <View style={{ marginTop: 12, gap: 4 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: UIFont.regular, fontSize: 10, color: P.ink4 }}>Day elapsed</Text>
-            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink3 }}>{dayPct}%</Text>
+            <Text style={{ fontFamily: UIFont.regular, fontSize: 11, color: P.ink4 }}>Day elapsed</Text>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink3 }}>{dayPct}%</Text>
           </View>
           <View style={{ height: 3, backgroundColor: P.hairline, borderRadius: 2, overflow: 'hidden' }}>
             <View style={{ height: 3, width: `${dayPct}%`, backgroundColor: P.accent, borderRadius: 2 }} />
@@ -289,14 +290,14 @@ export function TodayScreen() {
           <View style={{ padding: 18, gap: 12 }}>
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.accent, letterSpacing: 1.8 }}>
+              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.accent, letterSpacing: 1.8 }}>
                 ✦ THE BRIEF
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 {tasksLoading && (
                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: P.accent, opacity: 0.6 }} />
                 )}
-                <Text style={{ fontFamily: UIFont.regular, fontSize: 10, color: 'rgba(253,248,231,0.35)' }}>
+                <Text style={{ fontFamily: UIFont.regular, fontSize: 11, color: 'rgba(253,248,231,0.35)' }}>
                   {new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
@@ -412,7 +413,7 @@ export function TodayScreen() {
                         paddingHorizontal: 6, paddingVertical: 3, borderRadius: Radii.chip,
                         backgroundColor: `${C.indigo}14`, borderWidth: 1, borderColor: `${C.indigo}30`,
                       }}>
-                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: C.indigo }}>
+                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: C.indigo }}>
                           #{idx + 1}
                         </Text>
                       </View>
@@ -488,7 +489,7 @@ export function TodayScreen() {
                       </View>
                     </View>
                     {/* Complete circle */}
-                    <Pressable
+                    <Pressable accessibilityLabel="Mark done"
                       onPress={() => void setStatus(t.id, 'done')}
                       hitSlop={8}
                       style={{
@@ -567,7 +568,7 @@ export function TodayScreen() {
                   borderWidth: 1, borderColor: P.hairline,
                   padding: 14,
                 }, Shadows.card]}>
-                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink4, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4, textTransform: 'uppercase' }}>
                     Safe to spend
                   </Text>
                   <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: C.green, marginTop: 4, letterSpacing: -0.5 }}>
@@ -582,7 +583,7 @@ export function TodayScreen() {
                   borderWidth: 1, borderColor: P.hairline,
                   padding: 14,
                 }, Shadows.card]}>
-                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink4, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4, textTransform: 'uppercase' }}>
                     Spent today
                   </Text>
                   <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: spentToday > 0 ? C.red : P.ink3, marginTop: 4, letterSpacing: -0.5 }}>

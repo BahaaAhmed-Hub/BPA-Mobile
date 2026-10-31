@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable } from './Pressable';
 import { C, Radii, Quadrants, QuadrantId } from '../../theme/tokens';
 import { useTaskStore } from '../../store/taskStore';
 import { UIFont, NumFont } from '../../theme/typography';

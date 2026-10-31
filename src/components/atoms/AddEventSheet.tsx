@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { Pressable } from './Pressable';
 import { C, Radii } from '../../theme/tokens';
 import { UIFont, NumFont } from '../../theme/typography';
 import { supabase } from '../../lib/supabase';

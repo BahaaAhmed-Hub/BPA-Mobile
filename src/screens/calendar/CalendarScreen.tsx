@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  View, Text, ScrollView, Pressable, RefreshControl, ActivityIndicator,
-  Modal, TextInput, Switch, KeyboardAvoidingView, Platform, Alert,
-} from 'react-native';
+import { View, Text, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, Switch, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -83,7 +81,7 @@ export function CalendarScreen() {
         dark={P.isDark}
         right={
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable
+            <Pressable accessibilityLabel="Sync calendar"
               onPress={() => void sync(isoDate(weekStart), isoDate(weekEnd))}
               disabled={syncing}
               hitSlop={8}
@@ -97,7 +95,7 @@ export function CalendarScreen() {
                 ? <ActivityIndicator size="small" color={P.accent} />
                 : <Text style={{ color: P.accent, fontFamily: UIFont.bold, fontSize: 14 }}>⟳</Text>}
             </Pressable>
-            <Pressable
+            <Pressable accessibilityLabel="Add event"
               onPress={() => setShowCreateModal(true)}
               hitSlop={8}
               style={{
@@ -150,7 +148,7 @@ export function CalendarScreen() {
                 alignItems: 'center',
               }}>
                 <Text style={{
-                  fontFamily: UIFont.semiBold, fontSize: 10,
+                  fontFamily: UIFont.semiBold, fontSize: 11,
                   color: active ? (P.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)') : P.ink2,
                   letterSpacing: 0.5,
                 }}>{DAY_LABELS[i]}</Text>
@@ -332,7 +330,7 @@ function CreateEventModal({
           borderBottomWidth: 1, borderBottomColor: P.hairline,
         }}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 17, color: P.ink }}>New Event</Text>
-          <Pressable onPress={onClose} hitSlop={10}>
+          <Pressable accessibilityLabel="Close" onPress={onClose} hitSlop={10}>
             <Text style={{ fontSize: 22, color: P.ink2, fontFamily: UIFont.medium }}>×</Text>
           </Pressable>
         </View>
@@ -502,7 +500,7 @@ function NowDivider({ P }: { P: ScreenPalette }) {
   return (
     <View style={{ marginVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ backgroundColor: C.red, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 }}>
-        <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 10, letterSpacing: 0.4 }}>
+        <Text style={{ color: '#fff', fontFamily: UIFont.bold, fontSize: 11, letterSpacing: 0.4 }}>
           NOW · {fmtTime(now.toISOString())}
         </Text>
       </View>

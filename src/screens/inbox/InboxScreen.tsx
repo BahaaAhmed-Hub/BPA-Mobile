@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  View, Text, ScrollView, Pressable, RefreshControl,
-  Modal, TextInput, TouchableWithoutFeedback,
-} from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useEmailActionsStore } from '../../store/emailActionsStore';
@@ -74,7 +72,7 @@ function ThreadSheet({ email, onClose, onHandle }: {
               paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radii.pill,
               backgroundColor: meta.soft,
             }}>
-              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: meta.color, letterSpacing: 0.8 }}>
+              <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: meta.color, letterSpacing: 0.8 }}>
                 {meta.label.toUpperCase()}
               </Text>
             </View>
@@ -440,7 +438,7 @@ export function InboxScreen() {
         paddingHorizontal: 14, paddingVertical: 10,
         flexDirection: 'row', alignItems: 'center', gap: 10,
       }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{
+        <Pressable accessibilityLabel="Back" onPress={() => navigation.goBack()} hitSlop={8} style={{
           width: 36, height: 36, borderRadius: 18,
           alignItems: 'center', justifyContent: 'center',
           backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -586,7 +584,7 @@ function ActionRow({
             </Text>
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, alignItems: 'center' }}>
               <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: Radii.pill, backgroundColor: badgeSoft }}>
-                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: badgeColor, letterSpacing: 0.4 }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: badgeColor, letterSpacing: 0.4 }}>
                   {badgeLabel}
                 </Text>
               </View>
@@ -597,7 +595,7 @@ function ActionRow({
               ) : null}
             </View>
           </View>
-          <Pressable onPress={() => onMark(done ? null : 'handled')} hitSlop={8}>
+          <Pressable accessibilityLabel={done ? 'Mark as not handled' : 'Mark as handled'} onPress={() => onMark(done ? null : 'handled')} hitSlop={8}>
             <View style={{
               width: 22, height: 22, borderRadius: 11,
               borderWidth: 2, borderColor: done ? P.positive : P.hairline,

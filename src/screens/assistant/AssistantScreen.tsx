@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { AlertCircle, ArrowUp, Check, ChevronLeft, Sparkles, SquarePen } from 'lucide-react-native';

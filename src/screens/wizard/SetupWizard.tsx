@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, Switch } from 'react-native';
+import { View, Text, ScrollView, Switch } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -138,7 +139,7 @@ function Step1Header({ step, onBack, onSkip }: { step: number; onBack: () => voi
   const P = useScreenPalette();
   return (
     <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Pressable onPress={onBack} hitSlop={8} style={{
+      <Pressable accessibilityLabel="Back" onPress={onBack} hitSlop={8} style={{
         width: 36, height: 36, borderRadius: 18,
         alignItems: 'center', justifyContent: 'center',
         backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,

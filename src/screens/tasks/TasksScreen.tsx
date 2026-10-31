@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View, Text, ScrollView, Pressable, RefreshControl,
-  Modal, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback,
-} from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Modal, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -169,7 +167,7 @@ function NewTaskSheet({ visible, onClose, onSave }: {
                   <Text style={{ fontFamily: NumFont.bold, fontSize: 18, color: P.ink, letterSpacing: -0.3 }}>
                     New task
                   </Text>
-                  <Pressable onPress={onClose} hitSlop={8}>
+                  <Pressable accessibilityLabel="Close" onPress={onClose} hitSlop={8}>
                     <View style={{
                       width: 28, height: 28, borderRadius: 14,
                       backgroundColor: P.field, alignItems: 'center', justifyContent: 'center',
@@ -343,7 +341,7 @@ function BoardCard({ task, onPress }: { task: DbTask; onPress: () => void }) {
               backgroundColor: P.field, borderWidth: 1, borderColor: P.hairline,
               flexDirection: 'row', gap: 3, alignItems: 'center',
             }}>
-              <Text style={{ fontSize: 9 }}>📅</Text>
+              <Text style={{ fontSize: 11 }}>📅</Text>
               <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
                 {task.due_date.slice(5)}
               </Text>
@@ -356,7 +354,7 @@ function BoardCard({ task, onPress }: { task: DbTask; onPress: () => void }) {
               borderWidth: 1, borderColor: `${priorityColor(priority)}40`,
             }}>
               <Text style={{
-                fontFamily: UIFont.bold, fontSize: 10,
+                fontFamily: UIFont.bold, fontSize: 11,
                 color: priorityColor(priority),
               }}>
                 {priority}
@@ -501,7 +499,7 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
           <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: '#fff', flex: 1 }}>
             Tap a row to move here
           </Text>
-          <Pressable onPress={cancelDrag} hitSlop={10}>
+          <Pressable accessibilityLabel="Cancel move" onPress={cancelDrag} hitSlop={10}>
             <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: '#fff' }}>✕</Text>
           </Pressable>
         </View>
@@ -517,7 +515,7 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
 
         if (inDragMode && !isDragging) {
           return (
-            <Pressable key={t.id} onPress={() => moveToPosition(t.id)}>
+            <Pressable accessibilityLabel="Reorder" key={t.id} onPress={() => moveToPosition(t.id)}>
               <View style={{
                 backgroundColor: P.surface, borderRadius: Radii.md,
                 borderWidth: 2, borderColor: 'transparent',
@@ -563,14 +561,14 @@ function DraggableTaskList({ tasks, onReorder, onPress, onSwipeLeft, setStatus }
               onAction: () => void useTaskStore.getState().removeTask(t.id),
             }}
           >
-            <Pressable onPress={() => onPress(t.id)}>
+            <Pressable accessibilityLabel="Reorder" onPress={() => onPress(t.id)}>
               <View style={{
                 backgroundColor: P.surface, borderRadius: Radii.md,
                 borderWidth: rowBorderWidth, borderColor: rowBorderColor, borderStyle: rowBorderStyle,
                 padding: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 12,
                 ...Shadows.card,
               }}>
-                <Pressable
+                <Pressable accessibilityLabel="Reorder"
                   onLongPress={() => enterDrag(t.id)}
                   delayLongPress={300}
                   hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
@@ -763,7 +761,7 @@ export function TasksScreen() {
         title="Tasks"
         subtitle={`${activeTasks.length} active`}
         right={
-          <Pressable
+          <Pressable accessibilityLabel="Add task"
             onPress={() => setShowNewTask(true)}
             hitSlop={8}
           >
@@ -996,7 +994,7 @@ function TaskRow({ task, onOpen, onComplete }: { task: DbTask; onOpen: () => voi
         flexDirection: 'row', alignItems: 'flex-start', gap: 12,
         ...Shadows.card,
       }}>
-        <Pressable onPress={onComplete} hitSlop={8}>
+        <Pressable accessibilityLabel="Mark done" onPress={onComplete} hitSlop={8}>
           <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: q.color }} />
         </Pressable>
         <View style={{ flex: 1 }}>

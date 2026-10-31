@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -184,7 +185,7 @@ export function SearchScreen() {
               }}
             />
             {query.length > 0 && (
-              <Pressable onPress={() => setQuery('')} hitSlop={8}>
+              <Pressable accessibilityLabel="Close" onPress={() => setQuery('')} hitSlop={8}>
                 <Text style={{ fontSize: 18, color: P.ink3, lineHeight: 20 }}>×</Text>
               </Pressable>
             )}

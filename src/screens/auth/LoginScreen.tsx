@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -72,7 +73,7 @@ export function LoginScreen() {
                 The Professor
               </Text>
               {T.badge ? (
-                <Text style={{ color: T.accentBright, fontFamily: UIFont.bold, fontSize: 10, marginTop: 3, letterSpacing: 2 }}>
+                <Text style={{ color: T.accentBright, fontFamily: UIFont.bold, fontSize: 11, marginTop: 3, letterSpacing: 2 }}>
                   {T.badge}
                 </Text>
               ) : (

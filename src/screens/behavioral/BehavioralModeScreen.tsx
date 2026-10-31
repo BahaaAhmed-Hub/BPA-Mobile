@@ -1,4 +1,5 @@
-import { View, Text, Pressable, ScrollView, Switch } from 'react-native';
+import { View, Text, ScrollView, Switch } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,7 +19,7 @@ export function BehavioralModeScreen() {
         paddingHorizontal: 14, paddingVertical: 10,
         flexDirection: 'row', alignItems: 'center', gap: 10,
       }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8} style={{
+        <Pressable accessibilityLabel="Back" onPress={() => navigation.goBack()} hitSlop={8} style={{
           width: 36, height: 36, borderRadius: 18,
           alignItems: 'center', justifyContent: 'center',
           backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -94,7 +95,7 @@ export function BehavioralModeScreen() {
                         <View>
                           <Text style={{ fontFamily: UIFont.bold, fontSize: 18, color: m.text }}>{m.name}</Text>
                           {m.badge ? (
-                            <Text style={{ fontFamily: UIFont.bold, fontSize: 9, color: m.accentBright, letterSpacing: 2, marginTop: 2 }}>
+                            <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: m.accentBright, letterSpacing: 2, marginTop: 2 }}>
                               {m.badge}
                             </Text>
                           ) : null}
@@ -102,7 +103,7 @@ export function BehavioralModeScreen() {
                       </View>
                       {!m.available ? (
                         <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radii.pill, backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                          <Text style={{ fontFamily: UIFont.bold, fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>
+                          <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>
                             COMING SOON
                           </Text>
                         </View>

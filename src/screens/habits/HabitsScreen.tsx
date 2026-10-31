@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  View, Text, ScrollView, Pressable, RefreshControl,
-  Modal, TextInput, Alert, TouchableWithoutFeedback,
-} from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Modal, TextInput, Alert, TouchableWithoutFeedback } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -102,7 +100,7 @@ function NewHabitWizard({ visible, onClose, onSave }: {
                     {step === 1 ? 'What it is' : 'What counts'}
                   </Text>
                 </View>
-                <Pressable onPress={handleClose} hitSlop={8}>
+                <Pressable accessibilityLabel="Close" onPress={handleClose} hitSlop={8}>
                   <View style={{
                     width: 28, height: 28, borderRadius: 14,
                     backgroundColor: P.field, alignItems: 'center', justifyContent: 'center',
@@ -299,7 +297,7 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
               borderRadius: Radii.pill, paddingHorizontal: 8, paddingVertical: 3,
               borderWidth: 1, borderColor: done ? P.accentBorder : P.hairline,
             }}>
-              <Text style={{ fontSize: 10 }}>🔥</Text>
+              <Text style={{ fontSize: 11 }}>🔥</Text>
               <Text style={{ fontFamily: NumFont.bold, fontSize: 12, color: done ? P.ink : P.ink2 }}>
                 {habit.current_streak}d
               </Text>
@@ -325,7 +323,7 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
             borderColor: done ? P.positive : P.hairline,
             overflow: 'hidden',
           }}>
-            <Pressable
+            <Pressable accessibilityLabel="Decrease"
               onPress={onDecrement}
               style={{ flex: 1, alignItems: 'center', paddingVertical: 10, backgroundColor: P.field }}
             >
@@ -336,7 +334,7 @@ function WallCard({ habit, done, count, target, onToggle, onIncrement, onDecreme
                 {count}/{target}
               </Text>
             </View>
-            <Pressable
+            <Pressable accessibilityLabel="Increase"
               onPress={onIncrement}
               style={{ flex: 1, alignItems: 'center', paddingVertical: 10, backgroundColor: done ? `${P.positive}18` : P.field }}
             >
@@ -429,7 +427,7 @@ export function HabitsScreen() {
         title="Habits"
         subtitle={`${doneCount} / ${habits.length || 0} · ${dateLabel}`}
         right={
-          <Pressable onPress={() => setAdding(true)} hitSlop={8}>
+          <Pressable accessibilityLabel="Add habit" onPress={() => setAdding(true)} hitSlop={8}>
             <View style={{
               width: 36, height: 36, borderRadius: 18,
               backgroundColor: P.accent, alignItems: 'center', justifyContent: 'center',
@@ -443,7 +441,7 @@ export function HabitsScreen() {
 
       {/* Day navigation */}
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 6, gap: 8 }}>
-        <Pressable onPress={prevDay} hitSlop={8}>
+        <Pressable accessibilityLabel="Previous day" onPress={prevDay} hitSlop={8}>
           <View style={{
             width: 32, height: 32, borderRadius: 16,
             backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -457,7 +455,7 @@ export function HabitsScreen() {
             {dateLabel}
           </Text>
         </Pressable>
-        <Pressable onPress={nextDay} hitSlop={8} disabled={isToday}>
+        <Pressable accessibilityLabel="Next day" onPress={nextDay} hitSlop={8} disabled={isToday}>
           <View style={{
             width: 32, height: 32, borderRadius: 16,
             backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline,
@@ -568,7 +566,7 @@ export function HabitsScreen() {
                         borderColor: done ? P.positive : P.hairline,
                         overflow: 'hidden',
                       }}>
-                        <Pressable
+                        <Pressable accessibilityLabel="Decrease"
                           onPress={() => void decrementCount(h.id, target)}
                           style={{ paddingHorizontal: 8, paddingVertical: 6, backgroundColor: P.field }}
                         >
@@ -579,7 +577,7 @@ export function HabitsScreen() {
                             {count}/{target}
                           </Text>
                         </View>
-                        <Pressable
+                        <Pressable accessibilityLabel="Increase"
                           onPress={() => void incrementCount(h.id, target)}
                           style={{ paddingHorizontal: 8, paddingVertical: 6, backgroundColor: P.field }}
                         >
@@ -587,7 +585,7 @@ export function HabitsScreen() {
                         </Pressable>
                       </View>
                     ) : (
-                      <Pressable onPress={() => isToday ? void toggleOn(h.id, selectedDate) : undefined} hitSlop={8}>
+                      <Pressable accessibilityLabel="Mark done" onPress={() => isToday ? void toggleOn(h.id, selectedDate) : undefined} hitSlop={8}>
                         <View style={{
                           width: 28, height: 28, borderRadius: 8,
                           borderWidth: 2, borderColor: done ? P.positive : P.hairline,
@@ -615,7 +613,7 @@ export function HabitsScreen() {
                       <Text style={{ fontFamily: NumFont.bold, fontSize: 17, color: h.current_streak > 0 ? P.positive : P.ink3 }}>
                         {h.current_streak}
                       </Text>
-                      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 10, color: P.ink4, letterSpacing: 1 }}>STREAK</Text>
+                      <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1 }}>STREAK</Text>
                     </View>
                     <Text style={{ color: P.ink3, fontSize: 22, lineHeight: 22 }}>›</Text>
                   </View>

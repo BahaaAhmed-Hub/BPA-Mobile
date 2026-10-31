@@ -1,4 +1,5 @@
-import { View, Text, Pressable, ViewStyle } from 'react-native';
+import { View, Text, ViewStyle } from 'react-native';
+import { Pressable } from './Pressable';
 import { C, Radii } from '../../theme/tokens';
 import { UIFont, NumFont } from '../../theme/typography';
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFinanceStore } from '../../store/financeStore';
@@ -106,7 +107,7 @@ export function FinanceScreen() {
         title="Finance"
         subtitle="Reflect · Balance · Plan"
         right={
-          <Pressable
+          <Pressable accessibilityLabel="Add entry"
             onPress={() => setAddOpen(true)}
             hitSlop={8}
             style={{
@@ -512,7 +513,7 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
     >
       {/* Month header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Pressable onPress={prevMonth} hitSlop={12}>
+        <Pressable accessibilityLabel="Previous month" onPress={prevMonth} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
         <View style={{ alignItems: 'center' }}>
@@ -528,7 +529,7 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
             </Text>
           </View>
         </View>
-        <Pressable onPress={nextMonth} hitSlop={12}>
+        <Pressable accessibilityLabel="Next month" onPress={nextMonth} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>›</Text>
         </Pressable>
       </View>
@@ -569,7 +570,7 @@ function TodayTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
                     }}>{day}</Text>
                     {hasActivity ? (
                       <Text style={{
-                        fontFamily: NumFont.medium, fontSize: 9, marginTop: 2,
+                        fontFamily: NumFont.medium, fontSize: 11, marginTop: 2,
                         color: isSelected ? P.bg : net >= 0 ? C.green : C.red,
                       }} numberOfLines={1}>
                         {fmtCompact(net)}
@@ -670,13 +671,13 @@ function FinancialsTab({ loading, onRefresh }: { loading: boolean; onRefresh: ()
 
       {/* Period navigator */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-        <Pressable onPress={prevPeriod} hitSlop={12}>
+        <Pressable accessibilityLabel="Previous period" onPress={prevPeriod} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
         <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
           {viewMode === 'annual' ? String(year) : `${MONTH_NAMES[month]} ${year}`}
         </Text>
-        <Pressable onPress={nextPeriod} hitSlop={12}>
+        <Pressable accessibilityLabel="Next period" onPress={nextPeriod} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>›</Text>
         </Pressable>
       </View>
@@ -840,13 +841,13 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
     >
       {/* Month navigator */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Pressable onPress={prevMonth} hitSlop={12}>
+        <Pressable accessibilityLabel="Previous month" onPress={prevMonth} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>‹</Text>
         </Pressable>
         <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.3 }}>
           {MONTH_NAMES[viewMonth]} {viewYear}
         </Text>
-        <Pressable onPress={nextMonth} hitSlop={12}>
+        <Pressable accessibilityLabel="Next month" onPress={nextMonth} hitSlop={12}>
           <Text style={{ fontFamily: UIFont.bold, fontSize: 22, color: P.ink3 }}>›</Text>
         </Pressable>
       </View>
@@ -1126,12 +1127,12 @@ function ReportsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
                   }} />
                   <Text style={{
                     fontFamily: m.isCurrent ? UIFont.bold : UIFont.regular,
-                    fontSize: 10,
+                    fontSize: 11,
                     color: m.isCurrent ? P.ink : P.ink3,
                   }}>
                     {m.label}
                   </Text>
-                  <Text style={{ fontFamily: NumFont.medium, fontSize: 9, color: P.ink3 }}>
+                  <Text style={{ fontFamily: NumFont.medium, fontSize: 11, color: P.ink3 }}>
                     {fmtCompact(m.total)}
                   </Text>
                 </View>

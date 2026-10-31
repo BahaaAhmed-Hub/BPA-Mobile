@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  View, Text, ScrollView, Pressable, TextInput,
-  Alert, KeyboardAvoidingView, Platform, ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { C, Radii, Shadows } from '../../theme/tokens';
@@ -26,7 +24,7 @@ function DotRating({ value, onChange }: { value: number; onChange: (n: number) =
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {[1, 2, 3, 4, 5].map(n => (
-        <Pressable key={n} onPress={() => onChange(n)} hitSlop={6}>
+        <Pressable accessibilityLabel={`Energy level ${n}`} key={n} onPress={() => onChange(n)} hitSlop={6}>
           <View style={{
             width: 28, height: 28, borderRadius: 14,
             backgroundColor: n <= value ? P.accent : 'transparent',
@@ -142,7 +140,7 @@ export function EnergyLogScreen() {
         flexDirection: 'row', alignItems: 'center',
         paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14, gap: 12,
       }}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
+        <Pressable accessibilityLabel="Back" onPress={() => navigation.goBack()} hitSlop={10}>
           <Text style={{ fontSize: 22, color: P.ink, fontFamily: UIFont.bold }}>‹</Text>
         </Pressable>
         <Text style={{ fontFamily: NumFont.bold, fontSize: 17, color: P.ink, letterSpacing: -0.3, flex: 1 }}>

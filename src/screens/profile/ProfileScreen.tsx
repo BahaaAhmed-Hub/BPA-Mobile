@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Alert, ScrollView } from 'react-native';
+import { View, Text, Alert, ScrollView } from 'react-native';
+import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -120,7 +121,7 @@ export function ProfileScreen() {
               paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radii.pill,
               backgroundColor: `${modeMeta.accentBright}22`, borderWidth: 1, borderColor: `${modeMeta.accentBright}40`,
             }}>
-              <Text style={{ fontFamily: UIFont.bold, fontSize: 10, color: modeMeta.accentBright, letterSpacing: 1.2 }}>
+              <Text style={{ fontFamily: UIFont.bold, fontSize: 11, color: modeMeta.accentBright, letterSpacing: 1.2 }}>
                 {modeMeta.emoji} {modeMeta.name.toUpperCase()}
               </Text>
             </View>
