@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { goalPace } from '../../lib/finance/goalPace';
+import { capacityFrom, debtGoals, planGoals, toGoal, type GoalPlan } from '../../lib/finance/goalPlan';
 import { View, Text, ScrollView, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { useBiometricLock } from '../../lib/useBiometricLock';
@@ -1038,12 +1039,32 @@ function paceLine(g: DbFinanceGoal, cur: string): { text: string; warn: boolean 
   }
 }
 
+/** Where the planner says a goal lands, in a sentence. Null when it has nothing to say. */
+function planLine(p: GoalPlan | undefined, surplus: number): { text: string; warn: boolean } | null {
+  if (!p) return null;
+  const month = (key: string) => new Date(`${key}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  if (p.remaining <= 0) return null;
+  if (p.eta === null) return { text: surplus > 0 ? 'Not reached within 10 years at this rate' : 'Nothing is left over in a usual month', warn: true };
+  return { text: `Reaches ${month(p.eta)}${p.onTime === false ? ', after the deadline' : ''}`, warn: p.onTime === false };
+}
+
 function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => Promise<void> }) {
   const P = useScreenPalette();
   const goals = useFinanceStore(s => s.goals);
+  const accounts = useFinanceStore(s => s.accounts);
+  const transactions = useFinanceStore(s => s.transactions);
   const [refreshing, setRefreshing] = useState(false);
 
   async function handleRefresh() { setRefreshing(true); await onRefresh(); setRefreshing(false); }
+
+  // The money poured down the ranking. Cards and loans owed come first, as on the web, so they are in the run even
+  // though only the person's own goals are drawn.
+  const planned = useMemo(() => {
+    const own = goals.map(g => toGoal(g));
+    const cap = capacityFrom(accounts, transactions, own);
+    const plans = planGoals([...debtGoals(accounts, transactions), ...own], cap);
+    return { cap, byId: new Map(plans.map(p => [p.goal.id, p])) };
+  }, [goals, accounts, transactions]);
 
   if (goals.length === 0) {
     return (
@@ -1067,6 +1088,24 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, gap: 12, paddingTop: 4 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={P.accent} />}
     >
+      {/* What can be put into goals: spare cash now, and what a usual month leaves. */}
+      <View style={{ backgroundColor: P.surface, borderRadius: Radii.md, borderWidth: 1, borderColor: P.hairline, padding: 14, gap: 10 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>FREE TO COMMIT</Text>
+            <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, marginTop: 2 }}>{fmt(planned.cap.free, planned.cap.currency)}</Text>
+          </View>
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>A USUAL MONTH LEAVES</Text>
+            <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: planned.cap.surplus < 0 ? P.negative : P.ink, marginTop: 2 }}>{fmt(planned.cap.surplus, planned.cap.currency)}</Text>
+          </View>
+        </View>
+        <Text style={{ fontFamily: UIFont.regular, fontSize: 12, lineHeight: 17, color: P.ink3 }}>
+          {planned.cap.months > 0
+            ? `From your last ${planned.cap.months} complete month${planned.cap.months === 1 ? '' : 's'}, after a month's spending kept back. Cards and loans you owe are paid first. This assumes every month is a usual one; the web also counts dated costs, so its dates can differ.`
+            : 'There is no completed month of entries to plan from yet.'}
+        </Text>
+      </View>
       {rows.map((row, ri) => (
         <View key={ri} style={{ flexDirection: 'row', gap: 12 }}>
           {row.map(rawGoal => {
@@ -1076,6 +1115,7 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
               ? Math.min(1, goal.current_amount / goal.target_amount)
               : 0;
             const pace = paceLine(goal, cur);
+            const lands = planned.cap.months > 0 ? planLine(planned.byId.get(goal.id), planned.cap.surplus) : null;
             return (
               <View key={goal.id} style={{
                 flex: 1,
@@ -1135,6 +1175,9 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
                   <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
                     by {new Date(`${goal.deadline}T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                   </Text>
+                ) : null}
+                {lands ? (
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: lands.warn ? P.negative : P.ink2 }}>{lands.text}</Text>
                 ) : null}
                 {pace ? (
                   <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: pace.warn ? P.negative : P.ink2 }}>
