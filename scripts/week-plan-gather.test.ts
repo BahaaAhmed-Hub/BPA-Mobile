@@ -79,3 +79,18 @@ const plan = async (w: World) => { const r: any = await planWeekFor(deps(w), 'ne
   const out = planFromData(g.data, 'next'); assert.ok(!out.result.proposals.some((p: any) => p.refId === 'a')); assert.ok(out.skipped.some((s: any) => s.id === 'a' && s.why === 'has-block'))
   console.log('ok')
 })()
+// --- iCloud events (the planner's own reader): a mapped event blocks time like a Google one; free, cancelled and all-day do not
+;(async () => {
+  const { icloudEventToPlan } = await import('../src/lib/weekplan/rows')
+  const ic = (o: any = {}) => ({ id: 'e1', calendarId: 'home', title: 'Hania birthday', start: iso(at(MON, 7) + 1_800_000), end: iso(at(MON, 8) + 1_800_000), allDay: false, busy: true, status: 'confirmed', ...o })
+  const m: any = icloudEventToPlan('acc1', ic()); assert.equal(m.id, 'ic:acc1:home:e1'); assert.equal(m.summary, 'Hania birthday'); assert.ok(m.start.dateTime && !m.start.date)
+  assert.equal(icloudEventToPlan('a', ic({ allDay: true, start: MON, end: addDays(MON, 1) })).start.date, MON)
+  const monthWorld = async (extra: any) => { const r: any = await planWeekFor(deps({ events: [{ ...icloudEventToPlan('acc1', extra), calendarId: 'icloud:acc1:home', accountEmail: 'me@icloud.com' }] }), 'next', { now: NOW }); return r }
+  // a day-long iCloud event blocks Monday (control: when marked free, cancelled or all-day it does not)
+  const fullDay = { start: iso(at(MON, 0)), end: iso(at(MON, 23) + 3_540_000) }
+  assert.equal((await monthWorld(ic(fullDay))).result.proposals.some((p: any) => p.date === MON), false, 'a busy iCloud event takes Monday')
+  assert.equal((await monthWorld(ic({ ...fullDay, busy: false }))).result.proposals.some((p: any) => p.date === MON), true, 'marked free: not busy')
+  assert.equal((await monthWorld(ic({ ...fullDay, status: 'cancelled' }))).result.proposals.some((p: any) => p.date === MON), true, 'cancelled: not busy')
+  assert.equal((await monthWorld(ic({ allDay: true, start: MON, end: addDays(MON, 1) }))).result.proposals.some((p: any) => p.date === MON), true, 'all-day: not a block of time')
+  console.log('ok (icloud)')
+})()

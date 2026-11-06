@@ -46,3 +46,27 @@ export function isMine(cal: { id: string; primary?: boolean; accessRole?: string
   if (id.includes('@') && !id.endsWith('@group.calendar.google.com')) return mine.has(id);
   return cal.accessRole === 'owner';
 }
+
+// ── iCloud events, as the planner reads them ────────────────────────────────
+
+/** What the `icloud-caldav` function sends for an event. */
+export interface IcloudWireEvent {
+  id: string; calendarId: string; title: string; start: string; end: string; allDay: boolean;
+  location?: string; status?: 'confirmed' | 'tentative' | 'cancelled'; busy?: boolean;
+}
+
+/** An iCloud event as a calendar event the planner understands. A cancelled one is not time anyone is using; one marked free
+ *  is transparent; an all-day one is a date, not a block of time. The id carries the account and calendar so it cannot equal a
+ *  Google id (the same prefix the web's calendar uses). */
+export function icloudEventToPlan(accountId: string, e: IcloudWireEvent): { id: string; status?: string; summary: string; transparency?: string; location?: string;
+  start: { dateTime?: string; date?: string }; end: { dateTime?: string; date?: string } } {
+  return {
+    id: `ic:${accountId}:${e.calendarId}:${e.id}`,
+    ...(e.status === 'cancelled' ? { status: 'cancelled' } : {}),
+    summary: e.title,
+    ...(e.busy === false ? { transparency: 'transparent' } : {}),
+    ...(e.location ? { location: e.location } : {}),
+    start: e.allDay ? { date: e.start } : { dateTime: e.start },
+    end: e.allDay ? { date: e.end } : { dateTime: e.end },
+  };
+}
