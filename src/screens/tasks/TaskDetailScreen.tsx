@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { LinkPreviews } from '../../components/atoms/LinkPreviews';
+import { TaskTimeCard } from '../../components/time/TaskTimeCard';
 import { View, Text, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -142,6 +143,11 @@ export function TaskDetailScreen() {
               );
             })}
           </View>
+
+          {/* Time */}
+          <Section title="Time" P={P}>
+            <TaskTimeCard task={task} />
+          </Section>
 
           {/* Notes */}
           <Section title="Notes" P={P}>
