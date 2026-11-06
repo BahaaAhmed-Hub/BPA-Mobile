@@ -104,6 +104,10 @@ export function CalendarScreen() {
                 ? <ActivityIndicator size="small" color={P.accent} />
                 : <Text style={{ color: P.accent, fontFamily: UIFont.bold, fontSize: 14 }}>⟳</Text>}
             </Pressable>
+            <Pressable accessibilityLabel="Plan week" onPress={() => navigation.navigate('PlanWeek')} hitSlop={8}
+              style={{ height: 36, paddingHorizontal: 14, borderRadius: 18, backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: P.ink, fontFamily: UIFont.semiBold, fontSize: 13 }}>Plan week</Text>
+            </Pressable>
             <Pressable accessibilityLabel="Add event"
               onPress={() => setShowCreateModal(true)}
               hitSlop={8}
