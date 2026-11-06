@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, FlatList, Image, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, FileText, PlayCircle, Star } from 'lucide-react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { useScreenPalette } from '../../theme/palette';
 import { UIFont, NumFont } from '../../theme/typography';
@@ -40,7 +40,7 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function Header({ title, subtitle, onBack }: { title: string; subtitle?: string; onBack: () => void }) {
+export function Header({ title, subtitle, onBack, right }: { title: string; subtitle?: string; onBack: () => void; right?: ReactNode }) {
   const P = useScreenPalette();
   return (
     <View style={{ paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -52,6 +52,7 @@ function Header({ title, subtitle, onBack }: { title: string; subtitle?: string;
         <Text numberOfLines={1} style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, letterSpacing: -0.4 }}>{title}</Text>
         {subtitle ? <Text numberOfLines={1} style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3 }}>{subtitle}</Text> : null}
       </View>
+      {right}
     </View>
   );
 }
@@ -155,7 +156,16 @@ export function LibraryBookScreen() {
   }
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: P.bg }} edges={['top']}>
-      <Header title="Book" subtitle="manage on the web" onBack={() => navigation.goBack()} />
+      <Header title="Book" subtitle="manage on the web" onBack={() => navigation.goBack()} right={
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {([['Videos about this book', PlayCircle, 'LibraryVideos'], ['Summary of this book', FileText, 'LibrarySummary']] as const).map(([label, Icon, route]) => (
+            <Pressable key={route} onPress={() => navigation.navigate(route, { bookId: book.id })} accessibilityLabel={label}
+              style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: P.surface, borderWidth: 1, borderColor: P.hairline }}>
+              <Icon size={20} color={P.ink} />
+            </Pressable>
+          ))}
+        </View>
+      } />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80, gap: 14 }}>
         <View style={{ flexDirection: 'row', gap: 16 }}>
           <Cover book={book} size={150} />
