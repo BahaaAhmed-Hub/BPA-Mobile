@@ -205,12 +205,8 @@ export function CalendarScreen() {
           {selected.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
         </Text>
 
-<<<<<<< HEAD
-        <DayMarksSection date={isoDate(selected)} />
-        <PeriodNotesSection date={dateKey(selected)} />
-=======
         <DayMarksSection date={dateKey(selected)} />
->>>>>>> feat/day-marks
+        <PeriodNotesSection date={dateKey(selected)} />
 
         {dayEvents.length === 0 ? (
           <View style={{
