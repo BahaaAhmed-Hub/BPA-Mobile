@@ -43,6 +43,9 @@ export function deltaFor(account: Account, tx: Tx): number | null {
   if (tx.tx_type === 'transfer') {
     // Both ends on the same account is money that went nowhere.
     if (tx.account_id === account.id && tx.to_account_id === account.id) return 0;
+    // Spending borrowed cash that was already counted as owed: the lender's debt does not move, only the account it
+    // lands in does (see loans.ts). Without this a draw would read as new borrowing and the debt would double.
+    if (tx.account_id === account.id && account.account_type === 'loan' && tx.to_account_id && tx.tags?.includes('draw')) return 0;
     if (tx.account_id === account.id) {
       const v = into(Math.abs(tx.amount));
       return v === null ? null : -v;

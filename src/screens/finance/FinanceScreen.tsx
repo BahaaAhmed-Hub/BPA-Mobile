@@ -14,7 +14,7 @@ import { Glyph } from '../../components/atoms/Glyph';
 import { liveBalances, positionFrom, groupOf, isSettled, todayISO } from '../../lib/finance/balances';
 import { toBase, baseCurrency, rateFor } from '../../lib/finance/fx';
 import { ValueSheet } from '../../components/atoms/ValueSheet';
-import { repayment, payFromOptions } from '../../lib/finance/loans';
+import { repayment, payFromOptions, unspentBorrowed, borrowedHeld } from '../../lib/finance/loans';
 import { notify } from '../../store/feedbackStore';
 import { totalsFor, byDay, byCategory as categoryTotals } from '../../lib/finance/flows';
 import { buildEnvelopes, sumEnvelopes, canEditAmount, type Envelope } from '../../lib/finance/budget';
@@ -149,12 +149,21 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
   const openLoans       = accounts.filter(a => groupOf(a) === 'loans' && !isSettled(balanceOf(a)));
   const settledLoans    = accounts.filter(a => groupOf(a) === 'loans').length - openLoans.length;
 
+  const borrowed = useMemo(() => borrowedHeld(accounts, transactions, live.balances), [accounts, transactions, live]);
+
   /** A line under an account: what is unpaid and due, or what could not be counted. */
   const noteFor = (a: DbFinanceAccount): string | null => {
     const due = live.pending.get(a.id) ?? 0;
     const missing = [...(live.unconverted.get(a.id) ?? [])];
     const parts: string[] = [];
     if (Math.abs(due) >= 0.5) parts.push(`${fmt(due, a.currency)} unpaid and due`);
+    // A lender holds a debt and, maybe, borrowed cash not yet moved. A silent "0 unspent" is correct, so only name it when there is some.
+    if (a.account_type === 'loan') {
+      const pot = unspentBorrowed(a, transactions);
+      if (pot >= 0.5 && !isSettled(balanceOf(a))) parts.push(`${fmt(pot, a.currency)} unspent`);
+    }
+    // An account that money from a lender reached says how much of what it holds is still owed, and to whom.
+    for (const h of borrowed.get(a.id) ?? []) parts.push(`incl. ${fmt(h.amount, a.currency)} from ${h.lender.name}`);
     if (missing.length) parts.push(`${missing.join(', ')} not counted — no rate set`);
     return parts.length ? parts.join(' · ') : null;
   };
