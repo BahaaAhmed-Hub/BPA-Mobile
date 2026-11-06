@@ -8,6 +8,7 @@ import { useProjectStore } from '../store/projectStore';
 import { useModuleStore } from '../store/moduleStore';
 import { useMailStore } from '../store/mailStore';
 import { useDayMarksStore, markWritesInFlight } from '../store/dayMarksStore';
+import { usePeriodNotesStore, noteWritesInFlight } from '../store/periodNotesStore';
 
 // Each screen loads its data once, when it opens, so an edit made on the web
 // never arrived until the app was restarted. Coming back to the app refreshes
@@ -27,7 +28,7 @@ export async function refreshIfStale(opts: { force?: boolean; now?: number } = {
   // A server that is failing is left alone, one probe at a time once it recovers.
   if (backoffLeft(now) > 0) return 'server-struggling';
   // Something the person just did is still on its way to the server.
-  if (taskWritesInFlight() > 0 || habitWritesInFlight() > 0 || markWritesInFlight()) return 'writing';
+  if (taskWritesInFlight() > 0 || habitWritesInFlight() > 0 || markWritesInFlight() || noteWritesInFlight()) return 'writing';
 
   running = true;
   last = now;
@@ -41,6 +42,7 @@ export async function refreshIfStale(opts: { force?: boolean; now?: number } = {
       useModuleStore.getState().load(),
       useMailStore.getState().loadFromDB(),
       useDayMarksStore.getState().loadFromDB(),
+      usePeriodNotesStore.getState().loadFromDB(),
     ]);
     return 'refreshed';
   } finally {

@@ -1,5 +1,6 @@
 import { createCalendarEvent } from '../../lib/calendarCreate';
 import { DayMarksSection } from '../../components/marks/DayMarksSection';
+import { PeriodNotesSection } from '../../components/marks/PeriodNotesSection';
 import { useDayMarksStore } from '../../store/dayMarksStore';
 import { marksOnDay } from '../../lib/marks/dayNotes';
 import { useEffect, useMemo, useState } from 'react';
@@ -204,6 +205,7 @@ export function CalendarScreen() {
         </Text>
 
         <DayMarksSection date={isoDate(selected)} />
+        <PeriodNotesSection date={isoDate(selected)} />
 
         {dayEvents.length === 0 ? (
           <View style={{
