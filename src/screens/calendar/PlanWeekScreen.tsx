@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft, TriangleAlert } from 'lucide-react-native';
+import { Check, ChevronLeft, TriangleAlert } from 'lucide-react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { useScreenPalette } from '../../theme/palette';
 import { UIFont, NumFont } from '../../theme/typography';
@@ -20,7 +20,10 @@ const dur = (mins: number) => (mins >= 60 ? `${Math.floor(mins / 60)} h${mins % 
 export function PlanWeekScreen() {
   const P = useScreenPalette();
   const navigation = useNavigation();
-  const { which, plan, say, loading, dropped, forced } = useWeekPlanStore();
+  const { which, plan, say, loading, dropped, forced, rows, busyAll } = useWeekPlanStore();
+  const add = useWeekPlanStore(s => s.add);
+  const undo = useWeekPlanStore(s => s.undo);
+  const addAll = useWeekPlanStore(s => s.addAll);
   const setWhich = useWeekPlanStore(s => s.setWhich);
   const load = useWeekPlanStore(s => s.load);
   const drop = useWeekPlanStore(s => s.drop);
@@ -30,7 +33,8 @@ export function PlanWeekScreen() {
 
   useEffect(() => { void load(); return () => clear(); }, [load, clear]);
 
-  const proposals = useMemo(() => visibleProposals(plan, dropped), [plan, dropped]);
+  const proposals = useMemo(() => visibleProposals(plan, dropped, rows), [plan, dropped, rows]);
+  const waiting = proposals.filter(p => !rows[p.id] || rows[p.id].state === 'failed');
   const byDay = useMemo(() => {
     const m = new Map<string, Proposal[]>();
     for (const p of proposals) m.set(p.date, [...(m.get(p.date) ?? []), p]);
@@ -125,9 +129,37 @@ export function PlanWeekScreen() {
                           <Text style={{ flex: 1, fontFamily: UIFont.medium, fontSize: 12, lineHeight: 17, color: P.accentDeep }}>{w}</Text>
                         </View>
                       ))}
-                      <Pressable accessibilityLabel={`Leave out ${p.title}`} onPress={() => drop(p.id)} hitSlop={8} style={{ alignSelf: 'flex-start', marginLeft: 104, minHeight: 32, justifyContent: 'center' }}>
-                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: P.ink3 }}>Leave out</Text>
-                      </Pressable>
+                      {(() => {
+                        const row = rows[p.id];
+                        const state = row?.state;
+                        if (state === 'added' || state === 'removing') {
+                          return (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginLeft: 104, minHeight: 36 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                                <Check size={14} color={P.positive} />
+                                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: P.positive }}>On your calendar</Text>
+                              </View>
+                              <Pressable accessibilityLabel={`Undo adding ${p.title}`} disabled={state === 'removing'} onPress={() => void undo(p.id)} hitSlop={8} style={{ minHeight: 36, justifyContent: 'center' }}>
+                                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: P.ink2 }}>{state === 'removing' ? 'Removing…' : 'Undo'}</Text>
+                              </Pressable>
+                            </View>
+                          );
+                        }
+                        return (
+                          <View style={{ marginLeft: 104, gap: 4 }}>
+                            {row?.error ? <Text style={{ fontFamily: UIFont.medium, fontSize: 12, lineHeight: 17, color: P.negative }}>{row.error}</Text> : null}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                              <Pressable accessibilityLabel={`Add ${p.title} to your calendar`} disabled={state === 'adding'} onPress={() => void add(p.id)}
+                                style={{ minHeight: 40, paddingHorizontal: 18, borderRadius: Radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: P.accent, opacity: state === 'adding' ? 0.6 : 1 }}>
+                                <Text style={{ fontFamily: UIFont.bold, fontSize: 13, color: P.accentInk }}>{state === 'adding' ? 'Adding…' : state === 'failed' ? 'Try again' : 'Add'}</Text>
+                              </Pressable>
+                              <Pressable accessibilityLabel={`Leave out ${p.title}`} disabled={state === 'adding'} onPress={() => drop(p.id)} hitSlop={8} style={{ minHeight: 40, justifyContent: 'center' }}>
+                                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 12, color: P.ink3 }}>Leave out</Text>
+                              </Pressable>
+                            </View>
+                          </View>
+                        );
+                      })()}
                     </View>
                   ))}
                 </View>
@@ -175,6 +207,19 @@ export function PlanWeekScreen() {
           </>
         ) : null}
       </ScrollView>
+
+      {waiting.length > 0 && !loading && plan && !plan.problem ? (
+        <View style={{ position: 'absolute', left: 16, right: 16, bottom: 24 }}>
+          <Pressable accessibilityLabel={`Add all ${waiting.length} blocks to your calendar`} disabled={busyAll}
+            onPress={() => Alert.alert(`Add ${waiting.length} block${waiting.length === 1 ? '' : 's'} to your calendar?`, 'They are real events on your own calendars. Nobody is invited. You can undo each one.', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Add all', onPress: () => void addAll() },
+            ])}
+            style={{ minHeight: 52, borderRadius: Radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: P.ink, opacity: busyAll ? 0.6 : 1 }}>
+            <Text style={{ fontFamily: UIFont.bold, fontSize: 15, color: P.bg }}>{busyAll ? 'Adding…' : `Add all (${waiting.length})`}</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
