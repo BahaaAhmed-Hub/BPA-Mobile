@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { notify } from './feedbackStore';
 import { useTaskStore } from './taskStore';
+import { useAuthStore } from './authStore';
 import { checkSession, endFor, runningOfTask, type TaskSession } from '../lib/time/taskSessions';
 import { DISCARD_UNDER_MS } from '../lib/time/timer';
 import { deleteSession, insertSession, isAlreadyRunning, loadRecentSessions, stopSession } from '../lib/time/sessionsDb';
@@ -116,3 +117,6 @@ export const useTaskSessionStore = create<SessionState>((set, get) => ({
 
   clearAll() { set({ sessions: [], loading: false, unavailable: false }); },
 }));
+
+// Signing out leaves nothing of the last person's time on the device.
+useAuthStore.subscribe(state => { if (!state.user) useTaskSessionStore.getState().clearAll(); });

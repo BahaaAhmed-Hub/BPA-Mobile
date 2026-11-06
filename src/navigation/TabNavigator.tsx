@@ -16,6 +16,7 @@ import { C, Shadows } from '../theme/tokens';
 import { UIFont } from '../theme/typography';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useIsTablet } from '../lib/layout';
+import { RunningTimerBar, useTimerBarHeight } from '../components/time/RunningTimerBar';
 
 const Tab = createBottomTabNavigator();
 
@@ -33,6 +34,8 @@ export function TabNavigator() {
   const [dialOpen, setDialOpen]   = useState(false);
   const [sheet, setSheet]         = useState<Sheet>(null);
   const tablet = useIsTablet();
+  // While a timer runs a bar sits above the tab bar; the add button rides above it rather than covering it.
+  const barH = useTimerBarHeight();
 
   function openSheet(id: Sheet) {
     setDialOpen(false);
@@ -85,6 +88,8 @@ export function TabNavigator() {
           options={{ tabBarIcon: ({ color, size }) => <User color={color} size={size - 2} /> }} />
       </Tab.Navigator>
 
+      {tablet ? <RunningTimerBar bottom={24} left={244} right={108} /> : <RunningTimerBar bottom={TAB_H + 8} />}
+
       {/* Speed-dial backdrop — dismiss on outside tap */}
       {dialOpen && (
         <Pressable
@@ -97,7 +102,7 @@ export function TabNavigator() {
       {!tablet && (
         <View
           pointerEvents="box-none"
-          style={{ position: 'absolute', bottom: TAB_H + 12, left: 0, right: 0, alignItems: 'center' }}
+          style={{ position: 'absolute', bottom: TAB_H + 12 + barH, left: 0, right: 0, alignItems: 'center' }}
         >
           {/* Speed-dial options (visible when open) */}
           {dialOpen && (
