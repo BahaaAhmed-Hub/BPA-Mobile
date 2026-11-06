@@ -1,4 +1,5 @@
 import { NavigationContainer } from '@react-navigation/native';
+import { PlanWeekScreen } from '../screens/calendar/PlanWeekScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
@@ -52,6 +53,7 @@ export type RootStackParamList = {
   SettingsDetail: { title: string };
   Search: undefined;
   Projects: undefined;
+  PlanWeek: undefined;
   Shopping: undefined;
   Library: undefined;
   LibraryBook: { bookId: string };
@@ -220,6 +222,11 @@ export function RootNavigator() {
             <Stack.Screen
               name="Shopping"
               component={ShoppingScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="PlanWeek"
+              component={PlanWeekScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
             <Stack.Screen
