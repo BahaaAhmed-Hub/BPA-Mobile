@@ -3,7 +3,7 @@ import { View, Text, Modal, TextInput, KeyboardAvoidingView, Platform, ScrollVie
 import { Pressable } from './Pressable';
 import { C, Radii } from '../../theme/tokens';
 import { UIFont, NumFont } from '../../theme/typography';
-import { supabase } from '../../lib/supabase';
+import { createCalendarEvent } from '../../lib/calendarCreate';
 import { useCalendarStore } from '../../store/calendarStore';
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
@@ -22,6 +22,7 @@ function nextHourISO() {
 
 export function AddEventSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const loadRange = useCalendarStore(s => s.loadRange);
+  const syncFromGoogle = useCalendarStore(s => s.syncFromGoogle);
   const [title, setTitle]     = useState('');
   const [date, setDate]       = useState(todayISO);
   const [startT, setStartT]   = useState(nextHourISO);
@@ -37,20 +38,19 @@ export function AddEventSheet({ visible, onClose }: { visible: boolean; onClose:
     const trimmed = title.trim();
     if (!trimmed || !date) return;
     setSaving(true);
-    const start_time = `${date}T${startT}:00`;
-    const end_time   = `${date}T${endT}:00`;
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('calendar_events').insert({
-      user_id: user?.id,
+    // Typed by hand, so check it reads as a date and two times before anything is sent.
+    const okDate = /^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    const okTimes = /^\d{1,2}:\d{2}$/.test(startT.trim()) && /^\d{1,2}:\d{2}$/.test(endT.trim());
+    if (!okDate || !okTimes) { setSaving(false); Alert.alert('Check the date and times', 'Use YYYY-MM-DD for the date and HH:MM for the times.'); return; }
+    const r = await createCalendarEvent({
       title: trimmed,
-      start_time,
-      end_time,
-      google_event_id: null,
-      is_synced: false,
+      start: new Date(`${date.trim()}T${startT.trim().padStart(5, '0')}:00`),
+      end: new Date(`${date.trim()}T${endT.trim().padStart(5, '0')}:00`),
     });
     setSaving(false);
-    if (error) { Alert.alert('Error', error.message); return; }
-    void loadRange(date, date);
+    if (!r.ok) { Alert.alert("Couldn't create the event", r.error); return; }
+    // The event was made on Google; read it back so it appears.
+    void syncFromGoogle(date.trim(), date.trim()).catch(() => void loadRange(date.trim(), date.trim()));
     setTitle(''); setDate(todayISO()); setStartT(nextHourISO());
     onClose();
   }

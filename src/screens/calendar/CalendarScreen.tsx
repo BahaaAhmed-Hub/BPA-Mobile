@@ -1,3 +1,4 @@
+import { createCalendarEvent } from '../../lib/calendarCreate';
 import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { projectOfEvent, drawableColor } from '../../lib/projects';
@@ -227,7 +228,8 @@ export function CalendarScreen() {
         onClose={() => setShowCreateModal(false)}
         onSaved={() => {
           setShowCreateModal(false);
-          void load(isoDate(weekStart), isoDate(weekEnd));
+          // The event was made on Google; read it back so it appears.
+          void sync(isoDate(weekStart), isoDate(weekEnd)).catch(() => void load(isoDate(weekStart), isoDate(weekEnd)));
         }}
       />
     </SafeAreaView>
@@ -279,30 +281,14 @@ function CreateEventModal({
     if (!title.trim()) { Alert.alert('Title required'); return; }
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { Alert.alert('Not signed in'); return; }
-
-      const startIso = allDay
-        ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0).toISOString()
-        : buildIso(date, startTime);
-      const endIso = allDay
-        ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 0).toISOString()
-        : buildIso(date, endTime);
-
-      const { error } = await supabase.from('calendar_events').insert({
-        user_id: user.id,
-        title: title.trim(),
-        location: location.trim() || null,
-        start_time: startIso,
-        end_time: endIso,
-        is_synced: false,
-        google_event_id: null,
-        company_id: null,
-        meeting_type: null,
-        prep_notes: null,
+      // The event is made on Google, the same place the web makes it, and read back by the next sync.
+      const day = (t: Date) => { const o = new Date(date); o.setHours(t.getHours(), t.getMinutes(), 0, 0); return o; };
+      const r = await createCalendarEvent({
+        title, location, notes, repeat, allDay,
+        start: allDay ? new Date(date) : day(startTime),
+        end: allDay ? new Date(date) : day(endTime),
       });
-
-      if (error) throw error;
+      if (!r.ok) { Alert.alert("Couldn't create the event", r.error); return; }
       onSaved();
       // Reset form
       setTitle(''); setLocation(''); setAllDay(false);

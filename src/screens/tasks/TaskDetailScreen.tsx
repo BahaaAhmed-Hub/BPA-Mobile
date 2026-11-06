@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { LinkPreviews } from '../../components/atoms/LinkPreviews';
 import { View, Text, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -153,6 +154,7 @@ export function TaskDetailScreen() {
               multiline
               style={fieldStyle(P)}
             />
+            <LinkPreviews text={description} />
           </Section>
 
           {/* Quadrant */}

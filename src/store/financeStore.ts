@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { setFinancePrefs, parseRates, parseBase } from '../lib/finance/fx';
-import { setPaidAtSupported } from '../lib/finance/balances';
+import { setFinancePrefs, parseRates, parseBase, withRate, currentRates } from '../lib/finance/fx';
+import { writeSharedPref } from '../lib/sharedPrefs';
+import { notify } from './feedbackStore';
+import { setPaidAtSupported, paidAtSupported, todayISO } from '../lib/finance/balances';
 import { parseTargets, setTransferTargets, withLocalTargets } from '../lib/finance/transferTargets';
 import { parseBasis, setBasis } from '../lib/finance/flows';
-import { parseRules, type BudgetRule } from '../lib/finance/budget';
+import { parseRules, withAmountFrom, type BudgetRule } from '../lib/finance/budget';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceGoal, DbFinanceBudget, DbFinanceBill, TxType } from '../types/financeTypes';
 
 /** One calendar year of entries, which is the window the web works from: an account's stored balance is its position
@@ -71,9 +73,16 @@ interface FinanceState {
     payee: string;
     date: string;
     note?: string | null;
-  }) => Promise<void>;
+  }) => Promise<boolean>;
+  /** Set one exchange rate (what one unit is worth in the base currency). Resolves true once the server holds it. */
+  saveRate: (currency: string, rate: number) => Promise<boolean>;
+  /** Change a category's budget amount from a month onward. Resolves true once the server holds it. */
+  saveBudgetAmount: (categoryId: string, monthKey: string, amount: number) => Promise<boolean>;
   clearAll: () => void;
 }
+
+/** One shared-pref write at a time: two saves racing would each read the old object and the second would undo the first. */
+let prefWriteInFlight = false;
 
 export const useFinanceStore = create<FinanceState>((set, get) => ({
   accounts: [],
@@ -114,13 +123,44 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   },
 
   async addTransaction(tx) {
+    // An entry with no payment date is money still owed, and is kept out of every balance. One made today or
+    // earlier from the phone has been paid, so it is stamped; one dated ahead is left unpaid, as on the web.
+    const paid = paidAtSupported() && tx.date <= todayISO() ? { paid_at: tx.date } : {};
     const { data, error } = await supabase
       .from('finance_transactions')
-      .insert({ ...tx, to_account_id: tx.to_account_id ?? null, note: tx.note ?? null, tags: [], attachments: [], is_cleared: false, is_recurring: false })
+      .insert({ ...tx, ...paid, to_account_id: tx.to_account_id ?? null, note: tx.note ?? null, tags: [], attachments: [], is_cleared: false, is_recurring: false })
       .select()
       .single();
-    if (error || !data) return;
+    if (error || !data) { notify('error', "Couldn't save that entry. Nothing was changed."); return false; }
     set({ transactions: [data as DbFinanceTransaction, ...get().transactions] });
+    return true;
+  },
+
+  async saveRate(currency, rate) {
+    if (prefWriteInFlight) return false;
+    const next = withRate(currentRates(), currency, rate);
+    if (!next) { notify('error', 'Enter a rate above zero. The base currency is always 1.'); return false; }
+    prefWriteInFlight = true;
+    try {
+      const r = await writeSharedPref('finance-fx-rates', JSON.stringify(next));
+      if (r !== 'saved') { notify('error', "Couldn't save that rate. Nothing was changed."); return false; }
+      setFinancePrefs({ rates: next });
+      await get().loadAll();   // re-reads from the server, so what is drawn is what was stored
+      return true;
+    } finally { prefWriteInFlight = false; }
+  },
+
+  async saveBudgetAmount(categoryId, monthKey, amount) {
+    if (prefWriteInFlight) return false;
+    const next = withAmountFrom(get().budgetRules, categoryId, monthKey, amount);
+    if (!next) { notify('error', 'Enter an amount above zero. One-off and instalment budgets are changed on the web.'); return false; }
+    prefWriteInFlight = true;
+    try {
+      const r = await writeSharedPref('finance-budget-rules', JSON.stringify(next));
+      if (r !== 'saved') { notify('error', "Couldn't save that budget. Nothing was changed."); return false; }
+      await get().loadAll();
+      return true;
+    } finally { prefWriteInFlight = false; }
   },
 
   clearAll() { set({ accounts: [], categories: [], transactions: [], goals: [], budgets: [], budgetRules: {}, bills: [], error: null }); },

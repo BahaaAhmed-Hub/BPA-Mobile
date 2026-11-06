@@ -12,6 +12,8 @@ import { UIFont, NumFont } from '../../theme/typography';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Pill } from '../../components/atoms/Pill';
 import { SwipeRow } from '../../components/atoms/SwipeRow';
+import { CompanyMark } from '../../components/atoms/CompanyMark';
+import { PlanView } from './PlanView';
 import { useIsTablet } from '../../lib/layout';
 import { isActionable, taskCompanyId } from '../../lib/tasks';
 import type { DbTask, DbTaskStatus } from '../../types/database';
@@ -19,7 +21,7 @@ import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const QUADRANT_ORDER: QuadrantId[] = ['urgent_important', 'important_not_urgent', 'urgent_not_important', 'neither'];
 
-type ViewMode = 'list' | 'matrix' | 'board';
+type ViewMode = 'list' | 'matrix' | 'board' | 'plan';
 
 // ── Board columns ─────────────────────────────────────────────────────────────
 interface BoardColumn {
@@ -196,7 +198,7 @@ function NewTaskSheet({ visible, onClose, onSave }: {
                     }}
                   />
                   <Text style={{ fontFamily: UIFont.regular, fontSize: 12, color: P.ink3, marginTop: 6 }}>
-                    e.g. "Email Nawaf the revised scope tomorrow 9am for Teradix"
+                    e.g. "Email the revised scope tomorrow 9am"
                   </Text>
                 </View>
 
@@ -697,6 +699,7 @@ export function TasksScreen() {
     { id: 'list', label: 'List' },
     { id: 'matrix', label: 'Matrix' },
     { id: 'board', label: 'Board' },
+    { id: 'plan', label: 'Plan' },
   ];
 
   if (tablet) {
@@ -820,7 +823,12 @@ export function TasksScreen() {
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, gap: 10 }}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor={P.accent} />}
         >
-          {viewMode === 'list' ? (
+          {viewMode === 'plan' ? (
+            <PlanView
+              tasks={companyFilter ? tasks.filter(t => taskCompanyId(t, companies) === companyFilter) : tasks}
+              onOpen={id => navigation.navigate('TaskDetail', { taskId: id })}
+            />
+          ) : viewMode === 'list' ? (
             <>
               <View style={{ paddingVertical: 8 }}>
                 <Text style={{ fontFamily: NumFont.bold, fontSize: 22, color: P.ink, letterSpacing: -0.3 }}>
@@ -951,9 +959,12 @@ function CompanyFilterRow({
               backgroundColor: active ? activeColor : 'transparent',
               borderColor: active ? activeColor : P.hairline,
             }}>
-              <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: active ? '#fff' : P.ink2 }}>
-                {company.name}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <CompanyMark name={company.name} logo={company.logo_url} color={company.color_tag} size={18} />
+                <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: active ? '#fff' : P.ink2 }}>
+                  {company.name}
+                </Text>
+              </View>
             </View>
           </Pressable>
         );

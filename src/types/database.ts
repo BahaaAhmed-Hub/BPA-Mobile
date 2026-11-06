@@ -19,6 +19,8 @@ export interface DbCompany {
   color_tag: string | null;
   calendar_id: string | null;
   is_active: boolean;
+  /** A data URL the web stores (migration 20260025); absent where that has not run. */
+  logo_url?: string | null;
 }
 
 export type DbQuadrant =

@@ -1,4 +1,7 @@
 import { useState, useRef } from 'react';
+import { MapPin } from 'lucide-react-native';
+import { createCalendarEvent } from '../../lib/calendarCreate';
+import { LinkPreviews } from '../../components/atoms/LinkPreviews';
 import { View, Text, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,6 +49,8 @@ export function EventDetailScreen() {
   const projects = useProjectStore(s => s.projects);
   const links    = useProjectStore(s => s.links);
   const addTask  = useTaskStore(s => s.addTask);
+  const [duplicating, setDuplicating] = useState(false);
+  const syncFromGoogle = useCalendarStore(s => s.syncFromGoogle);
   const [followOpen, setFollowOpen] = useState(false);
   const [followTitle, setFollowTitle] = useState('');
 
@@ -63,6 +68,29 @@ export function EventDetailScreen() {
   const isGoogleSourced = event.id.startsWith('google:');
   const project = projectOfEvent(event.google_event_id, links, projects);
   const allDay = isAllDay(event.start_time, event.end_time);
+
+  /** A copy keeps the event's own hours, title, place and notes — not its guests or Meet link. It lands on top of the
+   *  original, so the copy is opened for moving. */
+  async function duplicate() {
+    if (!event || duplicating) return;
+    setDuplicating(true);
+    const r = await createCalendarEvent({
+      title: event.title, location: event.location, notes: event.prep_notes,
+      start: new Date(event.start_time), end: new Date(event.end_time),
+      allDay: isAllDay(event.start_time, event.end_time),
+    });
+    if (!r.ok) { setDuplicating(false); notify('error', `Couldn't copy the event. ${r.error}`); return; }
+    const day = new Date(event.start_time).toLocaleDateString('en-CA');
+    try { await syncFromGoogle(day, day); } catch { /* the copy exists on Google; the next sync shows it */ }
+    setDuplicating(false);
+    const copyId = `google:${r.id}`;
+    if (useCalendarStore.getState().events.some(e => e.id === copyId)) {
+      notify('success', 'Copied. Move the copy where you want it.');
+      navigation.replace('EventDetail', { eventId: copyId });
+    } else {
+      notify('success', 'Copied. It will show on your calendar after the next sync.');
+    }
+  }
 
   /** A task that came out of this meeting. Its description says where from, the way the web's follow-ups do. */
   async function makeFollowUp() {
@@ -157,7 +185,7 @@ export function EventDetailScreen() {
             </Pressable>
             <View style={{ height: 1, backgroundColor: C.hairline, marginLeft: 14 }} />
             <View style={{ paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-              <Text style={{ fontSize: 16, marginTop: 2 }}>📍</Text>
+              <View style={{ marginTop: 2 }}><MapPin size={17} color={C.ink3} strokeWidth={1.75} /></View>
               <TextInput
                 value={locationDraft}
                 onChangeText={setLocationDraft}
@@ -278,7 +306,6 @@ export function EventDetailScreen() {
           <ListSection>
             <ListRow
               label="Make a follow-up task"
-              last
               active={followOpen}
               onPress={() => { setFollowOpen(o => !o); if (!followTitle) setFollowTitle(`Follow up: ${event.title}`); }}
               right={<Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: C.ink3 }}>{followOpen ? '▴' : '▾'}</Text>}
@@ -296,6 +323,12 @@ export function EventDetailScreen() {
                   </Pressable>
                 </View>
               ) : undefined}
+            />
+            <ListRow
+              label={duplicating ? 'Copying…' : 'Duplicate event'}
+              last
+              onPress={() => void duplicate()}
+              right={<Text style={{ fontFamily: UIFont.medium, fontSize: 14, color: C.ink3 }}>Same time, no guests ›</Text>}
             />
           </ListSection>
 
@@ -315,6 +348,7 @@ export function EventDetailScreen() {
                   padding: 0, minHeight: 72,
                 }}
               />
+              <LinkPreviews text={notesDraft} />
             </View>
           </ListSection>
 

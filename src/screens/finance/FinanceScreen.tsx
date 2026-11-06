@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { goalPace } from '../../lib/finance/goalPace';
+import { capacityFrom, debtGoals, planGoals, toGoal, type GoalPlan } from '../../lib/finance/goalPlan';
 import { View, Text, ScrollView, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
 import { Pressable } from '../../components/atoms/Pressable';
 import { useBiometricLock } from '../../lib/useBiometricLock';
@@ -9,10 +11,13 @@ import { C, Radii, Shadows, Spacing } from '../../theme/tokens';
 import { useScreenPalette } from '../../theme/palette';
 import { TopBar } from '../../components/atoms/TopBar';
 import { Glyph } from '../../components/atoms/Glyph';
-import { liveBalances, positionFrom, groupOf, isSettled } from '../../lib/finance/balances';
-import { toBase, baseCurrency } from '../../lib/finance/fx';
+import { liveBalances, positionFrom, groupOf, isSettled, todayISO } from '../../lib/finance/balances';
+import { toBase, baseCurrency, rateFor } from '../../lib/finance/fx';
+import { ValueSheet } from '../../components/atoms/ValueSheet';
+import { repayment, payFromOptions } from '../../lib/finance/loans';
+import { notify } from '../../store/feedbackStore';
 import { totalsFor, byDay, byCategory as categoryTotals } from '../../lib/finance/flows';
-import { buildEnvelopes, sumEnvelopes, type Envelope } from '../../lib/finance/budget';
+import { buildEnvelopes, sumEnvelopes, canEditAmount, type Envelope } from '../../lib/finance/budget';
 import type { DbFinanceAccount, DbFinanceCategory, DbFinanceTransaction, DbFinanceBudget, DbFinanceBill, DbFinanceGoal, TxType } from '../../types/financeTypes';
 import { UIFont, NumFont } from '../../theme/typography';
 
@@ -129,6 +134,12 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
   const pos = useMemo(() => positionFrom(accounts, transactions), [accounts, transactions]);
   const balanceOf = (a: DbFinanceAccount) => live.balances.get(a.id) ?? a.balance;
   const base = pos.base;
+  const saveRate = useFinanceStore(st => st.saveRate);
+  const [rateFor_, setRateFor] = useState<string | null>(null);
+  const addTx = useFinanceStore(st => st.addTransaction);
+  const [repaying, setRepaying] = useState<DbFinanceAccount | null>(null);
+  const [payFrom, setPayFrom] = useState<string | null>(null);
+  const foreign = useMemo(() => [...new Set(accounts.map(a => (a.currency || base).toUpperCase()))].filter(c => c !== base.toUpperCase()).sort(), [accounts, base]);
   const inBase = (list: DbFinanceAccount[]) => list.reduce((sum, a) => sum + (toBase(balanceOf(a), a.currency, base) ?? 0), 0);
 
   // Split the way the web does: spendable accounts, cards, other assets, and money borrowed.
@@ -208,10 +219,84 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
         </View>
         {pos.unrated.length > 0 ? (
           <Text style={{ fontFamily: UIFont.medium, fontSize: 12, lineHeight: 17, color: '#F5D14E' }}>
-            {pos.unrated.join(' and ')} not in these totals — no exchange rate is set (set it on the web, under Settings → Finance).
+            {pos.unrated.join(' and ')} not in these totals — no exchange rate is set. Tap it below to set one.
           </Text>
         ) : null}
       </View>
+
+      {/* Exchange rates: one chip per foreign currency in use. The web keeps the same rates, so a change here shows there. */}
+      {foreign.length > 0 ? (
+        <View style={{ gap: 8 }}>
+          <SectionLabel title="EXCHANGE RATES" total={`1 unit in ${base}`} P={P} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {foreign.map(cur => {
+              const r = rateFor(cur);
+              return (
+                <Pressable key={cur} accessibilityLabel={r === null ? `Set the ${cur} exchange rate` : `Change the ${cur} exchange rate, now ${r}`} onPress={() => setRateFor(cur)}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radii.pill, backgroundColor: P.surface, borderWidth: 1, borderColor: r === null ? P.accentDeep : P.hairline }}>
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: r === null ? P.accentDeep : P.ink }}>
+                    {cur} {r === null ? 'set rate' : r.toLocaleString('en-US', { maximumFractionDigits: 4 })}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+      <ValueSheet
+        visible={rateFor_ !== null}
+        title={`${rateFor_ ?? ''} exchange rate`}
+        hint={`How much ${base} one ${rateFor_ ?? ''} is worth. This is the same rate the web uses.`}
+        label={`1 ${rateFor_ ?? ''} in ${base}`}
+        suffix={base}
+        initial={rateFor_ ? rateFor(rateFor_) : null}
+        onClose={() => setRateFor(null)}
+        onSave={v => saveRate(rateFor_!, v)}
+      />
+
+      {/* Pay back: a transfer from cash you hold into the lender, never an expense. */}
+      {repaying ? (() => {
+        const owed = Math.max(0, -balanceOf(repaying));
+        const options = payFromOptions(accounts, repaying);
+        const chosen = options.find(o => o.id === payFrom) ?? (options.length === 1 ? options[0] : undefined);
+        return (
+          <ValueSheet
+            visible
+            title={`Pay back ${repaying.name}`}
+            hint={`${fmt(owed, repaying.currency)} is owed. Paid from an account in ${repaying.currency}; the loan and that account both go down.`}
+            label={`Amount in ${repaying.currency}`}
+            suffix={repaying.currency}
+            initial={Math.round(owed * 100) / 100}
+            onClose={() => setRepaying(null)}
+            onSave={async v => {
+              const check = repayment(chosen, repaying, owed, v, todayISO());
+              if (!check.ok) { notify('error', check.reason); return false; }
+              return addTx(check.tx);
+            }}
+          >
+            {options.length === 0 ? (
+              <Text style={{ fontFamily: UIFont.medium, fontSize: 13, color: P.accentDeep }}>
+                You have no {repaying.currency} account to pay from. Repaying across currencies is done on the web.
+              </Text>
+            ) : (
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>PAY FROM</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {options.map(o => {
+                    const on = chosen?.id === o.id;
+                    return (
+                      <Pressable key={o.id} accessibilityLabel={`Pay from ${o.name}`} onPress={() => setPayFrom(o.id)}
+                        style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radii.pill, backgroundColor: on ? P.accent : P.bg, borderWidth: 1, borderColor: on ? P.accent : P.hairline }}>
+                        <Text style={{ fontFamily: UIFont.semiBold, fontSize: 13, color: P.ink }}>{o.name}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+          </ValueSheet>
+        );
+      })() : null}
 
       {/* Payment accounts */}
       {paymentAccounts.length > 0 ? (
@@ -241,7 +326,7 @@ function BalanceTab({ loading, onRefresh }: { loading: boolean; onRefresh: () =>
       {openLoans.length > 0 || settledLoans > 0 ? (
         <View style={{ gap: 8 }}>
           <SectionLabel title="BORROWED & LOANS OWED" total={openLoans.length ? fmt(inBase(openLoans), base) : undefined} totalColor={C.red} P={P} />
-          {openLoans.map(a => <CardRow key={a.id} account={a} balance={balanceOf(a)} note={noteFor(a)} isLoan P={P} />)}
+          {openLoans.map(a => <CardRow key={a.id} account={a} balance={balanceOf(a)} note={noteFor(a)} isLoan onPayBack={() => { setPayFrom(null); setRepaying(a); }} P={P} />)}
           {settledLoans > 0 ? (
             <Text style={{ fontFamily: UIFont.medium, fontSize: 12, color: P.ink3, paddingHorizontal: 2 }}>
               {settledLoans} settled loan{settledLoans === 1 ? '' : 's'} not shown
@@ -331,7 +416,7 @@ function AccountRow({ account: a, balance, note, P }: { account: DbFinanceAccoun
   );
 }
 
-function CardRow({ account: a, balance, note, isLoan = false, P }: { account: DbFinanceAccount; balance: number; note: string | null; isLoan?: boolean; P: ReturnType<typeof useScreenPalette> }) {
+function CardRow({ account: a, balance, note, isLoan = false, onPayBack, P }: { account: DbFinanceAccount; balance: number; note: string | null; isLoan?: boolean; onPayBack?: () => void; P: ReturnType<typeof useScreenPalette> }) {
   // A card in credit is not a debt: only a balance below zero is owed.
   const owed = Math.max(0, -balance);
   const limit = a.credit_limit ?? 0;
@@ -363,6 +448,12 @@ function CardRow({ account: a, balance, note, isLoan = false, P }: { account: Db
           {owed > 0 ? fmt(-owed, a.currency) : fmt(balance, a.currency)}
         </Text>
       </View>
+      {isLoan && onPayBack && owed > 0 ? (
+        <Pressable accessibilityLabel={`Pay back ${a.name}`} onPress={onPayBack}
+          style={{ alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: Radii.pill, backgroundColor: P.accent }}>
+          <Text style={{ fontFamily: UIFont.bold, fontSize: 13, color: P.ink }}>Pay back</Text>
+        </Pressable>
+      ) : null}
       {!isLoan && limit > 0 ? (
         <View style={{ gap: 4 }}>
           <View style={{ height: 4, backgroundColor: P.hairline, borderRadius: 2, overflow: 'hidden' }}>
@@ -790,6 +881,8 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
   const earn  = useMemo(() => sumEnvelopes(env.earning), [env]);
   const base = baseCurrency();
   const noBudgetsAnywhere = Object.keys(rules).length === 0;
+  const saveBudgetAmount = useFinanceStore(st => st.saveBudgetAmount);
+  const [editing, setEditing] = useState<Envelope | null>(null);
 
   return (
     <ScrollView
@@ -837,18 +930,28 @@ function BudgetTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => 
           {env.spending.length > 0 ? (
             <View style={{ gap: 10 }}>
               <SectionLabel title="SPENDING" total={`${env.spending.filter(e => e.planned > 0).length} of ${env.spending.length} budgeted`} P={P} />
-              {env.spending.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="spending" P={P} />)}
+              {env.spending.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="spending" P={P} onEdit={canEditAmount(rules[e.cat.id]) ? () => setEditing(e) : undefined} />)}
             </View>
           ) : null}
 
           {env.earning.length > 0 ? (
             <View style={{ gap: 10 }}>
               <SectionLabel title="INCOME" P={P} />
-              {env.earning.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="income" P={P} />)}
+              {env.earning.map(e => <EnvelopeRow key={e.cat.id} e={e} kind="income" P={P} onEdit={canEditAmount(rules[e.cat.id]) ? () => setEditing(e) : undefined} />)}
             </View>
           ) : null}
         </>
       )}
+      <ValueSheet
+        visible={editing !== null}
+        title={editing ? `${editing.cat.name} budget` : 'Budget'}
+        hint={`The monthly amount from ${new Date(`${monthKey}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} on. Earlier months keep what they were.`}
+        label="Amount per month"
+        suffix={editing?.cur}
+        initial={editing && editing.plannedFrom === 'own' ? editing.planned : null}
+        onClose={() => setEditing(null)}
+        onSave={v => saveBudgetAmount(editing!.cat.id, monthKey, v)}
+      />
     </ScrollView>
   );
 }
@@ -868,14 +971,15 @@ function SummaryLine({ label, actual, planned, base, color, strong = false, P }:
 }
 
 /** One envelope: what has been paid out of a category this month against what it is allowed, in its own currency. */
-function EnvelopeRow({ e, kind, P }: { e: Envelope; kind: 'spending' | 'income'; P: ReturnType<typeof useScreenPalette> }) {
+function EnvelopeRow({ e, kind, P, onEdit }: { e: Envelope; kind: 'spending' | 'income'; P: ReturnType<typeof useScreenPalette>; onEdit?: () => void }) {
   const budgeted = e.planned > 0;
   const ratio = budgeted ? e.actual / e.planned : 0;
   const over = kind === 'spending' && budgeted && e.actual > e.planned;
   const bar = kind === 'income' ? C.green : over ? C.red : ratio >= 0.8 ? C.orange : C.green;
   const shown = e.children.filter(c => c.budgeted || c.actual > 0);
   return (
-    <View style={{ backgroundColor: P.surface, borderRadius: Radii.md, padding: 14, gap: 8, borderWidth: 1, borderColor: P.hairline, ...Shadows.card }}>
+    <Pressable disabled={!onEdit} onPress={onEdit} accessibilityLabel={onEdit ? `Change the budget for ${e.cat.name}` : undefined}
+      style={{ backgroundColor: P.surface, borderRadius: Radii.md, padding: 14, gap: 8, borderWidth: 1, borderColor: P.hairline, ...Shadows.card }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${e.cat.color}20`, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Glyph icon={e.cat.icon || '📁'} fallback="📁" size={16} box={36} color={e.cat.color || P.ink} />
@@ -913,18 +1017,54 @@ function EnvelopeRow({ e, kind, P }: { e: Envelope; kind: 'spending' | 'income';
           ))}
         </View>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
 // ─── GOALS TAB ────────────────────────────────────────────────────────────────
 
+/** One line on how a goal is going, from its own saved / target / deadline / monthly amount. */
+function paceLine(g: DbFinanceGoal, cur: string): { text: string; warn: boolean } | null {
+  const pace = goalPace(g);
+  const n = (v: number) => `${v.toLocaleString('en-US', { maximumFractionDigits: 0 })} ${cur}`;
+  const month = (key: string) => new Date(`${key}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  switch (pace.state) {
+    case 'reached': return { text: 'Reached', warn: false };
+    case 'overdue': return { text: `Deadline passed · ${n(pace.remaining)} to go`, warn: true };
+    case 'needs': return { text: `${n(pace.perMonth)} a month to arrive on time`, warn: false };
+    case 'projected':
+      if (pace.onTrack === false) return { text: `Arrives ${month(pace.arrives)}, after the deadline${pace.perMonthNeeded ? ` · ${n(pace.perMonthNeeded)} a month would make it` : ''}`, warn: true };
+      return { text: `On track · arrives ${month(pace.arrives)}`, warn: false };
+    default: return null;
+  }
+}
+
+/** Where the planner says a goal lands, in a sentence. Null when it has nothing to say. */
+function planLine(p: GoalPlan | undefined, surplus: number): { text: string; warn: boolean } | null {
+  if (!p) return null;
+  const month = (key: string) => new Date(`${key}-01T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  if (p.remaining <= 0) return null;
+  if (p.eta === null) return { text: surplus > 0 ? 'Not reached within 10 years at this rate' : 'Nothing is left over in a usual month', warn: true };
+  return { text: `Reaches ${month(p.eta)}${p.onTime === false ? ', after the deadline' : ''}`, warn: p.onTime === false };
+}
+
 function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => Promise<void> }) {
   const P = useScreenPalette();
   const goals = useFinanceStore(s => s.goals);
+  const accounts = useFinanceStore(s => s.accounts);
+  const transactions = useFinanceStore(s => s.transactions);
   const [refreshing, setRefreshing] = useState(false);
 
   async function handleRefresh() { setRefreshing(true); await onRefresh(); setRefreshing(false); }
+
+  // The money poured down the ranking. Cards and loans owed come first, as on the web, so they are in the run even
+  // though only the person's own goals are drawn.
+  const planned = useMemo(() => {
+    const own = goals.map(g => toGoal(g));
+    const cap = capacityFrom(accounts, transactions, own);
+    const plans = planGoals([...debtGoals(accounts, transactions), ...own], cap);
+    return { cap, byId: new Map(plans.map(p => [p.goal.id, p])) };
+  }, [goals, accounts, transactions]);
 
   if (goals.length === 0) {
     return (
@@ -948,6 +1088,24 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
       contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120, gap: 12, paddingTop: 4 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={P.accent} />}
     >
+      {/* What can be put into goals: spare cash now, and what a usual month leaves. */}
+      <View style={{ backgroundColor: P.surface, borderRadius: Radii.md, borderWidth: 1, borderColor: P.hairline, padding: 14, gap: 10 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>FREE TO COMMIT</Text>
+            <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: P.ink, marginTop: 2 }}>{fmt(planned.cap.free, planned.cap.currency)}</Text>
+          </View>
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
+            <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: P.ink4, letterSpacing: 1.4 }}>A USUAL MONTH LEAVES</Text>
+            <Text style={{ fontFamily: NumFont.bold, fontSize: 20, color: planned.cap.surplus < 0 ? P.negative : P.ink, marginTop: 2 }}>{fmt(planned.cap.surplus, planned.cap.currency)}</Text>
+          </View>
+        </View>
+        <Text style={{ fontFamily: UIFont.regular, fontSize: 12, lineHeight: 17, color: P.ink3 }}>
+          {planned.cap.months > 0
+            ? `From your last ${planned.cap.months} complete month${planned.cap.months === 1 ? '' : 's'}, after a month's spending kept back. Cards and loans you owe are paid first. This assumes every month is a usual one; the web also counts dated costs, so its dates can differ.`
+            : 'There is no completed month of entries to plan from yet.'}
+        </Text>
+      </View>
       {rows.map((row, ri) => (
         <View key={ri} style={{ flexDirection: 'row', gap: 12 }}>
           {row.map(rawGoal => {
@@ -956,6 +1114,8 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
             const pct = goal.target_amount > 0
               ? Math.min(1, goal.current_amount / goal.target_amount)
               : 0;
+            const pace = paceLine(goal, cur);
+            const lands = planned.cap.months > 0 ? planLine(planned.byId.get(goal.id), planned.cap.surplus) : null;
             return (
               <View key={goal.id} style={{
                 flex: 1,
@@ -1014,6 +1174,14 @@ function GoalsTab({ loading, onRefresh }: { loading: boolean; onRefresh: () => P
                 {goal.deadline ? (
                   <Text style={{ fontFamily: UIFont.medium, fontSize: 11, color: P.ink3 }}>
                     by {new Date(`${goal.deadline}T00:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </Text>
+                ) : null}
+                {lands ? (
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: lands.warn ? P.negative : P.ink2 }}>{lands.text}</Text>
+                ) : null}
+                {pace ? (
+                  <Text style={{ fontFamily: UIFont.semiBold, fontSize: 11, color: pace.warn ? P.negative : P.ink2 }}>
+                    {pace.text}
                   </Text>
                 ) : null}
               </View>

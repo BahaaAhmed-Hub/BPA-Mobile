@@ -13,7 +13,7 @@ import { useHabitStore } from '../../store/habitStore';
 import { useCalendarStore } from '../../store/calendarStore';
 import { supabase } from '../supabase';
 import {
-  listGoogleCalendars, listGoogleEvents, createGoogleEvent, deleteGoogleEvent, writeGoogleEvent,
+  listGoogleEvents, createGoogleEvent, deleteGoogleEvent, writeGoogleEvent, mainCalendar,
   type GoogleSyncEvent, type GoogleAccountRef,
 } from '../googleCalendar';
 import { isActionable, isOpenTask } from '../tasks';
@@ -246,15 +246,7 @@ async function findEvent(ref: unknown): Promise<{ eventId: string; meta: EventMe
   return { eventId, meta };
 }
 
-let mainCalendar: { calendarId: string; account: GoogleAccountRef; name: string } | null = null;
-async function mainCalendarOrThrow() {
-  if (mainCalendar) return mainCalendar;
-  const cals = await listGoogleCalendars();
-  const c = cals.find(x => x.primary) ?? cals.find(x => x.accessRole === 'owner' || x.accessRole === 'writer');
-  if (!c) throw new Error('No Google calendar is connected. Connect one in the web app first.');
-  mainCalendar = { calendarId: c.id, account: { email: c.accountEmail }, name: c.summary };
-  return mainCalendar;
-}
+const mainCalendarOrThrow = mainCalendar;
 
 function refuseWithGuests(meta: EventMeta, what: 'change' | 'delete') {
   if (meta.guests > 0) {
