@@ -4,6 +4,7 @@
 // and another writer landing between our read and our write erases the key.
 import { supabase } from './supabase';
 import { mergeSharedPref, holds } from './sharedPrefsCore';
+import { updateSharedPrefWith } from './sharedPrefsUpdate';
 
 export type WriteResult = 'saved' | 'failed';
 
@@ -27,3 +28,6 @@ export async function writeSharedPref(key: string, value: string): Promise<Write
   }
   return 'failed';
 }
+
+/** Change one key from its current value, as a read-modify-write on one read (see sharedPrefsUpdate). */
+export const updateSharedPref = (key: string, fn: (current: string | null) => string) => updateSharedPrefWith(supabase, key, fn);
