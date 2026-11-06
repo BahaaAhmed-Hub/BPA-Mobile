@@ -46,8 +46,9 @@ export const useDayMarksStore = create<MarksState>((set, get) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data, error } = await supabase.from('users').select('v:schedule_rules->shared_prefs->>cal-day-marks').eq('id', session.user.id).maybeSingle();
-      // A failed read is not an empty diary: keep what is drawn.
-      if (error) return;
+      // A failed read is not an empty diary. No row at all is also a failed read (an expired token returns none, not an error):
+      // keep what is drawn.
+      if (error || !data) return;
       set({ marks: parseMarks((data as { v?: string | null } | null)?.v), loaded: true });
     },
 
