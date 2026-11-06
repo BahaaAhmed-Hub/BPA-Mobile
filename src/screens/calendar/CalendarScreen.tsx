@@ -2,6 +2,7 @@ import { createCalendarEvent } from '../../lib/calendarCreate';
 import { DayMarksSection } from '../../components/marks/DayMarksSection';
 import { useDayMarksStore } from '../../store/dayMarksStore';
 import { marksOnDay } from '../../lib/marks/dayNotes';
+import { dateKey } from '../../lib/marks/dateKey';
 import { useEffect, useMemo, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { projectOfEvent, drawableColor } from '../../lib/projects';
@@ -170,7 +171,7 @@ export function CalendarScreen() {
                   color: active ? (P.isDark ? P.bg : '#fff') : today ? P.accent : P.ink,
                 }}>{d.getDate()}</Text>
                 {(() => {
-                  const ms = marksOnDay(dayMarks, isoDate(d));
+                  const ms = marksOnDay(dayMarks, dateKey(d));
                   if (!ms.length) return null;
                   return (
                     <Text numberOfLines={1} style={{ fontSize: 11, marginTop: 1, letterSpacing: 1 }}>
@@ -203,7 +204,7 @@ export function CalendarScreen() {
           {selected.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
         </Text>
 
-        <DayMarksSection date={isoDate(selected)} />
+        <DayMarksSection date={dateKey(selected)} />
 
         {dayEvents.length === 0 ? (
           <View style={{
