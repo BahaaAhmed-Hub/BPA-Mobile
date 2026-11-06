@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { strainAwareFetch } from './serverStrain';
+import { retryOnExpired } from './authRetry';
 
 // Web app reuses these - same Supabase project, served via the be2.life custom domain.
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://api.be2.life';
@@ -37,8 +38,13 @@ const LargeSecureStore = {
   },
 };
 
+// An expired token is refreshed once and the request sent again (see authRetry.ts). The client does not exist yet when this
+// is built, so it is bound afterwards, and read at call time.
+let boundClient: { auth: { refreshSession: () => Promise<{ data: { session: { access_token: string } | null } }> } } | undefined;
+const refreshAccessToken = async (): Promise<string | null> => (await boundClient?.auth.refreshSession())?.data.session?.access_token ?? null;
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  global: { fetch: strainAwareFetch },
+  global: { fetch: retryOnExpired(strainAwareFetch, refreshAccessToken) },
   auth: {
     storage: LargeSecureStore as never,
     storageKey: AUTH_STORAGE_KEY,
@@ -47,3 +53,4 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     detectSessionInUrl: false,
   },
 });
+boundClient = supabase;
