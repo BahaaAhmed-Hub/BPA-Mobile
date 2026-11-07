@@ -31,6 +31,8 @@ import { useProjectStore } from '../store/projectStore';
 import { ShoppingScreen } from '../screens/shopping/ShoppingScreen';
 import { useShoppingStore } from '../store/shoppingStore';
 import { LibraryScreen, LibraryBookScreen } from '../screens/library/LibraryScreen';
+import { BookVideosScreen } from '../screens/library/BookVideosScreen';
+import { BookSummaryScreen } from '../screens/library/BookSummaryScreen';
 import { useLibraryStore } from '../store/libraryStore';
 import { useModuleStore } from '../store/moduleStore';
 import { useMailStore } from '../store/mailStore';
@@ -55,6 +57,8 @@ export type RootStackParamList = {
   Shopping: undefined;
   Library: undefined;
   LibraryBook: { bookId: string };
+  LibraryVideos: { bookId: string };
+  LibrarySummary: { bookId: string };
   ProjectDetail: { projectId: string };
 };
 import { refreshIfStale } from '../lib/refresh';
@@ -215,6 +219,16 @@ export function RootNavigator() {
             <Stack.Screen
               name="LibraryBook"
               component={LibraryBookScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="LibraryVideos"
+              component={BookVideosScreen}
+              options={{ presentation: 'card', animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="LibrarySummary"
+              component={BookSummaryScreen}
               options={{ presentation: 'card', animation: 'slide_from_right' }}
             />
             <Stack.Screen
